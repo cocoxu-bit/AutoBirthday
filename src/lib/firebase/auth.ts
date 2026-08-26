@@ -3,6 +3,8 @@
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut, 
   updateProfile, 
   onAuthStateChanged,
@@ -14,7 +16,13 @@ function mapAuthError(error: any): string {
   const code = error?.code || '';
   switch (code) {
     case 'auth/operation-not-allowed':
-      return 'El proveedor de autenticación con Correo/Contraseña no está habilitado en la consola de Firebase. Actívalo en Firebase Console > Authentication > Sign-in method.';
+      return 'El proveedor de autenticación no está habilitado en la consola de Firebase. Actívalo en Firebase Console > Authentication > Sign-in method.';
+    case 'auth/unauthorized-domain':
+      return 'Este dominio no está autorizado en Firebase. Añade autobirthday.vercel.app en Firebase Console > Authentication > Settings > Authorized domains.';
+    case 'auth/popup-closed-by-user':
+      return 'Has cerrado la ventana de inicio de sesión con Google.';
+    case 'auth/cancelled-popup-request':
+      return 'Operación cancelada.';
     case 'auth/configuration-not-found':
       return 'Autenticación no configurada en Firebase. Habilita Authentication en la consola de Firebase.';
     case 'auth/email-already-in-use':
@@ -57,6 +65,17 @@ export async function signIn(email: string, password: string) {
   }
 }
 
+export async function signInWithGoogle() {
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const userCredential = await signInWithPopup(auth, provider);
+    return userCredential.user;
+  } catch (error: any) {
+    throw new Error(mapAuthError(error));
+  }
+}
+
 export async function signOutUser() {
   try {
     await signOut(auth);
@@ -74,3 +93,4 @@ export async function getIdToken(): Promise<string | null> {
   if (!user) return null;
   return await user.getIdToken(true);
 }
+
