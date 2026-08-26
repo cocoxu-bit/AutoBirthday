@@ -7,7 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:flow": "tsx scripts/test-flow.ts"
+    "test:flow": "tsx scripts/test-flow.ts",
+    "cron:setup": "tsx scripts/setup-cron-jobs.ts"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",
