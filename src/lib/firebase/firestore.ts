@@ -183,16 +183,8 @@ export const DEFAULT_TEMPLATES = [
     content: '¡Feliz cumpleaños {nombre}! ❤️🎉 Deseo que pases un día maravilloso y súper especial. Gracias por estar siempre ahí. ¡Te quiero mucho y te mando un abrazo enorme!',
   },
   {
-    title: '🎾 Grupos / Deporte / Pádel (Para Grupos de WhatsApp)',
-    content: '¡Muchas felicidades {nombre}! 🎾🥳 Hoy te perdonamos que falles bolas en la pista, pero te toca pagar la ronda de después. ¡A disfrutar a tope del día!',
-  },
-  {
     title: '⚡ Rápido & Efectivo (Corto)',
     content: '¡Feliz cumpleaños {nombre}! 🥳🎂 ¡Pásalo genial hoy y que cumplas muchísimos más!',
-  },
-  {
-    title: '👔 Formal / Institucional',
-    content: 'Estimado/a {nombre}, le deseo un muy feliz cumpleaños y un año próspero lleno de salud y grandes logros. Un cordial saludo.',
   },
 ];
 
