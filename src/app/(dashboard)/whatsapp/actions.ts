@@ -6,6 +6,7 @@ import { evolutionApi } from '@/lib/evolution-api/client';
 import { Timestamp } from 'firebase-admin/firestore';
 import { WhatsAppInstanceStatus } from '@/types';
 import { formatToWhatsappJid } from '@/lib/utils/phone';
+import { getAppUrl } from '@/lib/utils';
 
 async function getAuthenticatedUserId(): Promise<string> {
   const cookieStore = await cookies();
@@ -73,7 +74,7 @@ export async function connectInstance() {
   try {
     const userId = await getAuthenticatedUserId();
     const instanceName = `autocumple-${userId}`;
-    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhooks/evolution`;
+    const webhookUrl = `${getAppUrl()}/api/webhooks/evolution`;
     
     // Ensure instance is created in Evolution API
     try {
@@ -108,7 +109,7 @@ export async function connectWithPairingCode(phone: string) {
   try {
     const userId = await getAuthenticatedUserId();
     const instanceName = `autocumple-${userId}`;
-    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhooks/evolution`;
+    const webhookUrl = `${getAppUrl()}/api/webhooks/evolution`;
 
     if (!phone || phone.trim().length < 7) {
       return { success: false, error: 'Por favor, introduce un número de teléfono válido con prefijo de país (ej: 34612345678)' };

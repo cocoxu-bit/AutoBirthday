@@ -3,6 +3,7 @@ import { toZonedTime } from 'date-fns-tz';
 import { calculateScheduledTime } from '@/lib/scheduler/jitter';
 import { generateBirthdayWish } from '@/lib/ai/generate-wish';
 import { evolutionApi } from '@/lib/evolution-api/client';
+import { getAppUrl } from '@/lib/utils';
 import { AiTone } from '@/types';
 
 /**
@@ -193,7 +194,7 @@ ${targetDesc}
 • Responde *SI* para aprobar y enviar ahora.
 • O responde *EDITAR: tu nuevo texto* para modificarlo y enviarlo.
 • O responde *NO* para cancelarlo.
-• O gestiónalo en la web: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/wishes`;
+• O gestiónalo en la web: ${getAppUrl()}/wishes`;
 
               await evolutionApi.sendText(instanceName, userPhone, approvalText);
             }

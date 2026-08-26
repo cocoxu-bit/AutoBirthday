@@ -45,3 +45,16 @@ export function getDaysUntilBirthday(birthDay: number, birthMonth: number): numb
 export function generateInstanceName(userId: string): string {
   return `autobd_${userId.substring(0, 8)}`;
 }
+
+export function getAppUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return 'https://autobirthday.vercel.app';
+}
