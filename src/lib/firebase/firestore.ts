@@ -169,12 +169,61 @@ export async function deleteContact(userId: string, contactId: string): Promise<
 
 // ─── Templates ─────────────────────────────────────────────────────────────────
 
+export const DEFAULT_TEMPLATES = [
+  {
+    title: '🎉 Amigos / Cercanos (Informal & Divertido)',
+    content: '¡Muchísimas felicidades {nombre}! 🎂🍻 Espero que lo celebres como se merece por todo lo alto. ¡A ver cuándo nos vemos y nos tomamos algo! Un abrazo crack.',
+  },
+  {
+    title: '💼 Trabajo / Colegas / Clientes (Profesional)',
+    content: '¡Feliz cumpleaños, {nombre}! 🎂 Te deseo un gran día rodeado de tu gente y que este nuevo año venga cargado de éxitos profesionales y personales. ¡Un cordial saludo!',
+  },
+  {
+    title: '💖 Familia Cercana / Pareja (Afectivo & Emotivo)',
+    content: '¡Feliz cumpleaños {nombre}! ❤️🎉 Deseo que pases un día maravilloso y súper especial. Gracias por estar siempre ahí. ¡Te quiero mucho y te mando un abrazo enorme!',
+  },
+  {
+    title: '🎾 Grupos / Deporte / Pádel (Para Grupos de WhatsApp)',
+    content: '¡Muchas felicidades {nombre}! 🎾🥳 Hoy te perdonamos que falles bolas en la pista, pero te toca pagar la ronda de después. ¡A disfrutar a tope del día!',
+  },
+  {
+    title: '⚡ Rápido & Efectivo (Corto)',
+    content: '¡Feliz cumpleaños {nombre}! 🥳🎂 ¡Pásalo genial hoy y que cumplas muchísimos más!',
+  },
+  {
+    title: '👔 Formal / Institucional',
+    content: 'Estimado/a {nombre}, le deseo un muy feliz cumpleaños y un año próspero lleno de salud y grandes logros. Un cordial saludo.',
+  },
+];
+
 export async function getTemplates(userId: string): Promise<Template[]> {
-  const snapshot = await adminDb
+  const templatesRef = adminDb
     .collection('users')
     .doc(userId)
-    .collection('templates')
-    .get();
+    .collection('templates');
+    
+  const snapshot = await templatesRef.get();
+  
+  if (snapshot.empty) {
+    // Auto-seed default templates for new users
+    const seededDocs = await Promise.all(
+      DEFAULT_TEMPLATES.map(async (tmpl) => {
+        const docRef = await templatesRef.add({
+          ...tmpl,
+          userId,
+          createdAt: new Date(),
+        });
+        return {
+          id: docRef.id,
+          ...tmpl,
+          userId,
+          createdAt: new Date().toISOString(),
+        };
+      })
+    );
+    return seededDocs as any;
+  }
+
   return snapshot.docs.map((doc) => serializeDoc<Template>(doc));
 }
 
