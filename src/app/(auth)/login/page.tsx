@@ -20,15 +20,20 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       const idToken = await getIdToken();
-      if (idToken) {
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+      if (!idToken) {
+        throw new Error("No se pudo obtener el token de autenticación");
+      }
+      const res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Bienvenido! 🎉");
-      router.push("/dashboard");
+      window.location.href = "/whatsapp";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al iniciar sesión con Google";
@@ -45,15 +50,20 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       const idToken = await getIdToken();
-      if (idToken) {
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+      if (!idToken) {
+        throw new Error("No se pudo obtener el token de autenticación");
+      }
+      const res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Bienvenido de vuelta! 🎉");
-      router.push("/dashboard");
+      window.location.href = "/whatsapp";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al iniciar sesión";

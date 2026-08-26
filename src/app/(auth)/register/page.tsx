@@ -30,15 +30,20 @@ export default function RegisterPage() {
     try {
       await signInWithGoogle();
       const idToken = await getIdToken();
-      if (idToken) {
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+      if (!idToken) {
+        throw new Error("No se pudo obtener el token de autenticación");
+      }
+      const res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Cuenta vinculada con éxito! 🎉");
-      router.push("/dashboard");
+      window.location.href = "/whatsapp";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al registrarse con Google";
@@ -66,15 +71,20 @@ export default function RegisterPage() {
     try {
       await signUp(email, password, displayName);
       const idToken = await getIdToken();
-      if (idToken) {
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+      if (!idToken) {
+        throw new Error("No se pudo obtener el token de autenticación");
+      }
+      const res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Cuenta creada con éxito! 🎉");
-      router.push("/dashboard");
+      window.location.href = "/whatsapp";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al crear la cuenta";
