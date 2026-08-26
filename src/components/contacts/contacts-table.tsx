@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { toggleContactActive, deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact } from '@/types';
-import { Search, UserPlus, FileUp, Edit, Trash2, Power, Users, MessageSquare } from 'lucide-react';
-import { ImportWizardDialog } from './import-wizard-dialog';
+import { Search, UserPlus, Edit, Trash2, Power, Users, MessageSquare } from 'lucide-react';
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -14,7 +13,6 @@ interface ContactsTableProps {
 
 export function ContactsTable({ contacts }: ContactsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const filteredContacts = contacts.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,20 +45,13 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
             className="w-full pl-9 pr-4 py-2 bg-white/80 border-slate-200 rounded-xl shadow-sm focus:ring-violet-500 focus:border-violet-500 transition-all text-sm"
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button 
-            onClick={() => setIsImportOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-semibold shadow-sm"
-          >
-            <FileUp className="w-4 h-4 text-violet-600" />
-            <span>Importar (.ics, .vcf)</span>
-          </button>
+        <div className="flex w-full sm:w-auto">
           <Link 
             href="/contacts/new" 
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors shadow-sm text-sm font-semibold shadow-violet-500/20"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors shadow-sm text-sm font-semibold shadow-violet-500/20"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Añadir</span>
+            <span>Añadir Contacto</span>
           </Link>
         </div>
       </div>
@@ -73,17 +64,10 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
           <div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">No hay contactos todavía</h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
-              Añade un contacto manualmente o importa tu calendario de cumpleaños (.ics) en 5 segundos.
+              Añade tu primer contacto para programar sus felicitaciones de cumpleaños.
             </p>
           </div>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button 
-              onClick={() => setIsImportOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-xs font-bold shadow-sm"
-            >
-              <FileUp className="w-4 h-4 text-violet-600" />
-              <span>Importar Calendario (.ics)</span>
-            </button>
+          <div className="flex items-center justify-center pt-2">
             <Link 
               href="/contacts/new" 
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors shadow-sm text-xs font-bold shadow-violet-500/20"
@@ -158,10 +142,6 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
             </div>
           ))}
         </div>
-      )}
-
-      {isImportOpen && (
-        <ImportWizardDialog onClose={() => setIsImportOpen(false)} />
       )}
     </div>
   );
