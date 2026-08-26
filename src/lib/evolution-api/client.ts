@@ -58,6 +58,13 @@ class EvolutionAPIClient {
       method: 'GET',
     });
   }
+
+  async getPairingCode(instanceName: string, phoneNumber: string): Promise<{ pairingCode?: string; code?: string }> {
+    const cleanPhone = formatToWhatsappJid(phoneNumber);
+    return this.request<{ pairingCode?: string; code?: string }>(`/instance/connect/${instanceName}?number=${cleanPhone}`, {
+      method: 'GET',
+    });
+  }
   
   async getConnectionState(instanceName: string): Promise<{ instance: { state: string } }> {
     try {

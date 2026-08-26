@@ -104,6 +104,51 @@ export async function connectInstance() {
   }
 }
 
+export async function connectWithPairingCode(phone: string) {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhooks/evolution`;
+
+    if (!phone || phone.trim().length < 7) {
+      return { success: false, error: 'Por favor, introduce un número de teléfono válido con prefijo de país (ej: 34612345678)' };
+    }
+
+    // Ensure instance is created in Evolution API
+    try {
+      const instances = await evolutionApi.fetchInstances().catch(() => []);
+      const exists = instances?.some((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
+      
+      if (!exists) {
+        await evolutionApi.createInstance(instanceName, webhookUrl);
+      }
+    } catch (createErr: any) {
+      console.warn('Instance creation note:', createErr?.message);
+    }
+
+    const cleanPhone = formatToWhatsappJid(phone);
+    const response = await evolutionApi.getPairingCode(instanceName, cleanPhone);
+    const pairingCode = response.pairingCode || response.code;
+
+    if (!pairingCode) {
+      return { success: false, error: 'No se pudo generar el código. Verifica el número e inténtalo de nuevo.' };
+    }
+
+    await adminDb.collection('users').doc(userId).set({
+      whatsappInstance: {
+        instanceName,
+        status: 'connecting',
+        updatedAt: Timestamp.now()
+      }
+    }, { merge: true });
+
+    return { success: true, pairingCode };
+  } catch (error: any) {
+    console.error('Error in connectWithPairingCode:', error);
+    return { success: false, error: error.message || 'Error al generar código de emparejamiento' };
+  }
+}
+
 export async function refreshQRCode() {
   try {
     const userId = await getAuthenticatedUserId();
