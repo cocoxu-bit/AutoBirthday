@@ -2,7 +2,7 @@ import { Timestamp } from "firebase/firestore";
 
 export type WishMode = 'manual' | 'template' | 'ai';
 export type AiTone = 'casual' | 'divertido' | 'formal' | 'emotivo';
-export type WishStatus = 'draft' | 'waiting_approval' | 'approved' | 'queued' | 'sent' | 'failed' | 'cancelled';
+export type WishStatus = 'draft' | 'waiting_approval' | 'approved' | 'queued' | 'sent' | 'failed' | 'cancelled' | 'expired';
 export type WhatsAppInstanceStatus = 'disconnected' | 'connecting' | 'connected';
 export type TargetType = 'individual' | 'group';
 export type ContactSource = 'manual' | 'csv' | 'calendar_ics' | 'vcard_vcf';

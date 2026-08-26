@@ -478,14 +478,48 @@ export default function WhatsAppPage() {
 
       </div>
 
-      {/* TARJETA INFORMATIVA / SEGURIDAD */}
-      <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-slate-200/60 p-4 flex items-start gap-3 text-left">
-        <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-        <div className="text-xs text-slate-600 space-y-0.5">
-          <p className="font-bold text-slate-800">Conexión Oficial y Segura</p>
-          <p>
-            Tus mensajes y credenciales viajan cifrados de extremo a extremo. AutoBirthday solo envía las felicitaciones que tú programes o apruebes.
-          </p>
+      {/* TARJETA DE PRIVACIDAD, AISLAMIENTO Y CIFRADO */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-violet-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-white/10 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm sm:text-base font-bold text-slate-100">Privacidad y Seguridad Garantizada</h4>
+            <p className="text-[11px] text-slate-400">Arquitectura de máxima confidencialidad y permisos mínimos</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div className="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-1.5 backdrop-blur-sm">
+            <div className="text-xs font-bold text-violet-300 flex items-center gap-1.5">
+              <span>🛡️</span>
+              <span>Contenedor Aislado</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Tu sesión se ejecuta en un contenedor aislado y exclusivo para tu cuenta, sin interferencia de otros usuarios.
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-1.5 backdrop-blur-sm">
+            <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+              <span>🔒</span>
+              <span>Cero Espionaje</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              No almacenamos el historial de tus conversaciones ni leemos tus mensajes privados o chats personales.
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-1.5 backdrop-blur-sm">
+            <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>Permisos Acotados</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Solo se utilizan permisos para emitir las felicitaciones que programes y recibir las respuestas del bot de aprobación.
+            </p>
+          </div>
         </div>
       </div>
 

@@ -138,13 +138,16 @@ export async function executeDailyScan(
           });
         }
 
+        const isGroupTarget = contact.targetType === 'group' && Boolean(contact.groupId);
+        // Groups strictly require prior confirmation for safety
+        const status = (!isGroupTarget && contact.autoSend) ? 'queued' : 'waiting_approval';
+
         const scheduledFor = calculateScheduledTime(
           contact.sendTimeStart || '09:00',
           contact.sendTimeEnd || '14:00',
-          timezone
+          timezone,
+          scanned
         );
-
-        const status = contact.autoSend ? 'queued' : 'waiting_approval';
 
         await adminDb.collection('wishes').add({
           contactId: item.id,

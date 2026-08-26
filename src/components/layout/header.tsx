@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Cake } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Cake, Smartphone, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { signOutUser } from "@/lib/firebase/auth";
 import { toast } from "sonner";
+import { WhatsAppInstanceStatus } from "@/types";
 
 const routeMap: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -19,6 +22,7 @@ const routeMap: Record<string, string> = {
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus>('disconnected');
 
   // Match title or sub-routes
   let title = routeMap[pathname];
@@ -27,6 +31,23 @@ export function Header() {
     else if (pathname.startsWith('/templates/')) title = 'Editar Plantilla';
     else title = 'AutoBirthday';
   }
+
+  useEffect(() => {
+    async function checkWa() {
+      try {
+        const res = await fetch('/api/whatsapp/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status) setWaStatus(data.status);
+        }
+      } catch (err) {
+        // silent fail in background
+      }
+    }
+    checkWa();
+    const interval = setInterval(checkWa, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -46,7 +67,31 @@ export function Header() {
         <h1 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Real-time WhatsApp Status Badge */}
+        <Link
+          href="/whatsapp"
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+            waStatus === 'connected'
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+              : waStatus === 'connecting'
+              ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 animate-pulse'
+              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+          }`}
+          title={waStatus === 'connected' ? 'WhatsApp vinculado y operativo' : 'WhatsApp desconectado (pulsa para vincular)'}
+        >
+          <span className={`w-2 h-2 rounded-full ${
+            waStatus === 'connected'
+              ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+              : waStatus === 'connecting'
+              ? 'bg-amber-500 animate-ping'
+              : 'bg-red-500 shadow-sm shadow-red-500/50'
+          }`} />
+          <span className="hidden sm:inline">
+            {waStatus === 'connected' ? 'WhatsApp Activo' : waStatus === 'connecting' ? 'Conectando...' : 'Reconectar WA'}
+          </span>
+        </Link>
+
         <button
           onClick={handleSignOut}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-red-600 transition-colors rounded-xl hover:bg-red-50"

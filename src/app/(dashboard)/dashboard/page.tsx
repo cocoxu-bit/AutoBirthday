@@ -7,6 +7,7 @@ import { getContacts, getWishes } from "@/lib/firebase/firestore";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { UpcomingBirthdays, UpcomingBirthdayItem } from "@/components/dashboard/upcoming-birthdays";
 import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-activity";
+import { ConnectionStatusCard } from "@/components/dashboard/connection-status-card";
 import { Smartphone, UserPlus, FileText, Sparkles, Cake } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
@@ -183,26 +184,10 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* WhatsApp banner if not connected */}
-      {!data?.isWhatsAppConnected && (
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-emerald-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="font-extrabold text-base sm:text-lg flex items-center gap-2">
-              <Smartphone className="w-5 h-5" />
-              Vincula tu cuenta de WhatsApp
-            </h3>
-            <p className="text-emerald-100 text-xs max-w-xl font-medium">
-              Conecta tu número con código de 8 dígitos o QR para enviar felicitaciones automáticas y recibir avisos de aprobación.
-            </p>
-          </div>
-          <Link
-            href="/whatsapp"
-            className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-white text-emerald-900 font-bold text-xs hover:bg-emerald-50 transition-all shrink-0 shadow-md"
-          >
-            Vincular WhatsApp ➔
-          </Link>
-        </div>
-      )}
+      {/* WhatsApp Connection Health Monitor */}
+      <ConnectionStatusCard 
+        initialStatus={data?.isWhatsAppConnected ? 'connected' : 'disconnected'} 
+      />
 
       {/* Stats Cards */}
       <StatsCards 

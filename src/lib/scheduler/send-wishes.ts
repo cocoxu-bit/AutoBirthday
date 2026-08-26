@@ -1,11 +1,13 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { formatToWhatsappJid } from '@/lib/utils/phone';
+import { toZonedTime } from 'date-fns-tz';
 
 export interface SendResult {
   sent: number;
   failed: number;
   skipped: number;
+  expired?: number;
   details: Array<{
     wishId: string;
     contactId: string;
@@ -13,14 +15,17 @@ export interface SendResult {
     phone: string;
     targetType?: string;
     targetName?: string;
-    status: 'sent' | 'failed' | 'skipped';
+    status: 'sent' | 'failed' | 'skipped' | 'expired';
     error?: string;
   }>;
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Processes queued birthday wishes that are due for delivery.
  * Supports sending directly to individual chats or WhatsApp Groups with optional @mentions.
+ * Features rate-limiting between sends, message sanitization, and 21:00 timeout policy.
  *
  * @param customNow Optional timestamp for testing
  * @param limit Maximum number of wishes to process in one batch (default 50)
@@ -30,7 +35,43 @@ export async function executeSendWishes(
   limit: number = 50
 ): Promise<SendResult> {
   const now = customNow || new Date();
+  const zonedMadrid = toZonedTime(now, 'Europe/Madrid');
+  const currentMadridHour = zonedMadrid.getHours();
 
+  let expiredCount = 0;
+  const details: SendResult['details'] = [];
+
+  // 1. Timeout Policy: Expire unapproved wishes if >= 21:00 Madrid time
+  if (currentMadridHour >= 21) {
+    try {
+      const pendingApprovalSnapshot = await adminDb
+        .collection('wishes')
+        .where('status', '==', 'waiting_approval')
+        .limit(100)
+        .get();
+
+      for (const pDoc of pendingApprovalSnapshot.docs) {
+        await pDoc.ref.update({
+          status: 'expired',
+          errorLog: 'Expirado a las 21:00 sin confirmación del usuario para evitar envíos nocturnos.',
+          updatedAt: new Date(),
+        });
+        expiredCount++;
+        details.push({
+          wishId: pDoc.id,
+          contactId: pDoc.data().contactId,
+          contactName: 'Pendiente de aprobación',
+          phone: '',
+          status: 'expired',
+          error: 'Expirado por política de seguridad nocturna (21:00)',
+        });
+      }
+    } catch (expErr: any) {
+      console.warn('Error during wish expiration check:', expErr?.message);
+    }
+  }
+
+  // 2. Fetch Queued Wishes
   let wishesDocs: any[] = [];
   try {
     const wishesSnapshot = await adminDb
@@ -58,11 +99,17 @@ export async function executeSendWishes(
   let sent = 0;
   let failed = 0;
   let skipped = 0;
-  const details: SendResult['details'] = [];
 
-  for (const doc of wishesDocs) {
+  for (let i = 0; i < wishesDocs.length; i++) {
+    const doc = wishesDocs[i];
     const wish = doc.data();
     try {
+      // Anti-Spam Rate Limiting: Delay 8s to 15s between consecutive sends
+      if (sent > 0) {
+        const jitterMs = Math.floor(Math.random() * (15000 - 8000 + 1)) + 8000;
+        await sleep(jitterMs);
+      }
+
       const userDoc = await adminDb.collection('users').doc(wish.userId).get();
       const userData = userDoc.data();
 
@@ -102,15 +149,31 @@ export async function executeSendWishes(
         throw new Error('Destino no especificado (falta número de teléfono o grupo de WhatsApp)');
       }
 
+      // Message Sanitization
+      let finalMessage = (wish.generatedMessage || '').trim();
+      if (!finalMessage) {
+        throw new Error('El mensaje de felicitación está vacío');
+      }
+
+      // Replace any residual un-interpolated template variables
+      if (finalMessage.includes('{nombre}') || finalMessage.includes('{edad}')) {
+        const currentYear = new Date().getFullYear();
+        const age = contactData.birthYear ? currentYear - contactData.birthYear : undefined;
+        finalMessage = finalMessage
+          .replace(/\{nombre\}/gi, contactData.name.split(' ')[0])
+          .replace(/\{edad\}/gi, age ? `${age}` : '');
+      }
+
       const options: any = {};
       if (isGroup && contactData.mentionInGroup && cleanPhone) {
         options.mentioned = [cleanPhone];
       }
 
-      await evolutionApi.sendText(instanceName, destination, wish.generatedMessage, options);
+      await evolutionApi.sendText(instanceName, destination, finalMessage, options);
 
       await doc.ref.update({
         status: 'sent',
+        generatedMessage: finalMessage,
         sentAt: new Date(),
         errorLog: null,
       });
@@ -144,5 +207,5 @@ export async function executeSendWishes(
     }
   }
 
-  return { sent, failed, skipped, details };
+  return { sent, failed, skipped, expired: expiredCount, details };
 }

@@ -120,6 +120,13 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Force autoSend false on WhatsApp groups for safety
+  useEffect(() => {
+    if (targetType === 'group') {
+      form.setValue('autoSend', false);
+    }
+  }, [targetType, form]);
+
   const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedJid = e.target.value;
     form.setValue('groupId', selectedJid);
@@ -598,19 +605,33 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
         <h3 className="text-lg font-bold text-slate-900">Aprobación y Horarios</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-xl hover:bg-slate-50/80 transition-colors">
-              <input 
-                type="checkbox" 
-                {...form.register('autoSend')} 
-                className="w-5 h-5 mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500" 
-              />
-              <div>
-                <div className="font-bold text-slate-900 text-sm">Enviar automáticamente sin preguntar</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Si está desactivado, el bot te enviará un WhatsApp por la mañana pidiéndote confirmación antes de lanzar el mensaje.
+            {targetType === 'group' ? (
+              <div className="p-3.5 bg-amber-50/90 rounded-2xl border border-amber-200/80 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-amber-900">🛡️ Aprobación previa obligatoria en Grupos</span>
+                  <span className="text-[10px] font-extrabold bg-amber-200/80 text-amber-800 px-2 py-0.5 rounded-full">
+                    Seguridad
+                  </span>
                 </div>
+                <p className="text-xs text-amber-800/90">
+                  Por seguridad, las felicitaciones públicas en grupos de WhatsApp requieren tu confirmación previa por WhatsApp antes de publicarse.
+                </p>
               </div>
-            </label>
+            ) : (
+              <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-xl hover:bg-slate-50/80 transition-colors">
+                <input 
+                  type="checkbox" 
+                  {...form.register('autoSend')} 
+                  className="w-5 h-5 mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500" 
+                />
+                <div>
+                  <div className="font-bold text-slate-900 text-sm">Enviar automáticamente sin preguntar</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    Si está desactivado, el bot te enviará un WhatsApp por la mañana pidiéndote confirmación antes de lanzar el mensaje.
+                  </div>
+                </div>
+              </label>
+            )}
             
             <label className="flex items-start space-x-3 cursor-pointer p-3 rounded-xl hover:bg-slate-50/80 transition-colors">
               <input 

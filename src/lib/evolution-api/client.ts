@@ -75,6 +75,15 @@ class EvolutionAPIClient {
       return { instance: { state: 'close' } };
     }
   }
+
+  async fetchConnectionState(instanceName: string): Promise<{ state: string; open: boolean }> {
+    const res = await this.getConnectionState(instanceName);
+    const state = res?.instance?.state || 'close';
+    return {
+      state,
+      open: state === 'open'
+    };
+  }
   
   async sendText(
     instanceName: string, 

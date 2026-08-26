@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
 import { executeSendWishes } from '@/lib/scheduler/send-wishes';
 
-export async function GET(req: Request) {
+async function handleRequest(req: Request) {
   try {
     const authHeader = req.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const { searchParams } = new URL(req.url);
+    const querySecret = searchParams.get('secret');
+
+    const expectedSecret = process.env.CRON_SECRET;
+    const isAuthorized = !expectedSecret || 
+      authHeader === `Bearer ${expectedSecret}` || 
+      querySecret === expectedSecret;
+
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -15,6 +23,7 @@ export async function GET(req: Request) {
       sent: result.sent,
       failed: result.failed,
       skipped: result.skipped,
+      expired: result.expired || 0,
       details: result.details,
     });
   } catch (error: any) {
@@ -24,4 +33,12 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(req: Request) {
+  return handleRequest(req);
+}
+
+export async function POST(req: Request) {
+  return handleRequest(req);
 }

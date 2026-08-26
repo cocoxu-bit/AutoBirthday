@@ -33,6 +33,7 @@ export async function generateBirthdayWish(params: GenerateWishParams): Promise<
     ? `\nCONTEXTO ESPECIAL DE GRUPO DE WHATSAPP:
 - Este mensaje se enviará en el grupo de WhatsApp "${groupName || 'del grupo'}".
 - Debe redactarse en tono público y festivo para que todos los miembros del grupo se sumen a la celebración.
+- REGLA DE SEGURIDAD ESTRICTA: No inventes bromas internas o apodos que no hayan sido proporcionados explícitamente en las notas. Mantén un tono festivo, cercano y adecuado para ser leído por todos los miembros del grupo.
 ${mentionInGroup ? `- IMPORTANTE: Menciona al cumpleañero como @${phone || name} al inicio o durante el mensaje.` : `- Menciona a ${name} con naturalidad.`}`
     : '';
 
