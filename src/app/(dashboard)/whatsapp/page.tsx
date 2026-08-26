@@ -156,13 +156,16 @@ export default function WhatsAppPage() {
     }
   };
 
-  if (loading && status === 'disconnected' && !qrCode && !pairingCode) {
+  if (loading && !pairingCode && !qrCode && status !== 'connected') {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex flex-col items-center justify-center h-96 space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        <p className="text-xs text-slate-400 font-medium">Cargando estado de WhatsApp...</p>
       </div>
     );
   }
+
+  const showConnectionForm = status === 'disconnected' || (status === 'connecting' && !pairingCode && !qrCode);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 mt-4 pb-12">
@@ -176,8 +179,8 @@ export default function WhatsAppPage() {
 
         <CardContent className="flex flex-col items-center justify-center space-y-6 pt-2">
           
-          {/* DISCONNECTED STATE */}
-          {status === 'disconnected' && (
+          {/* DISCONNECTED / READY TO CONNECT STATE */}
+          {showConnectionForm && (
             <div className="flex flex-col items-center space-y-6 w-full max-w-lg">
               
               {/* Method Switcher */}
