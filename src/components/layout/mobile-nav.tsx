@@ -17,8 +17,8 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-lg border-t border-white/20 pb-safe z-50">
-      <div className="flex items-center justify-around h-full px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-t border-slate-200/80 shadow-lg shadow-slate-900/5 z-40">
+      <div className="flex items-center justify-around h-full px-1 max-w-md mx-auto">
         {mobileNavItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
@@ -26,16 +26,23 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors",
-                isActive ? "text-violet-700" : "text-slate-500 hover:text-violet-900"
+                "flex flex-col items-center justify-center flex-1 h-full py-1 transition-all rounded-xl",
+                isActive 
+                  ? "text-violet-700 font-bold" 
+                  : "text-slate-500 hover:text-slate-900 font-medium"
               )}
             >
-              <item.icon className={cn("w-6 h-6", isActive && "fill-violet-100")} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <div className={cn(
+                "p-1 rounded-xl transition-all",
+                isActive && "bg-violet-100/80 text-violet-700"
+              )}>
+                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+              </div>
+              <span className="text-[10px] leading-tight mt-0.5">{item.label}</span>
             </Link>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

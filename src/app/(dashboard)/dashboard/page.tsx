@@ -139,23 +139,23 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8 pb-20 md:pb-6 max-w-7xl mx-auto">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-white/60 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/70 backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-white/60 shadow-sm">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100/80 text-violet-700 text-xs font-bold mb-2">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Panel de Control Inteligente</span>
+            <span>Panel Inteligente</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             ¡Hola, {data?.displayName || 'Bienvenido'}! 👋
           </h1>
           <p className="text-slate-500 capitalize text-xs font-semibold mt-1">{currentDate}</p>
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
           <Link
             href="/whatsapp"
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+            className={`col-span-2 sm:col-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
               data?.isWhatsAppConnected
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
                 : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20'
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/contacts/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-all shadow-sm shadow-violet-500/20"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-all shadow-sm shadow-violet-500/20"
           >
             <UserPlus className="w-4 h-4" />
             <span>Añadir Contacto</span>
@@ -175,7 +175,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/templates/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/80 border border-slate-200 text-slate-700 text-xs font-bold hover:bg-white hover:border-slate-300 transition-all shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
           >
             <FileText className="w-4 h-4" />
             <span>Nueva Plantilla</span>
@@ -185,21 +185,21 @@ export default async function DashboardPage() {
 
       {/* WhatsApp banner if not connected */}
       {!data?.isWhatsAppConnected && (
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-6 text-white shadow-xl shadow-emerald-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-emerald-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h3 className="font-extrabold text-lg flex items-center gap-2">
+            <h3 className="font-extrabold text-base sm:text-lg flex items-center gap-2">
               <Smartphone className="w-5 h-5" />
               Vincula tu cuenta de WhatsApp
             </h3>
             <p className="text-emerald-100 text-xs max-w-xl font-medium">
-              Escanea el código QR para que AutoBirthday pueda enviar tus felicitaciones y avisarte de las revisiones por mensaje.
+              Conecta tu número con código de 8 dígitos o QR para enviar felicitaciones automáticas y recibir avisos de aprobación.
             </p>
           </div>
           <Link
             href="/whatsapp"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-white text-emerald-900 font-bold text-xs hover:bg-emerald-50 transition-all shrink-0 shadow-md"
+            className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-white text-emerald-900 font-bold text-xs hover:bg-emerald-50 transition-all shrink-0 shadow-md"
           >
-            Escanear Código QR ➔
+            Vincular WhatsApp ➔
           </Link>
         </div>
       )}
