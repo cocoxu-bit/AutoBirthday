@@ -2,11 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/daily-scan",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/cron/send-wishes",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
