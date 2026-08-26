@@ -67,7 +67,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
       groupId: initialData?.groupId || '',
       groupName: initialData?.groupName || '',
       mentionInGroup: initialData?.mentionInGroup ?? false,
-      mode: initialData?.mode || 'ai',
+      mode: initialData?.mode || 'manual',
       customMessage: initialData?.customMessage || '',
       templateId: initialData?.templateId || '',
       aiRelationship: initialData?.aiRelationship || '',
