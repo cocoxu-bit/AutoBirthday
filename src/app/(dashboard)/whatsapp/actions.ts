@@ -1,0 +1,190 @@
+'use server';
+
+import { cookies } from 'next/headers';
+import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { evolutionApi } from '@/lib/evolution-api/client';
+import { Timestamp } from 'firebase-admin/firestore';
+import { WhatsAppInstanceStatus } from '@/types';
+import { formatToWhatsappJid } from '@/lib/utils/phone';
+
+async function getAuthenticatedUserId(): Promise<string> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('__session')?.value;
+  if (!sessionCookie) throw new Error('Debes iniciar sesión para conectar WhatsApp');
+  try {
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+    return decodedClaims.uid;
+  } catch (err: any) {
+    throw new Error('Sesión expirada o inválida. Por favor, vuelve a iniciar sesión.');
+  }
+}
+
+export async function getConnectionStatus() {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+    
+    // Check instance state in Evolution API
+    const evoState = await evolutionApi.getConnectionState(instanceName);
+    
+    let currentStatus: WhatsAppInstanceStatus = 'disconnected';
+    if (evoState.instance?.state === 'open') {
+      currentStatus = 'connected';
+    } else if (evoState.instance?.state === 'connecting') {
+      currentStatus = 'connecting';
+    }
+
+    // Try to get owner phone number from Evolution API
+    let phoneNumber: string | undefined;
+    try {
+      const instances = await evolutionApi.fetchInstances();
+      const inst = instances.find((i: any) => i.name === instanceName || i.instance?.instanceName === instanceName);
+      if (inst?.ownerJid) {
+        phoneNumber = inst.ownerJid.replace(/@.*$/, '');
+      }
+    } catch {}
+
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userData = userDoc.data();
+
+    if (!phoneNumber && userData?.whatsappInstance?.phoneNumber) {
+      phoneNumber = userData.whatsappInstance.phoneNumber;
+    }
+    
+    await adminDb.collection('users').doc(userId).set({
+      whatsappInstance: {
+        instanceName,
+        status: currentStatus,
+        phoneNumber: phoneNumber || null,
+        updatedAt: Timestamp.now()
+      }
+    }, { merge: true });
+
+    return { 
+      status: currentStatus, 
+      phoneNumber: phoneNumber || null
+    };
+  } catch (error) {
+    return { status: 'disconnected' as WhatsAppInstanceStatus };
+  }
+}
+
+export async function connectInstance() {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhooks/evolution`;
+    
+    // Ensure instance is created in Evolution API
+    try {
+      const instances = await evolutionApi.fetchInstances().catch(() => []);
+      const exists = instances?.some((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
+      
+      if (!exists) {
+        await evolutionApi.createInstance(instanceName, webhookUrl);
+      }
+    } catch (createErr: any) {
+      console.warn('Instance creation note:', createErr?.message);
+    }
+    
+    const qrResponse = await evolutionApi.getQRCode(instanceName);
+    
+    await adminDb.collection('users').doc(userId).set({
+      whatsappInstance: {
+        instanceName,
+        status: 'connecting',
+        updatedAt: Timestamp.now()
+      }
+    }, { merge: true });
+    
+    return { success: true, qr: qrResponse.base64 };
+  } catch (error: any) {
+    console.error('Error in connectInstance:', error);
+    return { success: false, error: error.message || 'Error al conectar instancia' };
+  }
+}
+
+export async function refreshQRCode() {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+    const qrResponse = await evolutionApi.getQRCode(instanceName);
+    return { success: true, qr: qrResponse.base64 };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function disconnectInstance() {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+    
+    try {
+      await evolutionApi.logout(instanceName);
+      await evolutionApi.deleteInstance(instanceName);
+    } catch (e) {
+      console.warn("Evolution delete failed:", e);
+    }
+    
+    await adminDb.collection('users').doc(userId).set({
+      whatsappInstance: {
+        instanceName,
+        status: 'disconnected',
+        phoneNumber: null,
+        updatedAt: Timestamp.now()
+      }
+    }, { merge: true });
+    
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendTestMessage(targetPhone?: string) {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+
+    // Verify WhatsApp connection in Evolution API
+    const evoState = await evolutionApi.getConnectionState(instanceName);
+    if (evoState.instance?.state !== 'open') {
+      return { success: false, error: 'WhatsApp no está conectado. Escanea el código QR primero.' };
+    }
+
+    let phone = targetPhone?.trim();
+
+    // If no target phone passed, look for owner phone in Evolution API
+    if (!phone) {
+      const instances = await evolutionApi.fetchInstances();
+      const inst = instances.find((i: any) => i.name === instanceName || i.instance?.instanceName === instanceName);
+      if (inst?.ownerJid) {
+        phone = inst.ownerJid.replace(/@.*$/, '');
+      }
+    }
+
+    // Fallback to Firestore user record
+    if (!phone) {
+      const userDoc = await adminDb.collection('users').doc(userId).get();
+      phone = userDoc.data()?.whatsappInstance?.phoneNumber;
+    }
+
+    if (!phone) {
+      return { success: false, error: 'Por favor, escribe el número de teléfono al que deseas enviar la prueba.' };
+    }
+
+    const cleanPhone = formatToWhatsappJid(phone);
+
+    await evolutionApi.sendText(
+      instanceName,
+      cleanPhone,
+      '🎉 ¡Hola! Este es un mensaje de prueba desde AutoBirthday. ¡Tu conexión de WhatsApp funciona perfectamente!'
+    );
+
+    return { success: true, phone: cleanPhone };
+  } catch (error: any) {
+    console.error('Error sending test message:', error);
+    return { success: false, error: error.message || 'Error al enviar mensaje de prueba' };
+  }
+}

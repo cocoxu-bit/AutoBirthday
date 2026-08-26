@@ -1,69 +1,186 @@
-import Image from "next/image";
+import Link from "next/link";
+import {
+  Cake,
+  MessageCircle,
+  Sparkles,
+  Calendar,
+  Zap,
+  Shield,
+  ArrowRight,
+} from "lucide-react";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="min-h-screen bg-gradient-festive">
+      {/* Header */}
+      <header className="glass-strong sticky top-0 z-50 border-b border-white/20">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-gradient-birthday flex items-center justify-center shadow-md">
+              <Cake className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-lg text-slate-900">
+              AutoBirthday
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors px-4 py-2"
+            >
+              Iniciar Sesión
+            </Link>
+            <Link
+              href="/register"
+              className="text-sm font-semibold text-white bg-gradient-violet px-5 py-2.5 rounded-xl shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+            >
+              Empezar Gratis
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-4 pt-20 pb-24 text-center relative">
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-violet-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            100% Gratis · Con IA
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight max-w-3xl mx-auto">
+            Nunca más olvides un{" "}
+            <span className="bg-gradient-birthday bg-clip-text text-transparent">
+              cumpleaños
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+
+          <p className="text-lg sm:text-xl text-slate-600 mt-6 max-w-2xl mx-auto leading-relaxed">
+            Conecta tu WhatsApp, añade tus contactos y deja que la IA genere y
+            envíe felicitaciones personalizadas{" "}
+            <strong>automáticamente</strong>.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 bg-gradient-violet text-white font-semibold px-8 py-4 rounded-2xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-lg"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Empezar Gratis
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <p className="text-sm text-slate-500">
+              Sin tarjeta de crédito · Setup en 2 minutos
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="max-w-6xl mx-auto px-4 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: MessageCircle,
+              title: "WhatsApp Personal",
+              description:
+                "Conecta tu propio WhatsApp escaneando un QR. Los mensajes se envían desde tu número, como si los escribieras tú.",
+              color: "bg-emerald-100 text-emerald-600",
+            },
+            {
+              icon: Sparkles,
+              title: "IA Personalizada",
+              description:
+                "Gemini genera felicitaciones únicas basadas en tu relación, tono y anécdotas con cada persona.",
+              color: "bg-violet-100 text-violet-600",
+            },
+            {
+              icon: Calendar,
+              title: "Totalmente Automático",
+              description:
+                "Configura una vez y olvídate. El sistema escanea cumpleaños cada día y envía en el horario que elijas.",
+              color: "bg-amber-100 text-amber-600",
+            },
+            {
+              icon: Zap,
+              title: "Aprobación por WhatsApp",
+              description:
+                "¿Prefieres revisar antes de enviar? Te avisamos por WhatsApp y apruebas con un simple SÍ.",
+              color: "bg-pink-100 text-pink-600",
+            },
+            {
+              icon: Shield,
+              title: "Privado y Seguro",
+              description:
+                "Tus datos y contactos están protegidos. Tu sesión de WhatsApp solo la controlas tú.",
+              color: "bg-blue-100 text-blue-600",
+            },
+            {
+              icon: Cake,
+              title: "Plantillas & Custom",
+              description:
+                "Usa plantillas con variables, mensajes manuales o deja que la IA decida. Tú eliges por cada contacto.",
+              color: "bg-rose-100 text-rose-600",
+            },
+          ].map((feature) => (
+            <div
+              key={feature.title}
+              className="glass-strong rounded-2xl p-6 hover:shadow-xl hover:shadow-violet-500/10 hover:-translate-y-1 transition-all duration-300"
             >
-              Learning
-            </a>{" "}
-            center.
+              <div
+                className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${feature.color} mb-4`}
+              >
+                <feature.icon className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-6xl mx-auto px-4 pb-24">
+        <div className="bg-gradient-violet rounded-3xl p-12 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-4 left-8 text-4xl">🎂</div>
+            <div className="absolute top-12 right-16 text-3xl">🎉</div>
+            <div className="absolute bottom-8 left-1/4 text-5xl">🎈</div>
+            <div className="absolute bottom-4 right-8 text-4xl">🥳</div>
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              ¿Listo para no olvidar ningún cumpleaños?
+            </h2>
+            <p className="text-violet-200 text-lg mb-8 max-w-xl mx-auto">
+              Crea tu cuenta en segundos y configura tu primer contacto.
+            </p>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 bg-white text-violet-700 font-semibold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-lg"
+            >
+              Crear Cuenta Gratis
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-violet-100 py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-slate-500">
+          <p>
+            © {new Date().getFullYear()} AutoBirthday. Hecho con ❤️ para que
+            nunca olvides un cumpleaños.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
     </div>
   );
 }
