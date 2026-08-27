@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { toggleContactActive, deleteContact } from '@/app/(dashboard)/contacts/actions';
+import { deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact } from '@/types';
 import { 
   Search, 
@@ -12,7 +12,6 @@ import {
   Edit3, 
   Trash2, 
   Users, 
-  Cake, 
   ChevronRight
 } from 'lucide-react';
 
@@ -36,13 +35,6 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
     (c.groupName && c.groupName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  async function handleToggleActive(e: React.MouseEvent, id: string, current: boolean) {
-    e.stopPropagation();
-    const res = await toggleContactActive(id, !current);
-    if (res.success) toast.success(`Contacto ${!current ? 'activado' : 'desactivado'}`);
-    else toast.error('Error al cambiar el estado');
-  }
-
   async function handleDelete(e: React.MouseEvent, id: string, name: string) {
     e.stopPropagation();
     if (!confirm(`¿Estás seguro de eliminar a "${name}"?`)) return;
@@ -53,10 +45,10 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
     else toast.error('Error al eliminar contacto');
   }
 
-  const formatBirthday = (day?: number, month?: number, year?: number | null) => {
+  const formatBirthday = (day?: number, month?: number) => {
     if (!day || !month) return null;
     const monthName = MONTH_NAMES[month - 1];
-    return `🎂 ${day} de ${monthName}${year ? ` (${year})` : ''}`;
+    return `🎂 ${day} de ${monthName}`;
   };
 
   return (
@@ -87,7 +79,7 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
         </Link>
       </div>
 
-      {/* MINIMALIST CONTACT LIST */}
+      {/* MINIMALIST WHATSAPP-STYLE CONTACT LIST */}
       {filteredContacts.length === 0 ? (
         <div className="text-center py-16 bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-100 text-violet-600 shadow-inner">
@@ -119,7 +111,7 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
         <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden divide-y divide-slate-100">
           {filteredContacts.map(contact => {
             const isGroup = contact.targetType === 'group';
-            const bdayString = formatBirthday(contact.birthDay, contact.birthMonth, contact.birthYear);
+            const bdayString = formatBirthday(contact.birthDay, contact.birthMonth);
 
             return (
               <div
@@ -127,41 +119,27 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
                 onClick={() => router.push(`/contacts/${contact.id}/edit`)}
                 className="group relative flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50/90 transition-all cursor-pointer gap-3 sm:gap-4"
               >
-                {/* LEFT: TOGGLE SWITCH (HORIZONTAL OVAL) + AVATAR */}
-                <div className="flex items-center gap-3 shrink-0">
-                  
-                  {/* iOS Style Horizontal Switch */}
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={contact.isActive}
-                    onClick={(e) => contact.id && handleToggleActive(e, contact.id, contact.isActive)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      contact.isActive ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                    title={contact.isActive ? 'Activo (haz clic para desactivar)' : 'Desactivado (haz clic para activar)'}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                        contact.isActive ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                {/* LEFT: WHATSAPP AVATAR (PHOTO OR INITIALS) */}
+                <div className="relative shrink-0">
+                  {contact.profilePictureUrl ? (
+                    <img
+                      src={contact.profilePictureUrl}
+                      alt={contact.name}
+                      className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200/80"
                     />
-                  </button>
-
-                  {/* Avatar with Initials or Group Icon */}
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-sm transition-transform group-hover:scale-105 ${
-                    isGroup
-                      ? 'bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700'
-                      : 'bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600'
-                  }`}>
-                    {isGroup ? (
-                      <Users className="w-5 h-5" />
-                    ) : (
-                      contact.name.substring(0, 2).toUpperCase()
-                    )}
-                  </div>
-
+                  ) : (
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm transition-transform group-hover:scale-105 ${
+                      isGroup
+                        ? 'bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700'
+                        : 'bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600'
+                    }`}>
+                      {isGroup ? (
+                        <Users className="w-5 h-5" />
+                      ) : (
+                        contact.name.substring(0, 2).toUpperCase()
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* MIDDLE: CLEAN NAME & BIRTHDAY */}

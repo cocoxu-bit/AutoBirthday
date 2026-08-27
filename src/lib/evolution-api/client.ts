@@ -242,6 +242,19 @@ class EvolutionAPIClient {
     }
   }
 
+  async fetchProfilePictureUrl(instanceName: string, numberOrJid: string): Promise<string | null> {
+    try {
+      const cleanNumber = numberOrJid.replace(/[@+]/g, '').trim();
+      const res = await this.request<any>(`/chat/fetchProfilePictureUrl/${instanceName}`, {
+        method: 'POST',
+        body: JSON.stringify({ number: cleanNumber }),
+      });
+      return res?.profilePictureUrl || res?.pictureUrl || null;
+    } catch {
+      return null;
+    }
+  }
+
   async logout(instanceName: string) {
     return this.request(`/instance/logout/${instanceName}`, {
       method: 'DELETE',

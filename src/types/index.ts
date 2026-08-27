@@ -35,6 +35,7 @@ export interface Contact<T = Timestamp> {
   groupId?: string;          // JID del grupo de WhatsApp (ej: 12036302482394@g.us)
   groupName?: string;        // Nombre del grupo para mostrar en la interfaz
   mentionInGroup?: boolean;  // Si es true, añade mención @tag en el grupo
+  profilePictureUrl?: string | null; // URL de la foto de perfil en WhatsApp CDN
 
   // Modo y Personalización
   mode: WishMode;

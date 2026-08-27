@@ -29,6 +29,17 @@ export async function createContact(formData: ContactFormData) {
     const userId = await getAuthenticatedUserId();
     const validatedData = contactFormSchema.parse(formData);
 
+    // Try to fetch WhatsApp profile picture
+    let profilePictureUrl: string | null = null;
+    try {
+      const instanceName = `autocumple-${userId}`;
+      if (validatedData.targetType === 'group' && validatedData.groupId) {
+        profilePictureUrl = await evolutionApi.fetchProfilePictureUrl(instanceName, validatedData.groupId);
+      } else if (validatedData.phone) {
+        profilePictureUrl = await evolutionApi.fetchProfilePictureUrl(instanceName, validatedData.phone);
+      }
+    } catch {}
+
     await dbCreateContact(userId, {
       name: validatedData.name,
       phone: validatedData.phone || '',
@@ -39,6 +50,7 @@ export async function createContact(formData: ContactFormData) {
       groupId: validatedData.groupId || undefined,
       groupName: validatedData.groupName || undefined,
       mentionInGroup: validatedData.mentionInGroup ?? false,
+      profilePictureUrl: profilePictureUrl || undefined,
       mode: validatedData.mode,
       customMessage: validatedData.customMessage || undefined,
       templateId: validatedData.templateId || undefined,
@@ -67,6 +79,17 @@ export async function updateContact(contactId: string, formData: ContactFormData
     const userId = await getAuthenticatedUserId();
     const validatedData = contactFormSchema.parse(formData);
 
+    // Try to fetch WhatsApp profile picture
+    let profilePictureUrl: string | null = null;
+    try {
+      const instanceName = `autocumple-${userId}`;
+      if (validatedData.targetType === 'group' && validatedData.groupId) {
+        profilePictureUrl = await evolutionApi.fetchProfilePictureUrl(instanceName, validatedData.groupId);
+      } else if (validatedData.phone) {
+        profilePictureUrl = await evolutionApi.fetchProfilePictureUrl(instanceName, validatedData.phone);
+      }
+    } catch {}
+
     await dbUpdateContact(userId, contactId, {
       name: validatedData.name,
       phone: validatedData.phone || '',
@@ -77,6 +100,7 @@ export async function updateContact(contactId: string, formData: ContactFormData
       groupId: validatedData.groupId || null,
       groupName: validatedData.groupName || null,
       mentionInGroup: validatedData.mentionInGroup ?? false,
+      ...(profilePictureUrl ? { profilePictureUrl } : {}),
       mode: validatedData.mode,
       customMessage: validatedData.customMessage || null,
       templateId: validatedData.templateId || null,
