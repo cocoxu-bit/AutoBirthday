@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, 
@@ -13,7 +13,7 @@ import {
   ChevronRight, 
   ChevronDown, 
   ChevronUp, 
-  X,
+  X, 
   ExternalLink,
   PartyPopper
 } from 'lucide-react';
@@ -35,6 +35,14 @@ export function OnboardingChecklist({
   const [isDismissed, setIsDismissed] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('autobirthday_onboarding_dismissed') === 'true') {
+        setIsDismissed(true);
+      }
+    } catch {}
+  }, []);
+
   // Calculate Progress
   const step1 = isWhatsAppConnected;
   const step2 = contactsCount > 0;
@@ -44,7 +52,17 @@ export function OnboardingChecklist({
   const percentage = Math.round((completedSteps / 3) * 100);
   const allCompleted = completedSteps === 3;
 
-  if (isDismissed) return null;
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    try {
+      localStorage.setItem('autobirthday_onboarding_dismissed', 'true');
+    } catch {}
+  };
+
+  // Automatically disappear when all 3 steps are completed or user dismissed it
+  if (isDismissed || allCompleted) {
+    return null;
+  }
 
   const openGuideFor = (tab: 'whatsapp' | 'contacts' | 'assistant') => {
     setDefaultTab(tab);
@@ -68,14 +86,12 @@ export function OnboardingChecklist({
 
             <div className="flex items-center gap-2 pt-0.5">
               <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
-                {allCompleted ? '¡Tu cuenta está 100% lista! 🎉' : 'Primeros pasos para automatizar tus cumpleaños'}
+                Primeros pasos para automatizar tus cumpleaños
               </h3>
             </div>
             
             <p className="text-xs text-slate-300 max-w-xl font-medium">
-              {allCompleted 
-                ? 'Has completado la configuración básica. AutoBirthday se encargará del resto.'
-                : 'Completa estos 3 sencillos pasos para que tus felicitaciones salgan solas.'}
+              Completa estos sencillos pasos para que tus felicitaciones se envíen solas.
             </p>
           </div>
 
@@ -98,6 +114,14 @@ export function OnboardingChecklist({
               title={isCollapsed ? "Expandir" : "Plegar"}
             >
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={handleDismiss}
+              className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
+              title="Ocultar guía"
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
