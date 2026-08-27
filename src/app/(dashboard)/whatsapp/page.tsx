@@ -436,10 +436,10 @@ export default function WhatsAppPage() {
               )}
             </div>
 
-            {/* Test de envío */}
+            {/* Test de envío desde el Asistente */}
             <form onSubmit={handleSendTest} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Probar conexión (Enviar mensaje de prueba)
+                Recibir mensaje de prueba desde el Asistente (+34 926 31 24 36)
               </label>
 
               <div className="flex flex-col sm:flex-row gap-2">
@@ -456,12 +456,12 @@ export default function WhatsAppPage() {
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs px-4 py-2.5 shrink-0 shadow-sm"
                 >
                   <Send className="w-3.5 h-3.5 mr-1.5" />
-                  <span>Enviar Test</span>
+                  <span>Probar Chat</span>
                 </Button>
               </div>
 
               <p className="text-[11px] text-slate-400">
-                Introduce el número donde quieres recibir el mensaje de prueba.
+                El Asistente te enviará un WhatsApp de confirmación a este número para que verifiques la recepción.
               </p>
             </form>
 

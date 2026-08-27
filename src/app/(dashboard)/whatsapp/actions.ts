@@ -228,15 +228,31 @@ export async function sendTestMessage(targetPhone?: string) {
 
     const cleanPhone = formatToWhatsappJid(phone);
 
+    // Send test message from autobirthday-system assistant bot (with fallback to user instance)
+    let senderInstance = 'autobirthday-system';
+    try {
+      const sysState = await evolutionApi.getConnectionState('autobirthday-system');
+      if (sysState?.instance?.state !== 'open') {
+        senderInstance = instanceName;
+      }
+    } catch {
+      senderInstance = instanceName;
+    }
+
+    const testMessageText = `🤖 *AutoBirthday Asistente*\n\n` +
+      `🎉 *¡Conexión Verificada con Éxito!*\n\n` +
+      `Tu cuenta de WhatsApp está correctamente vinculada y lista para funcionar.\n\n` +
+      `A partir de ahora, desde este chat te enviaré las propuestas de felicitación de tus amigos y grupos para que puedas aprobarlas o editarlas antes de enviarse.\n\n` +
+      `¡Todo listo para que nunca se te pase ningún cumpleaños! 🎂✨`;
+
     await evolutionApi.sendText(
-      instanceName,
+      senderInstance,
       cleanPhone,
-      '🎉 ¡Hola! Este es un mensaje de prueba desde AutoBirthday. ¡Tu conexión de WhatsApp funciona perfectamente!'
+      testMessageText
     );
 
     return { success: true, phone: cleanPhone };
   } catch (error: any) {
-    console.error('Error sending test message:', error);
-    return { success: false, error: error.message || 'Error al enviar mensaje de prueba' };
+    return { success: false, error: error.message || 'Error al enviar el mensaje de prueba' };
   }
 }
