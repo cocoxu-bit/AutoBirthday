@@ -461,21 +461,22 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
           </div>
         )}
         
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 items-end">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Día</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">Día</label>
             <input 
               type="number" 
               {...form.register('birthDay', { valueAsNumber: true })} 
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium" 
+              className="w-full px-2.5 sm:px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium text-center sm:text-left" 
               min="1" max="31"
+              placeholder="Día"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Mes</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">Mes</label>
             <select 
               {...form.register('birthMonth', { valueAsNumber: true })} 
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium"
+              className="w-full px-2 sm:px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium"
             >
               {[
                 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -486,12 +487,12 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Año (Opcional)</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">Año</label>
             <input 
               type="number" 
               {...form.register('birthYear', { valueAsNumber: true })} 
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium" 
-              placeholder="Ej. 1998"
+              className="w-full px-2.5 sm:px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium text-center sm:text-left" 
+              placeholder="Opcional"
             />
           </div>
         </div>
