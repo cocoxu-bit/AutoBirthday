@@ -37,6 +37,15 @@ export async function POST(req: Request) {
           }
         }, { merge: true });
 
+        // If instance connected for the first time, send onboarding welcome message
+        if (state === 'open') {
+          const userPhone = userDoc.data()?.whatsappInstance?.phoneNumber;
+          if (userPhone) {
+            const { sendWelcomeMessageIfNotSent } = await import('@/lib/notifications/assistant');
+            await sendWelcomeMessageIfNotSent(userId, userPhone, userDoc.data()?.displayName);
+          }
+        }
+
         // If instance unexpectedly disconnected (and was previously connected), send alert from system bot
         if (state === 'close' && prevStatus === 'connected') {
           const userPhone = userDoc.data()?.whatsappInstance?.phoneNumber;

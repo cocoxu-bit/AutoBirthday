@@ -61,6 +61,12 @@ export async function getConnectionStatus() {
       }
     }, { merge: true });
 
+    // Send onboarding welcome message from system assistant if first time connected
+    if (currentStatus === 'connected' && phoneNumber) {
+      const { sendWelcomeMessageIfNotSent } = await import('@/lib/notifications/assistant');
+      await sendWelcomeMessageIfNotSent(userId, phoneNumber, userData?.displayName);
+    }
+
     return { 
       status: currentStatus, 
       phoneNumber: phoneNumber || null

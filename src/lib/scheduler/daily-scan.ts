@@ -232,5 +232,13 @@ ${targetDesc}
     }
   }
 
+  // Scan and dispatch gentle 48h activation reminders for users with 0 contacts
+  try {
+    const { checkAndSendActivationNudges } = await import('@/lib/notifications/assistant');
+    await checkAndSendActivationNudges();
+  } catch (nudgeErr: any) {
+    console.warn('Activation nudge scan error:', nudgeErr?.message);
+  }
+
   return { scanned, created, errors, details };
 }
