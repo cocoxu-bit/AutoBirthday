@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:flow": "tsx scripts/test-flow.ts",
-    "cron:setup": "tsx scripts/setup-cron-jobs.ts"
+    "cron:setup": "tsx scripts/setup-cron-jobs.ts",
+    "benchmark:memory": "tsx scripts/benchmark-memory.ts"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",
