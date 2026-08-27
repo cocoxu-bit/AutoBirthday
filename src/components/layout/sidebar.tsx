@@ -18,10 +18,10 @@ import {
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/whatsapp", icon: Smartphone, label: "WhatsApp", isWhatsApp: true },
   { href: "/contacts", icon: Users, label: "Contactos" },
-  { href: "/templates", icon: FileText, label: "Plantillas" },
   { href: "/wishes", icon: Gift, label: "Felicitaciones" },
+  { href: "/templates", icon: FileText, label: "Plantillas" },
+  { href: "/whatsapp", icon: Smartphone, label: "WhatsApp", isWhatsApp: true },
   { href: "/settings", icon: Settings, label: "Configuración" },
 ];
 

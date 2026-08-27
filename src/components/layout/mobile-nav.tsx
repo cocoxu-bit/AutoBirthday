@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 
 const mobileNavItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  { href: "/whatsapp", icon: Smartphone, label: "WhatsApp" },
   { href: "/contacts", icon: Users, label: "Contactos" },
   { href: "/wishes", icon: Gift, label: "Saludos" },
+  { href: "/whatsapp", icon: Smartphone, label: "WhatsApp" },
   { href: "/settings", icon: Settings, label: "Ajustes" },
 ];
 

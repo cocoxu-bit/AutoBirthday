@@ -157,24 +157,29 @@ export default async function DashboardPage() {
 
         {/* Quick Action Buttons */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-          <Link
-            href="/whatsapp"
-            className={`col-span-2 sm:col-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              data?.isWhatsAppConnected
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20'
-            }`}
-          >
-            <Smartphone className="w-4 h-4" />
-            <span>{data?.isWhatsAppConnected ? 'WhatsApp Conectado ✅' : 'Conectar WhatsApp ⚠️'}</span>
-          </Link>
+          {!data?.isWhatsAppConnected ? (
+            <Link
+              href="/whatsapp"
+              className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all shadow-md shadow-emerald-600/20"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>Conectar WhatsApp ⚠️</span>
+            </Link>
+          ) : null}
 
           <Link
             href="/contacts/new"
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-all shadow-sm shadow-violet-500/20"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-all shadow-sm shadow-violet-500/20"
           >
             <UserPlus className="w-4 h-4" />
             <span>Añadir Contacto</span>
+          </Link>
+
+          <Link
+            href="/wishes"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <span>Ver Felicitaciones</span>
           </Link>
 
           <Link
