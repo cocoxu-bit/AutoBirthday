@@ -8,6 +8,8 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { UpcomingBirthdays, UpcomingBirthdayItem } from "@/components/dashboard/upcoming-birthdays";
 import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-activity";
 import { ConnectionStatusCard } from "@/components/dashboard/connection-status-card";
+import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
+import { WelcomeModal } from "@/components/onboarding/welcome-modal";
 import { Smartphone, UserPlus, FileText, Sparkles, Cake } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
@@ -117,6 +119,7 @@ async function getDashboardData() {
     return {
       displayName,
       isWhatsAppConnected,
+      hasReceivedWelcomeMessage: Boolean(userData?.hasReceivedWelcomeMessage),
       stats: {
         activeContacts: activeContacts.length,
         sentTotal,
@@ -183,6 +186,19 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Revolut / Airbnb Style Onboarding Checklist */}
+      <OnboardingChecklist
+        isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
+        contactsCount={data?.stats?.activeContacts || 0}
+        hasReceivedWelcome={Boolean(data?.hasReceivedWelcomeMessage)}
+      />
+
+      {/* First-time Welcome Modal */}
+      <WelcomeModal
+        displayName={data?.displayName}
+        isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
+      />
 
       {/* WhatsApp Connection Health Monitor */}
       <ConnectionStatusCard 
