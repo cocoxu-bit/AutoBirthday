@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { executeSendWishes } from '@/lib/scheduler/send-wishes';
+import { getAppUrl } from '@/lib/utils';
 
 export async function POST(req: Request) {
   try {
@@ -12,8 +13,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing instance' }, { status: 400 });
     }
 
-    const instanceName = instance; // autocumple-{userId}
-    const userId = instanceName.replace('autocumple-', '');
+    const instanceName = instance;
+    const isSystemInstance = instanceName === 'autobirthday-system';
     const eventType = (event || '').toLowerCase().replace(/_/g, '.');
 
     // 1. Handle Connection Updates
@@ -23,25 +24,46 @@ export async function POST(req: Request) {
       if (state === 'open') status = 'connected';
       else if (state === 'connecting') status = 'connecting';
       
-      await adminDb.collection('users').doc(userId).set({
-        whatsappInstance: {
-          instanceName,
-          status,
-          updatedAt: new Date(),
+      if (!isSystemInstance && instanceName.startsWith('autocumple-')) {
+        const userId = instanceName.replace('autocumple-', '');
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        const prevStatus = userDoc.data()?.whatsappInstance?.status;
+
+        await adminDb.collection('users').doc(userId).set({
+          whatsappInstance: {
+            instanceName,
+            status,
+            updatedAt: new Date(),
+          }
+        }, { merge: true });
+
+        // If instance unexpectedly disconnected (and was previously connected), send alert from system bot
+        if (state === 'close' && prevStatus === 'connected') {
+          const userPhone = userDoc.data()?.whatsappInstance?.phoneNumber;
+          if (userPhone) {
+            try {
+              const alertMsg = `⚠️ *AutoBirthday: Alerta de Desconexión*\n\n` +
+                `Hola! Tu sesión personal de WhatsApp se ha desconectado. Las felicitaciones programadas están en pausa hasta que reconectes tu cuenta.\n\n` +
+                `🔗 *Reconéctala en 10 segundos aquí:*\n${getAppUrl()}/whatsapp`;
+
+              await evolutionApi.sendText('autobirthday-system', userPhone, alertMsg);
+            } catch (alertErr: any) {
+              console.warn('Could not send disconnection alert:', alertErr.message);
+            }
+          }
         }
-      }, { merge: true });
+      }
 
       return NextResponse.json({ success: true });
     }
 
     // 2. Handle Incoming Messages for Approvals
     if (eventType === 'messages.upsert') {
-      // Baileys / Evolution v2 payloads can have data.messages, data.data, or data directly
       const message = Array.isArray(data?.messages) 
         ? data.messages[0] 
         : (data?.data?.message ? data.data : (data?.message ? data : data));
 
-      if (!message) {
+      if (!message || message.key?.fromMe) {
         return NextResponse.json({ success: true });
       }
 
@@ -52,12 +74,35 @@ export async function POST(req: Request) {
         || '';
       
       const remoteJid = message.key?.remoteJid || message.remoteJid || '';
-      const phone = remoteJid.replace(/@.*$/, '');
+      const rawPhone = remoteJid.replace(/@.*$/, '');
 
-      if (!text || !phone) return NextResponse.json({ success: true });
+      if (!text || !rawPhone) return NextResponse.json({ success: true });
+
+      // Resolve userId: either from instance name or by looking up phone number
+      let targetUserId = '';
+      if (!isSystemInstance && instanceName.startsWith('autocumple-')) {
+        targetUserId = instanceName.replace('autocumple-', '');
+      } else {
+        // Look up user by phone number
+        const usersSnap = await adminDb.collection('users').get();
+        for (const u of usersSnap.docs) {
+          const uData = u.data();
+          const phone = uData?.whatsappInstance?.phoneNumber || '';
+          const cleanUPhone = phone.replace(/\D/g, '');
+          const cleanRaw = rawPhone.replace(/\D/g, '');
+          if (cleanUPhone && cleanRaw && (cleanUPhone === cleanRaw || cleanUPhone.endsWith(cleanRaw) || cleanRaw.endsWith(cleanUPhone))) {
+            targetUserId = u.id;
+            break;
+          }
+        }
+      }
+
+      if (!targetUserId) {
+        return NextResponse.json({ success: true });
+      }
 
       const wishesSnapshot = await adminDb.collection('wishes')
-        .where('userId', '==', userId)
+        .where('userId', '==', targetUserId)
         .where('status', '==', 'waiting_approval')
         .get();
 
@@ -73,23 +118,22 @@ export async function POST(req: Request) {
         let finalMessage = wish.generatedMessage;
         let replyMessage = '';
 
-        // Get contact details for personalized confirmation
         let contactName = 'el contacto';
         try {
-          const contactDoc = await adminDb.collection('users').doc(userId).collection('contacts').doc(wish.contactId).get();
+          const contactDoc = await adminDb.collection('users').doc(targetUserId).collection('contacts').doc(wish.contactId).get();
           if (contactDoc.exists) contactName = contactDoc.data()?.name || 'el contacto';
         } catch {}
 
-        if (['SÍ', 'SI', 'OK', 'ENVIAR', 'APROBAR', 'VALE', '1'].includes(upperText)) {
+        if (['SÍ', 'SI', 'OK', 'ENVIAR', 'APROBAR', 'VALE', '1', 'CONFIRMAR', 'ADELANTE', 'DE ACUERDO'].includes(upperText)) {
           newStatus = 'queued';
-          replyMessage = `✅ ¡Felicitación para *${contactName}* aprobada! Enviando ahora mismo por WhatsApp... 🎉`;
-        } else if (['NO', 'CANCELAR', 'CANCEL', '0'].includes(upperText)) {
+          replyMessage = `✅ ¡Felicitación para *${contactName}* aprobada! Enviando hoy a su hora desde tu WhatsApp personal... 🎉`;
+        } else if (['NO', 'CANCELAR', 'CANCEL', '0', 'DESCARTAR', 'NO ENVIAR'].includes(upperText)) {
           newStatus = 'cancelled';
           replyMessage = `❌ Felicitación para *${contactName}* cancelada.`;
         } else if (upperText.startsWith('EDITAR:')) {
           newStatus = 'queued';
           finalMessage = text.substring(7).trim();
-          replyMessage = `✅ Mensaje editado y aprobado para *${contactName}*:\n"${finalMessage}"\n\nEnviando ahora mismo... 🚀`;
+          replyMessage = `✅ Mensaje editado y aprobado para *${contactName}*:\n"${finalMessage}"\n\nSe enviará hoy a su hora... 🚀`;
         }
 
         if (newStatus !== wish.status) {
@@ -100,15 +144,16 @@ export async function POST(req: Request) {
             updatedAt: new Date(),
           });
 
-          // If approved/edited, trigger immediate send
+          // If approved/edited, trigger send engine
           if (newStatus === 'queued') {
             await executeSendWishes();
           }
 
-          // Reply back to user via WhatsApp
+          // Reply back to user via WhatsApp from system assistant
           if (replyMessage) {
             try {
-              await evolutionApi.sendText(instanceName, phone, replyMessage);
+              const replySender = isSystemInstance ? 'autobirthday-system' : instanceName;
+              await evolutionApi.sendText(replySender, rawPhone, replyMessage);
             } catch (replyErr) {
               console.warn('Could not send WhatsApp confirmation reply:', replyErr);
             }

@@ -194,12 +194,23 @@ ${targetDesc}
 
 ━━━━━━━━━━━━━━━━━━━━
 👉 *¿Qué deseas hacer?*
-• Responde *SI* para aprobar y enviar ahora.
+• Responde *SÍ* para aprobar y programar el envío.
 • O responde *EDITAR: tu nuevo texto* para modificarlo y enviarlo.
 • O responde *NO* para cancelarlo.
 • O gestiónalo en la web: ${getAppUrl()}/wishes`;
 
-              await evolutionApi.sendText(instanceName, userPhone, approvalText);
+              // Send from central system assistant if available, or fallback to user's instance
+              let senderInstance = 'autobirthday-system';
+              try {
+                const sysState = await evolutionApi.getConnectionState('autobirthday-system');
+                if (sysState?.instance?.state !== 'open') {
+                  senderInstance = instanceName;
+                }
+              } catch {
+                senderInstance = instanceName;
+              }
+
+              await evolutionApi.sendText(senderInstance, userPhone, approvalText);
             }
           } catch (notifErr: any) {
             console.warn(`Could not send WhatsApp approval notification to user ${userId}:`, notifErr?.message);
