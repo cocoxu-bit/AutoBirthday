@@ -3,6 +3,19 @@
 import { useState, useEffect } from 'react';
 import { Download, X, Share, PlusSquare, Sparkles } from 'lucide-react';
 
+const COOLDOWN_DAYS = 14; // No volver a molestar durante 14 días si se cierra
+
+function isDismissedInCooldown(): boolean {
+  try {
+    const dismissedAt = localStorage.getItem('autobirthday_pwa_dismissed');
+    if (!dismissedAt) return false;
+    const daysSince = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
+    return daysSince < COOLDOWN_DAYS;
+  } catch {
+    return false;
+  }
+}
+
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -20,7 +33,7 @@ export function InstallPrompt() {
       }
     }
 
-    // 2. Check if already installed in standalone mode
+    // 2. Check if already running in standalone mode (installed)
     const isStandaloneMode = 
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true ||
@@ -29,23 +42,20 @@ export function InstallPrompt() {
     setIsStandalone(isStandaloneMode);
     if (isStandaloneMode) return;
 
-    // 3. Check 7-day dismiss cooldown
-    try {
-      const dismissedAt = localStorage.getItem('autobirthday_pwa_dismissed');
-      if (dismissedAt) {
-        const daysSince = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
-        if (daysSince < 7) return; // Still in cooldown
-      }
-    } catch {}
+    // 3. If user closed it recently, don't show
+    if (isDismissedInCooldown()) return;
 
     // 4. Detect iOS Safari
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(isIosDevice);
 
-    // Show on iOS after a brief delay if not in standalone
     if (isIosDevice && !isStandaloneMode) {
-      const timer = setTimeout(() => setShowPrompt(true), 3000);
+      const timer = setTimeout(() => {
+        if (!isDismissedInCooldown()) {
+          setShowPrompt(true);
+        }
+      }, 4000); // 4 seconds delay
       return () => clearTimeout(timer);
     }
 
@@ -53,11 +63,25 @@ export function InstallPrompt() {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
+      if (!isDismissedInCooldown()) {
+        setShowPrompt(true);
+      }
+    };
+
+    const handleAppInstalled = () => {
+      setShowPrompt(false);
+      try {
+        localStorage.setItem('autobirthday_pwa_installed', 'true');
+      } catch {}
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
   const handleInstallClick = async () => {
@@ -66,6 +90,9 @@ export function InstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setShowPrompt(false);
+      try {
+        localStorage.setItem('autobirthday_pwa_installed', 'true');
+      } catch {}
     }
     setDeferredPrompt(null);
   };
@@ -90,7 +117,7 @@ export function InstallPrompt() {
         <button
           onClick={handleDismiss}
           className="absolute top-3.5 right-3.5 p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          title="Cerrar aviso"
+          title="Cerrar aviso (no volver a mostrar en 14 días)"
         >
           <X className="w-4 h-4" />
         </button>
@@ -120,7 +147,7 @@ export function InstallPrompt() {
               <div className="mt-3 p-2.5 bg-slate-800/90 rounded-xl border border-slate-700 text-[11px] text-slate-300 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Share className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>1. Pulsa el botón <strong>Compartir</strong> en la barra inferior.</span>
+                  <span>1. Pulsa el botón <strong>Compartir</strong> en Safari (⎋).</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <PlusSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -131,13 +158,19 @@ export function InstallPrompt() {
 
             {/* Android / Chromium 1-Click Install Button */}
             {!isIOS && deferredPrompt && (
-              <div className="mt-3">
+              <div className="mt-3 flex items-center gap-2">
                 <button
                   onClick={handleInstallClick}
-                  className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-violet-600/30 transition-all"
+                  className="inline-flex items-center justify-center gap-2 flex-1 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-violet-600/30 transition-all"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Instalar AutoBirthday</span>
+                  <span>Instalar App</span>
+                </button>
+                <button
+                  onClick={handleDismiss}
+                  className="px-3 py-2.5 text-xs text-slate-400 hover:text-white font-semibold rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Ahora no
                 </button>
               </div>
             )}
