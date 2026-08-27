@@ -193,17 +193,23 @@ class EvolutionAPIClient {
     }
 
     try {
-      const chats = await this.request<any[]>(`/chat/findChats/${instanceName}`, {
-        method: 'POST',
-        body: JSON.stringify({ where: {} }),
-      });
+      const [chats, contactsList] = await Promise.all([
+        this.request<any[]>(`/chat/findChats/${instanceName}`, {
+          method: 'POST',
+          body: JSON.stringify({ where: {} }),
+        }).catch(() => []),
+        this.request<any[]>(`/chat/findContacts/${instanceName}`, {
+          method: 'POST',
+          body: JSON.stringify({ where: {} }),
+        }).catch(() => []),
+      ]);
       
       const contacts: Array<WhatsAppChatContact & { lastActivity: number }> = [];
       const seen = new Set<string>();
 
+      // Process chats
       for (const chat of (chats || [])) {
         const jid = chat.remoteJid || chat.id;
-        // Keep only user contacts (@s.whatsapp.net)
         if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
         
         const phone = jid.replace(/@.*$/, '');
@@ -226,13 +232,39 @@ class EvolutionAPIClient {
         });
       }
 
+      // Process address book contacts
+      for (const c of (contactsList || [])) {
+        const jid = c.id || c.remoteJid || c.jid;
+        if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
+
+        const phone = jid.replace(/@.*$/, '');
+        const name = c.pushName || c.name || c.verifiedName || phone;
+
+        if (seen.has(phone)) {
+          const existing = contacts.find(item => item.phone === `+${phone}`);
+          if (existing && (!existing.name || existing.name === phone) && name !== phone) {
+            existing.name = name;
+          }
+          continue;
+        }
+        seen.add(phone);
+
+        contacts.push({
+          jid,
+          phone: `+${phone}`,
+          name,
+          pushName: c.pushName,
+          lastActivity: 0,
+        });
+      }
+
       // Sort by most recent activity
       contacts.sort((a, b) => b.lastActivity - a.lastActivity);
 
       const result: WhatsAppChatContact[] = contacts.map(({ lastActivity, ...c }) => c);
       this.contactsCache.set(instanceName, {
         data: result,
-        expiresAt: Date.now() + 2 * 60 * 1000,
+        expiresAt: Date.now() + 5 * 60 * 1000,
       });
 
       return result;

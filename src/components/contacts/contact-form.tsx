@@ -22,7 +22,8 @@ import {
   Search, 
   Phone, 
   UserCheck, 
-  Check 
+  Check,
+  RotateCw
 } from 'lucide-react';
 
 interface ContactFormProps {
@@ -91,7 +92,24 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadData(force = false) {
+      // 1. Instant load from client sessionStorage if available
+      if (!force) {
+        try {
+          const cachedGroups = sessionStorage.getItem('autobirthday_cached_groups');
+          const cachedContacts = sessionStorage.getItem('autobirthday_cached_contacts');
+          if (cachedGroups) setGroups(JSON.parse(cachedGroups));
+          if (cachedContacts) {
+            const parsed = JSON.parse(cachedContacts);
+            setWhatsAppContacts(parsed);
+            if (parsed.length > 0) {
+              setLoadingContacts(false);
+              setLoadingGroups(false);
+            }
+          }
+        } catch {}
+      }
+
       setLoadingGroups(true);
       setLoadingContacts(true);
       try {
@@ -101,6 +119,10 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
         ]);
         setGroups(loadedGroups);
         setWhatsAppContacts(loadedContacts);
+        try {
+          sessionStorage.setItem('autobirthday_cached_groups', JSON.stringify(loadedGroups));
+          sessionStorage.setItem('autobirthday_cached_contacts', JSON.stringify(loadedContacts));
+        } catch {}
       } catch (err) {
         console.warn('Could not load WhatsApp data:', err);
       } finally {
@@ -302,9 +324,38 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
               <Sparkles className="w-3.5 h-3.5 text-violet-600" />
               Buscador de Contactos de WhatsApp
             </label>
-            <span className="text-[11px] text-violet-600 font-semibold">
-              {loadingContacts ? 'Cargando...' : `${whatsAppContacts.length} chats vinculados`}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-violet-600 font-semibold">
+                {loadingContacts ? 'Cargando...' : `${whatsAppContacts.length} chats vinculados`}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoadingContacts(true);
+                  setLoadingGroups(true);
+                  Promise.all([
+                    fetchWhatsAppGroupsAction(),
+                    fetchWhatsAppContactsAction(),
+                  ]).then(([loadedGroups, loadedContacts]) => {
+                    setGroups(loadedGroups);
+                    setWhatsAppContacts(loadedContacts);
+                    try {
+                      sessionStorage.setItem('autobirthday_cached_groups', JSON.stringify(loadedGroups));
+                      sessionStorage.setItem('autobirthday_cached_contacts', JSON.stringify(loadedContacts));
+                    } catch {}
+                    toast.success('Contactos de WhatsApp actualizados');
+                  }).finally(() => {
+                    setLoadingContacts(false);
+                    setLoadingGroups(false);
+                  });
+                }}
+                disabled={loadingContacts}
+                className="p-1 text-violet-600 hover:text-violet-800 hover:bg-violet-100 rounded-lg transition-colors"
+                title="Actualizar contactos de WhatsApp"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${loadingContacts ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
           
           <div className="relative">
@@ -346,8 +397,24 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-center text-xs text-slate-400">
-                    No se encontraron contactos que coincidan con &ldquo;{contactSearch}&rdquo;
+                  <div className="p-3 text-center text-xs text-slate-500 space-y-2">
+                    <p>No se encontró ningún chat de WhatsApp con &ldquo;{contactSearch}&rdquo;</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const isDigits = /^[0-9+ ]+$/.test(contactSearch.trim());
+                        if (isDigits) {
+                          form.setValue('phone', contactSearch.trim());
+                        } else {
+                          form.setValue('name', contactSearch.trim());
+                        }
+                        setIsContactDropdownOpen(false);
+                        toast.success(`Datos aplicados: "${contactSearch.trim()}"`);
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold text-xs transition-colors"
+                    >
+                      <span>➕ Usar &ldquo;{contactSearch.trim()}&rdquo; directamente</span>
+                    </button>
                   </div>
                 )}
               </div>
