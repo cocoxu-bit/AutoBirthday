@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { requestGoogleCalendarAccessToken } from '@/lib/firebase/auth';
 import { 
@@ -21,6 +21,7 @@ import {
   Search, 
   Check, 
   ArrowRight, 
+  ChevronLeft,
   Users, 
   Edit3, 
   Phone, 
@@ -54,6 +55,9 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
+  // Scroll Container Ref
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // iCloud Input
   const [iCloudUrl, setICloudUrl] = useState('');
 
@@ -68,6 +72,13 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
   // WhatsApp Change Modal
   const [showChangeWaModal, setShowChangeWaModal] = useState(false);
   const [waSearchTerm, setWaSearchTerm] = useState('');
+
+  // Auto-scroll to top when moving to next or previous card
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentIndex, step]);
 
   // 1. Handle Google Calendar 1-Click Connect
   const handleGoogleSync = async () => {
@@ -154,6 +165,13 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
       setCurrentIndex(prev => prev + 1);
     } else {
       setStep('completed');
+    }
+  };
+
+  // Go back to previous card
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
@@ -275,7 +293,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
       <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[94vh] overflow-hidden">
         
         {/* MODAL HEADER */}
-        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center shadow-inner">
               <Calendar className="w-5 h-5" />
@@ -302,8 +320,8 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
           </button>
         </div>
 
-        {/* MODAL BODY */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        {/* MODAL BODY (SCROLLABLE) */}
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
           {/* ========================================================= */}
           {/* STEP 1: CONECTAR CALENDARIO                               */}
@@ -454,7 +472,20 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               {/* Progress Bar & Counters */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span className="text-violet-900">Contacto {currentIndex + 1} de {cards.length}</span>
+                  <div className="flex items-center gap-2">
+                    {currentIndex > 0 && (
+                      <button
+                        type="button"
+                        onClick={handlePrevious}
+                        className="text-slate-500 hover:text-violet-700 font-bold text-xs flex items-center gap-0.5 hover:underline"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <span>Anterior</span>
+                      </button>
+                    )}
+                    <span className="text-violet-900">Contacto {currentIndex + 1} de {cards.length}</span>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
                       ✨ {savedCount} guardados
@@ -733,17 +764,31 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                 </div>
               </div>
 
-              {/* ACTION BUTTONS */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* ACTION BUTTONS (WITH PREVIOUS BUTTON) */}
+              <div className="flex items-center gap-2 pt-1">
                 
+                {/* Previous Button */}
+                {currentIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    disabled={isSavingCurrent}
+                    className="py-3.5 px-3.5 bg-white hover:bg-slate-100 text-slate-700 rounded-2xl font-bold text-xs sm:text-sm border border-slate-200 shadow-sm transition-all shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
+                    title="Volver al contacto anterior"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Anterior</span>
+                  </button>
+                )}
+
                 {/* Skip Button */}
                 <button
                   type="button"
                   onClick={handleSkipCurrent}
                   disabled={isSavingCurrent}
-                  className="py-3.5 px-4 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-2xl font-bold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border border-slate-200/80 hover:border-red-200"
+                  className="flex-1 py-3.5 px-4 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-2xl font-bold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 border border-slate-200/80 hover:border-red-200"
                 >
-                  <span>❌ Omitir contacto</span>
+                  <span>❌ Omitir</span>
                 </button>
 
                 {/* Save & Next Button */}
@@ -751,7 +796,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   type="button"
                   onClick={handleSaveAndNext}
                   disabled={isSavingCurrent}
-                  className="py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-xl shadow-violet-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-xl shadow-violet-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {isSavingCurrent ? (
                     <>
@@ -760,7 +805,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     </>
                   ) : (
                     <>
-                      <span>Guardar y Siguiente</span>
+                      <span>Guardar</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
