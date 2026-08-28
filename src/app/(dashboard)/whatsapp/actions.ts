@@ -121,13 +121,19 @@ export async function connectWithPairingCode(phone: string) {
       return { success: false, error: 'Por favor, introduce un número de teléfono válido con prefijo de país (ej: 34612345678)' };
     }
 
-    // Ensure instance is created in Evolution API
+    // Ensure clean instance in Evolution API (if not open, recreate to ensure fresh authenticated socket)
     try {
       const instances = await evolutionApi.fetchInstances().catch(() => []);
-      const exists = instances?.some((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
+      const existing = instances?.find((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
       
-      if (!exists) {
+      if (!existing) {
         await evolutionApi.createInstance(instanceName, webhookUrl);
+      } else {
+        const state = existing.connectionStatus || existing.instance?.status;
+        if (state !== 'open') {
+          await evolutionApi.deleteInstance(instanceName).catch(() => {});
+          await evolutionApi.createInstance(instanceName, webhookUrl);
+        }
       }
     } catch (createErr: any) {
       console.warn('Instance creation note:', createErr?.message);
