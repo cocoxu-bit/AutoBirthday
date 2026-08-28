@@ -7,7 +7,6 @@ import {
   syncGoogleCalendarAction, 
   syncICloudCalendarAction, 
   saveSingleSyncedContactAction,
-  batchApproveSyncedContacts,
   getWhatsAppProfilePicAction,
   SyncedContactPreview 
 } from '@/app/(dashboard)/contacts/sync-actions';
@@ -29,7 +28,6 @@ import {
   FileText, 
   PenTool, 
   ShieldCheck, 
-  Zap, 
   MessageSquare
 } from 'lucide-react';
 
@@ -38,12 +36,21 @@ const MONTH_NAMES = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
 ];
 
+const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
+
 const TONES: Array<{ id: AiTone; label: string; icon: string }> = [
   { id: 'casual', label: 'Casual', icon: '😊' },
   { id: 'divertido', label: 'Divertido', icon: '🎉' },
   { id: 'emotivo', label: 'Emotivo', icon: '❤️' },
   { id: 'formal', label: 'Formal', icon: '🤝' },
 ];
+
+const AI_TONE_EXAMPLES: Record<AiTone, string> = {
+  casual: '¡Muchas felicidades {nombre}! 🎉🎂 Que tengas un día genial rodeado de los tuyos. ¡Un abrazo grande!',
+  divertido: '¡Feliz cumple {nombre}! 🍻🎂 ¡A celebrarlo por todo lo alto como se merece y que no falten las risas!',
+  emotivo: '¡Feliz cumpleaños {nombre}! ❤️✨ Deseo de todo corazón que pases un día maravilloso y súper especial. ¡Te mando un abrazo enorme!',
+  formal: '¡Feliz cumpleaños, {nombre}! 🎂 Le deseo un excelente día y muchos éxitos tanto personales como profesionales.',
+};
 
 interface CalendarSyncDialogProps {
   onClose: () => void;
@@ -161,7 +168,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
         return;
       }
 
-      // Seed photo cache
       const initialCache: Record<string, string | null> = {};
       result.items.forEach(item => {
         if (item.matchedPhone && item.profilePictureUrl) {
@@ -223,14 +229,13 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
       return;
     }
 
-    if (currentCard.mode === 'manual' && !currentCard.customMessage?.trim()) {
-      toast.error('Escribe el mensaje personalizado o cambia al modo IA.');
-      return;
-    }
+    const messageToSave = currentCard.mode === 'manual' 
+      ? (currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE)
+      : undefined;
 
-    if (currentCard.mode === 'template' && !currentCard.templateId && templates.length > 0) {
-      updateCurrentCard({ templateId: templates[0].id });
-    }
+    const templateIdToSave = currentCard.mode === 'template'
+      ? (currentCard.templateId || templates[0]?.id)
+      : undefined;
 
     setIsSavingCurrent(true);
     try {
@@ -242,9 +247,9 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
         birthYear: null,
         source: currentCard.source,
         profilePictureUrl: currentCard.profilePictureUrl,
-        mode: currentCard.mode,
-        templateId: currentCard.templateId,
-        customMessage: currentCard.customMessage,
+        mode: currentCard.mode || 'manual',
+        templateId: templateIdToSave,
+        customMessage: messageToSave,
         aiTone: currentCard.aiTone,
         aiNotes: currentCard.aiNotes,
         autoSend: currentCard.autoSend,
@@ -272,50 +277,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
     advanceDeck();
   };
 
-  // Fast Pass: Approve all remaining with default AI
-  const handleApproveAllRemaining = async () => {
-    const remainingCards = cards.slice(currentIndex).filter(c => c.matchedPhone && c.matchedPhone.trim().length >= 6);
-    if (remainingCards.length === 0) {
-      toast.error('Ninguno de los contactos restantes tiene un chat vinculado.');
-      return;
-    }
-
-    setIsSavingCurrent(true);
-    try {
-      const res = await batchApproveSyncedContacts(
-        remainingCards.map(c => ({
-          name: c.matchedName || c.name,
-          phone: c.matchedPhone,
-          birthDay: c.birthDay,
-          birthMonth: c.birthMonth,
-          birthYear: null,
-          source: c.source,
-          profilePictureUrl: c.profilePictureUrl,
-          mode: c.mode || 'ai',
-          templateId: c.templateId,
-          customMessage: c.customMessage,
-          aiTone: c.aiTone || 'casual',
-          aiNotes: c.aiNotes,
-          autoSend: c.autoSend ?? false,
-          sendTimeStart: c.sendTimeStart || '09:30',
-          sendTimeEnd: c.sendTimeEnd || '11:45',
-        }))
-      );
-
-      if (res.success) {
-        setSavedCount(prev => prev + (res.count || 0));
-        toast.success(`🎉 ¡${res.count} contactos guardados con éxito!`);
-        setStep('completed');
-      } else {
-        toast.error(res.error || 'Error al guardar contactos restantes');
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Error al guardar lote');
-    } finally {
-      setIsSavingCurrent(false);
-    }
-  };
-
   // Filtered WhatsApp chats for search modal
   const filteredWhatsApp = availableWhatsAppContacts.filter(c => {
     const q = waSearchTerm.toLowerCase();
@@ -326,40 +287,103 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
     );
   });
 
+  // Calculate live preview text for WhatsApp bubble
+  const contactFirstName = currentCard 
+    ? (currentCard.matchedName || currentCard.name).split(' ')[0] 
+    : 'Amigo/a';
+
+  let livePreviewText = '';
+  if (currentCard) {
+    if (currentCard.mode === 'manual') {
+      const raw = currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE;
+      livePreviewText = raw.replace(/\{nombre\}/gi, contactFirstName);
+    } else if (currentCard.mode === 'template') {
+      const tpl = templates.find(t => t.id === currentCard.templateId) || templates[0];
+      const raw = tpl ? tpl.content : DEFAULT_FIXED_MESSAGE;
+      livePreviewText = raw.replace(/\{nombre\}/gi, contactFirstName);
+    } else if (currentCard.mode === 'ai') {
+      const example = AI_TONE_EXAMPLES[currentCard.aiTone || 'casual'];
+      livePreviewText = example.replace(/\{nombre\}/gi, contactFirstName);
+      if (currentCard.aiNotes?.trim()) {
+        livePreviewText += `\n\n*(La IA adaptará el texto según tus notas: "${currentCard.aiNotes.trim()}")*`;
+      }
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[94vh] overflow-hidden">
         
-        {/* MODAL HEADER */}
-        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center shadow-inner">
-              <Calendar className="w-5 h-5" />
+        {/* STICKY HEADER (ALWAYS FIXED AT TOP WITH PROGRESS) */}
+        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/90 backdrop-blur-md shrink-0 space-y-3">
+          
+          {/* Top Row: Title, Back Button & Close */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              {step === 'deck' && currentIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center shadow-sm hover:scale-105 transition-all"
+                  title="Volver al contacto anterior"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
+              <div className="w-9 h-9 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center shadow-inner shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                  {step === 'connect' ? 'Sincronizar Calendario' : step === 'deck' ? 'Revisar Cumpleaños' : '¡Sincronización Completada!'}
+                </h2>
+                <p className="text-xs text-slate-500 font-medium">
+                  {step === 'connect' 
+                    ? 'Importa automáticamente desde Google o Apple sin archivos' 
+                    : step === 'deck' 
+                    ? `Contacto ${currentIndex + 1} de ${cards.length}`
+                    : 'Contactos añadidos a tu agenda'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                {step === 'connect' ? 'Sincronizar Calendario' : step === 'deck' ? `Revisar Cumpleaños (${currentIndex + 1} de ${cards.length})` : '¡Sincronización Completada!'}
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                {step === 'connect' 
-                  ? 'Importa automáticamente desde Google o Apple sin archivos' 
-                  : step === 'deck' 
-                  ? 'Revisa y personaliza la felicitación de cada persona'
-                  : 'Contactos añadidos a tu agenda'}
-              </p>
-            </div>
+
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Sticky Progress Bar & Badges */}
+          {step === 'deck' && (
+            <div className="space-y-1.5 pt-0.5">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                <span className="text-violet-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
+                    ✨ {savedCount} guardados
+                  </span>
+                  {skippedCount > 0 && (
+                    <span className="text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full font-bold text-[11px]">
+                      ⏭️ {skippedCount} omitidos
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* MODAL BODY (SCROLLABLE) */}
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
 
           {/* ========================================================= */}
           {/* STEP 1: CONECTAR CALENDARIO                               */}
@@ -502,49 +526,13 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
           )}
 
           {/* ========================================================= */}
-          {/* STEP 2: REVISIÓN LIMPIA Y CLARA 1 A 1                      */}
+          {/* STEP 2: REVISIÓN LIMPIA Y DETALLADA 1 A 1                  */}
           {/* ========================================================= */}
           {step === 'deck' && currentCard && (
-            <div className="space-y-4">
-              
-              {/* Progress Bar & Counters */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <div className="flex items-center gap-2">
-                    {currentIndex > 0 && (
-                      <button
-                        type="button"
-                        onClick={handlePrevious}
-                        className="text-slate-500 hover:text-violet-700 font-bold text-xs flex items-center gap-0.5 hover:underline"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                        <span>Anterior</span>
-                      </button>
-                    )}
-                    <span className="text-violet-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
-                  </div>
+            <div className="space-y-5">
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
-                      ✨ {savedCount} guardados
-                    </span>
-                    {skippedCount > 0 && (
-                      <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold text-[11px]">
-                        ⏭️ {skippedCount} omitidos
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-violet-600 to-indigo-600 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* MAIN CONTACT CARD (REDESIGNED: LARGE CENTERED PHOTO & CLEAR METADATA) */}
-              <div className="bg-white border-2 border-slate-100 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/40 space-y-5 text-center">
+              {/* MAIN CONTACT CARD */}
+              <div className="bg-white border-2 border-slate-100 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/40 space-y-6 text-center">
                 
                 {/* 1. BIG CENTERED AVATAR / PROFILE PHOTO */}
                 <div className="flex flex-col items-center">
@@ -585,52 +573,55 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     )}
                   </div>
 
-                  {/* Calendar Event Source (Clear & Uncropped) */}
+                  {/* Calendar Event Source */}
                   <p className="text-xs text-slate-400 mt-2 max-w-sm mx-auto">
                     📅 En tu calendario: <span className="font-semibold text-slate-700">&ldquo;{currentCard.rawSummary || currentCard.name}&rdquo;</span>
                   </p>
 
-                  {/* Button to Switch WhatsApp Chat */}
+                  {/* Switch Contact Button */}
                   <button
                     type="button"
                     onClick={() => setShowChangeWaModal(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold transition-all"
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 hover:text-violet-900 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3.5 py-1.5 rounded-xl transition-all"
                   >
-                    <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Cambiar contacto de WhatsApp</span>
+                    <span>¿Nos hemos equivocado de contacto? Cambiar</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 <hr className="border-slate-100" />
 
-                {/* 2. GREETING CONFIGURATION (3 MODES: AI | TEMPLATE | MANUAL) */}
-                <div className="space-y-3.5 text-left">
+                {/* 2. GREETING CONFIGURATION (GENEROUS SPACING & DEFAULT FIXED MESSAGE) */}
+                <div className="space-y-4 text-left">
                   
-                  {/* Mode Selector Tabs */}
-                  <div className="space-y-1">
+                  {/* Mode Selector Tabs (1: Mensaje Fijo, 2: Plantilla, 3: IA Mágica) */}
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                      ¿Cómo quieres felicitar a este contacto?
+                      Configuración de la Felicitación:
                     </label>
-                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl">
+                    <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-100 rounded-2xl">
+                      
+                      {/* TAB 1: MENSAJE FIJO (PREDETERMINADO) */}
                       <button
                         type="button"
-                        onClick={() => updateCurrentCard({ mode: 'ai' })}
-                        className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-                          currentCard.mode === 'ai'
-                            ? 'bg-white text-violet-900 shadow-sm'
+                        onClick={() => updateCurrentCard({ mode: 'manual' })}
+                        className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          currentCard.mode === 'manual'
+                            ? 'bg-white text-violet-900 shadow-sm font-black'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                        <span>IA Mágica</span>
+                        <PenTool className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Mensaje Fijo</span>
                       </button>
 
+                      {/* TAB 2: PLANTILLA */}
                       <button
                         type="button"
                         onClick={() => updateCurrentCard({ mode: 'template' })}
-                        className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                           currentCard.mode === 'template'
-                            ? 'bg-white text-violet-900 shadow-sm'
+                            ? 'bg-white text-violet-900 shadow-sm font-black'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -638,29 +629,79 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                         <span>Plantilla</span>
                       </button>
 
+                      {/* TAB 3: IA MÁGICA */}
                       <button
                         type="button"
-                        onClick={() => updateCurrentCard({ mode: 'manual' })}
-                        className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-                          currentCard.mode === 'manual'
-                            ? 'bg-white text-violet-900 shadow-sm'
+                        onClick={() => updateCurrentCard({ mode: 'ai' })}
+                        className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          currentCard.mode === 'ai'
+                            ? 'bg-white text-violet-900 shadow-sm font-black'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        <PenTool className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Mensaje Fijo</span>
+                        <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                        <span>IA Mágica</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* MODE A: AI GENERATION */}
+                  {/* MODE A: MANUAL FIXED MESSAGE (SPACIOUS & PROMINENT) */}
+                  {currentCard.mode === 'manual' && (
+                    <div className="space-y-2 bg-emerald-50/40 border border-emerald-100 p-4 rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-700 uppercase">
+                          Texto del mensaje:
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => updateCurrentCard({ customMessage: (currentCard.customMessage || DEFAULT_FIXED_MESSAGE) + ' {nombre}' })}
+                          className="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-50 shadow-2xs"
+                        >
+                          + Añadir &ldquo;{'{nombre}'}&rdquo;
+                        </button>
+                      </div>
+                      <textarea
+                        rows={3}
+                        placeholder={DEFAULT_FIXED_MESSAGE}
+                        value={currentCard.customMessage ?? DEFAULT_FIXED_MESSAGE}
+                        onChange={e => updateCurrentCard({ customMessage: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 leading-relaxed shadow-inner"
+                      />
+                    </div>
+                  )}
+
+                  {/* MODE B: TEMPLATE SELECTION */}
+                  {currentCard.mode === 'template' && (
+                    <div className="space-y-2 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
+                      <label className="text-xs font-bold text-slate-700 uppercase">
+                        Elige una de tus plantillas:
+                      </label>
+                      {templates.length === 0 ? (
+                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Se usará el mensaje por defecto.</p>
+                      ) : (
+                        <select
+                          value={currentCard.templateId || templates[0]?.id || ''}
+                          onChange={e => updateCurrentCard({ templateId: e.target.value })}
+                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        >
+                          {templates.map(tpl => (
+                            <option key={tpl.id} value={tpl.id}>
+                              {tpl.title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+
+                  {/* MODE C: AI GENERATION */}
                   {currentCard.mode === 'ai' && (
-                    <div className="space-y-2.5 bg-violet-50/50 border border-violet-100 p-3.5 rounded-2xl">
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-600 uppercase">
+                    <div className="space-y-3 bg-violet-50/40 border border-violet-100 p-4 rounded-2xl">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase">
                           Tono de la felicitación IA:
                         </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {TONES.map(tone => {
                             const isSelected = currentCard.aiTone === tone.id;
                             return (
@@ -668,7 +709,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                                 key={tone.id}
                                 type="button"
                                 onClick={() => updateCurrentCard({ aiTone: tone.id })}
-                                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border ${
+                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border ${
                                   isSelected
                                     ? 'bg-violet-600 border-violet-600 text-white shadow-sm font-black'
                                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -685,95 +726,75 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       <div className="space-y-1">
                         <input
                           type="text"
-                          placeholder="💡 Notas opcionales para la IA (ej: Le gusta el tenis y viajar...)"
+                          placeholder="💡 Notas opcionales para la IA (ej: Le gusta el tenis, cumple 30...)"
                           value={currentCard.aiNotes || ''}
                           onChange={e => updateCurrentCard({ aiNotes: e.target.value })}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
                         />
                       </div>
                     </div>
                   )}
 
-                  {/* MODE B: TEMPLATE SELECTION */}
-                  {currentCard.mode === 'template' && (
-                    <div className="space-y-2 bg-indigo-50/50 border border-indigo-100 p-3.5 rounded-2xl">
-                      <label className="text-[11px] font-bold text-slate-600 uppercase">
-                        Selecciona una Plantilla:
-                      </label>
-                      {templates.length === 0 ? (
-                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Se usará el mensaje por defecto.</p>
-                      ) : (
-                        <select
-                          value={currentCard.templateId || templates[0]?.id || ''}
-                          onChange={e => updateCurrentCard({ templateId: e.target.value })}
-                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        >
-                          {templates.map(tpl => (
-                            <option key={tpl.id} value={tpl.id}>
-                              {tpl.title}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                  {/* 3. REALISTIC WHATSAPP CHAT PREVIEW (BALLOON / BURBUJA) */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5 text-slate-700">
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                        Vista previa en WhatsApp
+                      </span>
+                      <span className="text-[11px] font-normal text-slate-400 lowercase">
+                        así lo recibirá {contactFirstName}
+                      </span>
                     </div>
-                  )}
 
-                  {/* MODE C: MANUAL CUSTOM MESSAGE */}
-                  {currentCard.mode === 'manual' && (
-                    <div className="space-y-1.5 bg-emerald-50/50 border border-emerald-100 p-3.5 rounded-2xl">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-bold text-slate-600 uppercase">
-                          Mensaje Personalizado:
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => updateCurrentCard({ customMessage: (currentCard.customMessage || '') + ' {nombre}' })}
-                          className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200 hover:bg-emerald-50"
-                        >
-                          + Insertar &ldquo;{'{nombre}'}&rdquo;
-                        </button>
+                    {/* WhatsApp Chat Simulation */}
+                    <div className="bg-[#efeae2] p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-inner">
+                      <div className="flex justify-end">
+                        <div className="bg-[#dcf8c6] text-slate-900 rounded-2xl rounded-tr-none px-3.5 py-2.5 max-w-[92%] sm:max-w-[88%] shadow-sm text-xs sm:text-sm leading-relaxed space-y-1">
+                          <p className="whitespace-pre-wrap font-sans text-slate-900">{livePreviewText}</p>
+                          <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500 font-medium pt-0.5">
+                            <span>09:30</span>
+                            <span className="text-sky-500 font-bold">✓✓</span>
+                          </div>
+                        </div>
                       </div>
-                      <textarea
-                        rows={2}
-                        placeholder="¡Muchas felicidades {nombre}! Que tengas un día genial 🎂"
-                        value={currentCard.customMessage || ''}
-                        onChange={e => updateCurrentCard({ customMessage: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                      />
                     </div>
-                  )}
+                  </div>
 
-                  {/* 3. SEND MODE TOGGLE */}
-                  <div className="pt-1">
+                  {/* 4. SEND MODE TOGGLE */}
+                  <div className="pt-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
+                      Momento de Envío:
+                    </label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => updateCurrentCard({ autoSend: false })}
-                        className={`p-2.5 rounded-2xl text-left border transition-all ${
+                        className={`p-3 rounded-2xl text-left border transition-all ${
                           !currentCard.autoSend
-                            ? 'bg-violet-50/80 border-violet-500 text-violet-900 shadow-sm'
+                            ? 'bg-violet-50/90 border-violet-500 text-violet-900 shadow-sm'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
                           🛡️ Pedir Aprobación
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Te avisa por WhatsApp el día del cumple para dar el visto bueno.</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Te avisa por WhatsApp el día del cumple para dar el OK.</p>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => updateCurrentCard({ autoSend: true })}
-                        className={`p-2.5 rounded-2xl text-left border transition-all ${
+                        className={`p-3 rounded-2xl text-left border transition-all ${
                           currentCard.autoSend
-                            ? 'bg-violet-50/80 border-violet-500 text-violet-900 shadow-sm'
+                            ? 'bg-violet-50/90 border-violet-500 text-violet-900 shadow-sm'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
                           🚀 Envío Automático
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Se envía solo en la mañana de su cumpleaños.</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Se envía solo en la mañana de su cumpleaños.</p>
                       </button>
                     </div>
                   </div>
@@ -781,8 +802,8 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                 </div>
               </div>
 
-              {/* ACTION BUTTONS (WITH PREVIOUS BUTTON) */}
-              <div className="flex items-center gap-2 pt-1">
+              {/* BOTTOM ACTION BUTTONS */}
+              <div className="flex items-center gap-2.5 pt-1">
                 
                 {/* Previous Button */}
                 {currentIndex > 0 && (
@@ -828,21 +849,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   )}
                 </button>
               </div>
-
-              {/* Batch Remaining Option */}
-              {cards.length - currentIndex > 1 && (
-                <div className="text-center pt-1">
-                  <button
-                    type="button"
-                    onClick={handleApproveAllRemaining}
-                    disabled={isSavingCurrent}
-                    className="text-xs text-violet-600 hover:text-violet-800 font-bold underline inline-flex items-center gap-1"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Guardar los restantes ({cards.length - currentIndex}) con IA rápida</span>
-                  </button>
-                </div>
-              )}
 
             </div>
           )}
@@ -921,7 +927,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   const cleanPhone = c.phone.replace(/\D/g, '');
                   const cachedPic = photoCache[cleanPhone] ?? c.profilePictureUrl;
 
-                  // Trigger avatar fetch on render if not cached
                   if (photoCache[cleanPhone] === undefined) {
                     fetchAvatarIfNeeded(cleanPhone, c.profilePictureUrl);
                   }

@@ -92,12 +92,12 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         matchScore: match.confidence,
         isAutoMatched: isAuto,
 
-        // Greeting Defaults
-        mode: 'ai',
+        // Greeting Defaults (Default to fixed message)
+        mode: 'manual',
         aiTone: 'casual',
         aiNotes: '',
         templateId: '',
-        customMessage: '',
+        customMessage: '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.',
         autoSend: false,
         sendTimeStart: '09:30',
         sendTimeEnd: '11:45',
@@ -180,12 +180,12 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         matchScore: match.confidence,
         isAutoMatched: isAuto,
 
-        // Greeting Defaults
-        mode: 'ai',
+        // Greeting Defaults (Default to fixed message)
+        mode: 'manual',
         aiTone: 'casual',
         aiNotes: '',
         templateId: '',
-        customMessage: '',
+        customMessage: '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.',
         autoSend: false,
         sendTimeStart: '09:30',
         sendTimeEnd: '11:45',
