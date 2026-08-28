@@ -135,10 +135,13 @@ export async function connectWithPairingCode(phone: string) {
 
     const cleanPhone = formatToWhatsappJid(phone);
     const response = await evolutionApi.getPairingCode(instanceName, cleanPhone);
-    const pairingCode = response.pairingCode || response.code;
+    const pairingCode = response.pairingCode;
 
-    if (!pairingCode) {
-      return { success: false, error: 'No se pudo generar el código. Verifica el número e inténtalo de nuevo.' };
+    if (!pairingCode || pairingCode.length > 15 || pairingCode.includes('@')) {
+      return { 
+        success: false, 
+        error: 'WhatsApp no devolvió un código de 8 dígitos válido para este número. Asegúrate de que el número incluye el prefijo (ej: 34612345678) o prueba a vincular con el Código QR.' 
+      };
     }
 
     await adminDb.collection('users').doc(userId).set({

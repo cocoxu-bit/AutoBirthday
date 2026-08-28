@@ -61,9 +61,37 @@ class EvolutionAPIClient {
 
   async getPairingCode(instanceName: string, phoneNumber: string): Promise<{ pairingCode?: string; code?: string }> {
     const cleanPhone = formatToWhatsappJid(phoneNumber);
-    return this.request<{ pairingCode?: string; code?: string }>(`/instance/connect/${instanceName}?number=${cleanPhone}`, {
-      method: 'GET',
-    });
+    
+    // Attempt 1: Call with ?number={cleanPhone}
+    let res: { pairingCode?: string; code?: string; count?: number } = await this.request<{ pairingCode?: string; code?: string; count?: number }>(
+      `/instance/connect/${instanceName}?number=${cleanPhone}`,
+      { method: 'GET' }
+    ).catch(() => ({}));
+
+    // Verify if valid 8-digit code returned (length <= 15 and does not contain @)
+    if (res.pairingCode && res.pairingCode.length <= 15 && !res.pairingCode.includes('@')) {
+      return { pairingCode: res.pairingCode };
+    }
+    if (res.code && res.code.length <= 15 && !res.code.includes('@')) {
+      return { pairingCode: res.code };
+    }
+
+    // Attempt 2: If Evolution API was in QR mode, wait 1.5s and retry
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    res = await this.request<{ pairingCode?: string; code?: string }>(
+      `/instance/connect/${instanceName}?number=${cleanPhone}`,
+      { method: 'GET' }
+    ).catch(() => ({}));
+
+    if (res.pairingCode && res.pairingCode.length <= 15 && !res.pairingCode.includes('@')) {
+      return { pairingCode: res.pairingCode };
+    }
+    if (res.code && res.code.length <= 15 && !res.code.includes('@')) {
+      return { pairingCode: res.code };
+    }
+
+    return { pairingCode: undefined };
   }
   
   async getConnectionState(instanceName: string): Promise<{ instance: { state: string } }> {
