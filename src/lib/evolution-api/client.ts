@@ -16,11 +16,14 @@ class EvolutionAPIClient {
   }
 
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const url = process.env.EVOLUTION_API_URL || this.baseUrl || 'http://localhost:8080';
+    const key = process.env.EVOLUTION_API_KEY || this.apiKey || 'autobirthday-dev-key-2024';
+
+    const res = await fetch(`${url}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'apikey': this.apiKey,
+        'apikey': key,
         ...options?.headers,
       },
     });
@@ -32,10 +35,11 @@ class EvolutionAPIClient {
   }
 
   async createInstance(instanceName: string, webhookUrl?: string) {
+    const key = process.env.EVOLUTION_API_KEY || this.apiKey || 'autobirthday-dev-key-2024';
     const body: any = {
       instanceName,
+      token: key,
       integration: "WHATSAPP-BAILEYS",
-      qrcode: true,
     };
 
     if (webhookUrl) {
@@ -43,7 +47,7 @@ class EvolutionAPIClient {
       body.webhook = {
         url: webhookUrl,
         webhook_by_events: true,
-        events: ["connection.update", "messages.upsert"],
+        events: ["CONNECTION_UPDATE", "MESSAGES_UPSERT"],
       };
     }
 
@@ -62,33 +66,32 @@ class EvolutionAPIClient {
   async getPairingCode(instanceName: string, phoneNumber: string): Promise<{ pairingCode?: string; code?: string }> {
     const cleanPhone = formatToWhatsappJid(phoneNumber);
     
-    // Attempt 1: Call with ?number={cleanPhone}
-    let res: { pairingCode?: string; code?: string; count?: number } = await this.request<{ pairingCode?: string; code?: string; count?: number }>(
+    // 1. Initial request to instruct Evolution API / Baileys to request a pairing code
+    const initialRes = await this.request<{ pairingCode?: string; code?: string; count?: number }>(
       `/instance/connect/${instanceName}?number=${cleanPhone}`,
       { method: 'GET' }
-    ).catch(() => ({}));
+    ).catch(() => ({} as { pairingCode?: string; code?: string; count?: number }));
 
-    // Verify if valid 8-digit code returned (length <= 15 and does not contain @)
-    if (res.pairingCode && res.pairingCode.length <= 15 && !res.pairingCode.includes('@')) {
-      return { pairingCode: res.pairingCode };
-    }
-    if (res.code && res.code.length <= 15 && !res.code.includes('@')) {
-      return { pairingCode: res.code };
+    // Check if code was returned immediately
+    if (initialRes.pairingCode && initialRes.pairingCode.length <= 12 && !initialRes.pairingCode.includes('@')) {
+      return { pairingCode: initialRes.pairingCode };
     }
 
-    // Attempt 2: If Evolution API was in QR mode, wait 1.5s and retry
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    res = await this.request<{ pairingCode?: string; code?: string }>(
-      `/instance/connect/${instanceName}?number=${cleanPhone}`,
-      { method: 'GET' }
-    ).catch(() => ({}));
+    // 2. Poll up to 6 times (1.2s interval) until WhatsApp servers return the 8-character pairing code
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      const pollRes = await this.request<{ pairingCode?: string; code?: string }>(
+        `/instance/connect/${instanceName}?number=${cleanPhone}`,
+        { method: 'GET' }
+      ).catch(() => ({} as { pairingCode?: string; code?: string }));
 
-    if (res.pairingCode && res.pairingCode.length <= 15 && !res.pairingCode.includes('@')) {
-      return { pairingCode: res.pairingCode };
-    }
-    if (res.code && res.code.length <= 15 && !res.code.includes('@')) {
-      return { pairingCode: res.code };
+      if (pollRes.pairingCode && pollRes.pairingCode.length <= 12 && !pollRes.pairingCode.includes('@')) {
+        return { pairingCode: pollRes.pairingCode };
+      }
+      if (pollRes.code && pollRes.code.length <= 12 && !pollRes.code.includes('@')) {
+        return { pairingCode: pollRes.code };
+      }
     }
 
     return { pairingCode: undefined };
