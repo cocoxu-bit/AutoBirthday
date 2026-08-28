@@ -356,3 +356,13 @@ export async function batchApproveSyncedContacts(
     return { success: false, error: error.message || 'Error al guardar contactos' };
   }
 }
+
+export async function getWhatsAppProfilePicAction(phone: string): Promise<string | null> {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+    return await evolutionApi.fetchProfilePictureUrl(instanceName, phone);
+  } catch {
+    return null;
+  }
+}
