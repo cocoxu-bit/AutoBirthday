@@ -601,11 +601,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-50 border border-amber-200/80 text-amber-900 rounded-full font-black text-xs shadow-sm">
                       🎂 {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
-                      {daysInfo && (
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.2 rounded-md ml-0.5">
-                          {daysInfo.text}
-                        </span>
-                      )}
                     </span>
 
                     {currentCard.matchScore > 0 && (
@@ -706,7 +701,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                           >
                             {availableGroups.map(g => (
                               <option key={g.id} value={g.id}>
-                                👥 {g.subject}
+                                {g.subject}
                               </option>
                             ))}
                           </select>
