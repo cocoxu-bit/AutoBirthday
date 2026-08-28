@@ -12,6 +12,7 @@ export const contactFormSchema = z.object({
   groupId: z.string().optional().nullable(),
   groupName: z.string().optional().nullable(),
   mentionInGroup: z.boolean().default(false).optional(),
+  profilePictureUrl: z.string().optional().nullable(),
 
   // Modo y Personalización
   mode: z.enum(['manual', 'template', 'ai']).default('ai'),
@@ -70,6 +71,7 @@ export type ContactFormData = {
   groupId?: string | null;
   groupName?: string | null;
   mentionInGroup?: boolean;
+  profilePictureUrl?: string | null;
   mode: 'manual' | 'template' | 'ai';
   customMessage?: string | null;
   templateId?: string | null;
