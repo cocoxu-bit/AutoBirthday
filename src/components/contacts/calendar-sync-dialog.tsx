@@ -603,9 +603,13 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       🎂 {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
                     </span>
 
-                    {currentCard.matchScore > 0 && (
+                    {currentCard.matchedPhone && currentCard.matchScore > 0 ? (
                       <span className="text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full">
                         {currentCard.matchScore}% Match
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-bold bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
+                        ⚠️ Sin WhatsApp vinculado
                       </span>
                     )}
                   </div>
@@ -615,13 +619,17 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     📅 En tu calendario: <span className="font-semibold text-slate-700">&ldquo;{currentCard.rawSummary || currentCard.name}&rdquo;</span>
                   </p>
 
-                  {/* Switch Contact Button */}
+                  {/* Switch or Link Contact Button */}
                   <button
                     type="button"
                     onClick={() => setShowChangeWaModal(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 hover:text-violet-900 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3.5 py-1.5 rounded-xl transition-all"
+                    className={`mt-3 inline-flex items-center gap-1.5 text-xs font-bold rounded-xl transition-all ${
+                      currentCard.matchedPhone
+                        ? 'text-violet-700 hover:text-violet-900 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3.5 py-1.5'
+                        : 'text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-500/20 px-4 py-2'
+                    }`}
                   >
-                    <span>¿Nos hemos equivocado de contacto? Cambiar</span>
+                    <span>{currentCard.matchedPhone ? '¿Nos hemos equivocado de contacto? Cambiar' : '🔍 Vincular con un chat de WhatsApp'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>

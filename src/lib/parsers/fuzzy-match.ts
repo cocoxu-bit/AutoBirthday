@@ -52,7 +52,7 @@ export function calculateSimilarity(str1: string, str2: string): number {
   if (!norm1 || !norm2) return 0;
   if (norm1 === norm2) return 100;
 
-  // Check if one contains the other
+  // Check if one contains the other (e.g. "Lucas" in "Lucas Jimenez")
   if (norm1.includes(norm2) || norm2.includes(norm1)) {
     const minLen = Math.min(norm1.length, norm2.length);
     const maxLen = Math.max(norm1.length, norm2.length);
@@ -60,8 +60,8 @@ export function calculateSimilarity(str1: string, str2: string): number {
   }
 
   // Check word overlap (e.g. "Lucas Gana" vs "Lucas")
-  const words1 = norm1.split(/\s+/);
-  const words2 = norm2.split(/\s+/);
+  const words1 = norm1.split(/\s+/).filter(Boolean);
+  const words2 = norm2.split(/\s+/).filter(Boolean);
   const matchingWords = words1.filter(w => words2.includes(w));
   if (matchingWords.length > 0) {
     const score = (matchingWords.length / Math.max(words1.length, words2.length)) * 85;
@@ -82,7 +82,7 @@ export interface MatchResult {
 }
 
 /**
- * Finds best matching WhatsApp contact for a given person's name.
+ * Single-contact best match fallback (used by vcard and ics parsers)
  */
 export function findBestWhatsAppMatch(
   searchName: string,
@@ -93,7 +93,6 @@ export function findBestWhatsAppMatch(
   let highestScore = 0;
 
   for (const contact of whatsappContacts) {
-    // Compare against contact.name and contact.pushName
     const score1 = calculateSimilarity(searchName, contact.name);
     const score2 = contact.pushName ? calculateSimilarity(searchName, contact.pushName) : 0;
     const maxScore = Math.max(score1, score2);
@@ -115,4 +114,109 @@ export function findBestWhatsAppMatch(
   return {
     confidence: 0,
   };
+}
+
+export interface BirthdayToMatch {
+  id: string;
+  name: string;
+  birthDay: number;
+  birthMonth: number;
+  birthYear: number | null;
+  rawSummary?: string;
+}
+
+export interface Unique1to1MatchResult<T extends BirthdayToMatch = BirthdayToMatch> {
+  birthday: T;
+  matchedContact?: WhatsAppChatContact;
+  confidence: number;
+  isAutoMatched: boolean;
+}
+
+/**
+ * Strict 1-to-1 unique matcher:
+ * Ensures NO single WhatsApp contact is ever assigned to multiple calendar events.
+ */
+export function matchAllBirthdaysToWhatsApp1to1<T extends BirthdayToMatch>(
+  birthdays: T[],
+  whatsappContacts: WhatsAppChatContact[],
+  minThreshold = 60
+): Unique1to1MatchResult<T>[] {
+  // 1. Deduplicate identical calendar events (same name & same day/month)
+  const uniqueBirthdays: T[] = [];
+  const seenEvents = new Set<string>();
+
+  for (const b of birthdays) {
+    const key = `${normalizeString(b.name)}_${b.birthDay}_${b.birthMonth}`;
+    if (!seenEvents.has(key)) {
+      seenEvents.add(key);
+      uniqueBirthdays.push(b);
+    }
+  }
+
+  // 2. Generate all potential candidate pairs with similarity >= minThreshold
+  interface CandidatePair {
+    birthdayIndex: number;
+    contactPhone: string;
+    contact: WhatsAppChatContact;
+    score: number;
+  }
+
+  const candidatePairs: CandidatePair[] = [];
+
+  uniqueBirthdays.forEach((bday, bIndex) => {
+    for (const contact of whatsappContacts) {
+      const score1 = calculateSimilarity(bday.name, contact.name);
+      const score2 = contact.pushName ? calculateSimilarity(bday.name, contact.pushName) : 0;
+      const maxScore = Math.max(score1, score2);
+
+      if (maxScore >= minThreshold) {
+        const cleanPhone = (contact.phone || contact.jid || '').replace(/\D/g, '');
+        candidatePairs.push({
+          birthdayIndex: bIndex,
+          contactPhone: cleanPhone,
+          contact,
+          score: maxScore,
+        });
+      }
+    }
+  });
+
+  // 3. Sort candidate pairs descending by match score
+  candidatePairs.sort((a, b) => b.score - a.score);
+
+  // 4. Greedy 1-to-1 assignment: each WhatsApp contact can only be claimed ONCE
+  const matchedBirthdayMap = new Map<number, { contact: WhatsAppChatContact; score: number }>();
+  const claimedPhoneNumbers = new Set<string>();
+
+  for (const pair of candidatePairs) {
+    if (
+      !matchedBirthdayMap.has(pair.birthdayIndex) &&
+      !claimedPhoneNumbers.has(pair.contactPhone)
+    ) {
+      matchedBirthdayMap.set(pair.birthdayIndex, {
+        contact: pair.contact,
+        score: pair.score,
+      });
+      claimedPhoneNumbers.add(pair.contactPhone);
+    }
+  }
+
+  // 5. Build final result array
+  return uniqueBirthdays.map((bday, bIndex) => {
+    const match = matchedBirthdayMap.get(bIndex);
+    if (match) {
+      return {
+        birthday: bday,
+        matchedContact: match.contact,
+        confidence: match.score,
+        isAutoMatched: match.score >= 70,
+      };
+    }
+    return {
+      birthday: bday,
+      matchedContact: undefined,
+      confidence: 0,
+      isAutoMatched: false,
+    };
+  });
 }

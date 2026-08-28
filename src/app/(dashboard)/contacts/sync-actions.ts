@@ -7,7 +7,7 @@ import { createContact as dbCreateContact } from '@/lib/firebase/firestore';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { fetchGoogleCalendarBirthdays } from '@/lib/integrations/google-calendar';
 import { fetchICloudCalendarBirthdays } from '@/lib/integrations/icloud-calendar';
-import { findBestWhatsAppMatch } from '@/lib/parsers/fuzzy-match';
+import { matchAllBirthdaysToWhatsApp1to1 } from '@/lib/parsers/fuzzy-match';
 import { WhatsAppChatContact, WhatsAppGroup, ContactSource, WishMode, AiTone, TargetType } from '@/types';
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -83,14 +83,15 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       waGroups = g;
     } catch {}
 
-    const rawPreviews: SyncedContactPreview[] = [];
+    // Strict 1-to-1 unique match assignment
+    const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, 55);
 
-    for (const bday of rawBirthdays) {
-      const match = findBestWhatsAppMatch(bday.name, waContacts, 40);
-      const isAuto = match.confidence >= 65;
-      const matchedWa = match.matchedContact;
+    const rawPreviews: SyncedContactPreview[] = matches.map(m => {
+      const bday = m.birthday;
+      const matchedWa = m.matchedContact;
+      const cleanPhone = matchedWa ? (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '') : '';
 
-      rawPreviews.push({
+      return {
         id: bday.id,
         name: bday.name,
         birthDay: bday.birthDay,
@@ -98,12 +99,12 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         birthYear: null,
         rawSummary: bday.rawSummary || bday.name,
         source: 'google_calendar',
-        matchedPhone: match.suggestedPhone || '',
+        matchedPhone: cleanPhone,
         matchedName: matchedWa?.name || '',
         matchedPushName: matchedWa?.pushName,
         profilePictureUrl: matchedWa?.profilePictureUrl || null,
-        matchScore: match.confidence,
-        isAutoMatched: isAuto,
+        matchScore: m.confidence,
+        isAutoMatched: m.isAutoMatched,
 
         // Target Destination Default
         targetType: 'individual',
@@ -120,10 +121,10 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         autoSend: false,
         sendTimeStart: '09:30',
         sendTimeEnd: '11:45',
-      });
-    }
+      };
+    });
 
-    // Sort by match score descending (most reliable on top)
+    // Sort: matched contacts with highest score first, then unmatched
     rawPreviews.sort((a, b) => b.matchScore - a.matchScore);
 
     // Fetch real WhatsApp profile picture URLs in parallel for matched contacts
@@ -185,14 +186,15 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       waGroups = g;
     } catch {}
 
-    const rawPreviews: SyncedContactPreview[] = [];
+    // Strict 1-to-1 unique match assignment
+    const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, 55);
 
-    for (const bday of rawBirthdays) {
-      const match = findBestWhatsAppMatch(bday.name, waContacts, 40);
-      const isAuto = match.confidence >= 65;
-      const matchedWa = match.matchedContact;
+    const rawPreviews: SyncedContactPreview[] = matches.map(m => {
+      const bday = m.birthday;
+      const matchedWa = m.matchedContact;
+      const cleanPhone = matchedWa ? (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '') : '';
 
-      rawPreviews.push({
+      return {
         id: bday.id,
         name: bday.name,
         birthDay: bday.birthDay,
@@ -200,12 +202,12 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         birthYear: null,
         rawSummary: bday.rawSummary || bday.name,
         source: 'apple_calendar',
-        matchedPhone: match.suggestedPhone || '',
+        matchedPhone: cleanPhone,
         matchedName: matchedWa?.name || '',
         matchedPushName: matchedWa?.pushName,
         profilePictureUrl: matchedWa?.profilePictureUrl || null,
-        matchScore: match.confidence,
-        isAutoMatched: isAuto,
+        matchScore: m.confidence,
+        isAutoMatched: m.isAutoMatched,
 
         // Target Destination Default
         targetType: 'individual',
@@ -222,8 +224,8 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         autoSend: false,
         sendTimeStart: '09:30',
         sendTimeEnd: '11:45',
-      });
-    }
+      };
+    });
 
     rawPreviews.sort((a, b) => b.matchScore - a.matchScore);
 
