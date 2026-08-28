@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Cake,
@@ -98,14 +99,19 @@ export default function RegisterPage() {
     <div className="glass-strong rounded-2xl shadow-2xl shadow-violet-500/10 p-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-birthday mb-4 shadow-lg shadow-violet-500/20">
-          <Cake className="w-8 h-8 text-white" />
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900">
+        <Image 
+          src="/logo.png" 
+          alt="AutoBirthday" 
+          width={88} 
+          height={88} 
+          className="w-20 h-20 sm:w-22 sm:h-22 object-contain mx-auto mb-3 drop-shadow-lg" 
+          priority 
+        />
+        <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-violet-700 to-indigo-700 bg-clip-text text-transparent">
           Crea tu cuenta
         </h1>
-        <p className="text-slate-500 mt-1">
-          Empieza a automatizar tus felicitaciones
+        <p className="text-slate-500 mt-1 text-sm">
+          Empieza a automatizar tus felicitaciones de cumpleaños
         </p>
       </div>
 

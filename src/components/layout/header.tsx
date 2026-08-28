@@ -20,6 +20,8 @@ const routeMap: Record<string, string> = {
   "/settings": "Configuración",
 };
 
+import Image from "next/image";
+
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -65,7 +67,7 @@ export function Header() {
   return (
     <header className="h-16 flex items-center justify-between px-3 sm:px-6 bg-white/60 backdrop-blur-md border-b border-slate-200/60 shrink-0">
       <div className="flex items-center gap-2">
-        <Cake className="w-5 h-5 text-violet-600 md:hidden" />
+        <Image src="/logo.png" alt="AutoBirthday" width={28} height={28} className="md:hidden object-contain" />
         <h1 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">{title}</h1>
       </div>
 

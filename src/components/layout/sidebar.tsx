@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,7 +14,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Cake,
 } from "lucide-react";
 
 const navItems = [
@@ -37,7 +37,7 @@ export function Sidebar() {
       )}
     >
       <div className="flex items-center h-16 px-4 border-b border-white/20">
-        <Cake className="w-8 h-8 text-violet-600 shrink-0" />
+        <Image src="/logo.png" alt="AutoBirthday" width={38} height={38} className="shrink-0 object-contain rounded-xl" priority />
         {!collapsed && (
           <span className="ml-3 font-bold text-xl text-violet-900 truncate">
             AutoBirthday

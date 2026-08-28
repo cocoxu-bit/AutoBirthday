@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Cake,
   MessageCircle,
@@ -15,11 +16,9 @@ export default function HomePage() {
       {/* Header */}
       <header className="glass-strong sticky top-0 z-50 border-b border-white/20">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-birthday flex items-center justify-center shadow-md">
-              <Cake className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-lg text-slate-900">
+          <div className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="AutoBirthday" width={36} height={36} className="object-contain" priority />
+            <span className="font-black text-xl bg-gradient-to-r from-violet-700 to-indigo-700 bg-clip-text text-transparent">
               AutoBirthday
             </span>
           </div>
