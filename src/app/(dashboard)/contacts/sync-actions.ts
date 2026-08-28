@@ -8,7 +8,7 @@ import { evolutionApi } from '@/lib/evolution-api/client';
 import { fetchGoogleCalendarBirthdays } from '@/lib/integrations/google-calendar';
 import { fetchICloudCalendarBirthdays } from '@/lib/integrations/icloud-calendar';
 import { findBestWhatsAppMatch } from '@/lib/parsers/fuzzy-match';
-import { WhatsAppChatContact, ContactSource } from '@/types';
+import { WhatsAppChatContact, ContactSource, WishMode, AiTone } from '@/types';
 
 async function getAuthenticatedUserId(): Promise<string> {
   const cookieStore = await cookies();
@@ -24,6 +24,7 @@ export interface SyncedContactPreview {
   birthDay: number;
   birthMonth: number;
   birthYear: null;
+  rawSummary?: string;
   source: ContactSource;
   
   // WhatsApp Matching
@@ -33,17 +34,16 @@ export interface SyncedContactPreview {
   profilePictureUrl?: string | null;
   matchScore: number;
   isAutoMatched: boolean;
-  selected: boolean;
 
-  // On-the-fly Greeting Customization (for 1-by-1 Tinder deck)
-  mode: 'ai' | 'manual';
-  aiRelationship: string;
-  aiTone: 'casual' | 'divertido' | 'formal' | 'emotivo';
+  // On-the-fly Greeting Customization
+  mode: WishMode;
+  templateId?: string;
+  customMessage?: string;
+  aiTone: AiTone;
   aiNotes: string;
   autoSend: boolean;
   sendTimeStart: string;
   sendTimeEnd: string;
-  customMessage?: string;
 }
 
 export async function syncGoogleCalendarAction(accessToken: string): Promise<{
@@ -70,19 +70,20 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       waContacts = await evolutionApi.fetchChats(instanceName);
     } catch {}
 
-    const previews: SyncedContactPreview[] = [];
+    const rawPreviews: SyncedContactPreview[] = [];
 
     for (const bday of rawBirthdays) {
       const match = findBestWhatsAppMatch(bday.name, waContacts, 40);
       const isAuto = match.confidence >= 65;
       const matchedWa = match.matchedContact;
 
-      previews.push({
+      rawPreviews.push({
         id: bday.id,
         name: bday.name,
         birthDay: bday.birthDay,
         birthMonth: bday.birthMonth,
         birthYear: null,
+        rawSummary: bday.rawSummary || bday.name,
         source: 'google_calendar',
         matchedPhone: match.suggestedPhone || '',
         matchedName: matchedWa?.name || '',
@@ -90,13 +91,13 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         profilePictureUrl: matchedWa?.profilePictureUrl || null,
         matchScore: match.confidence,
         isAutoMatched: isAuto,
-        selected: isAuto,
 
-        // Defaults for card customization
+        // Greeting Defaults
         mode: 'ai',
-        aiRelationship: 'Amigo',
         aiTone: 'casual',
         aiNotes: '',
+        templateId: '',
+        customMessage: '',
         autoSend: false,
         sendTimeStart: '09:30',
         sendTimeEnd: '11:45',
@@ -104,7 +105,20 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
     }
 
     // Sort by match score descending (most reliable on top)
-    previews.sort((a, b) => b.matchScore - a.matchScore);
+    rawPreviews.sort((a, b) => b.matchScore - a.matchScore);
+
+    // Fetch real WhatsApp profile picture URLs in parallel for matched contacts
+    const previews = await Promise.all(
+      rawPreviews.map(async item => {
+        if (item.matchedPhone && !item.profilePictureUrl) {
+          try {
+            const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, item.matchedPhone);
+            if (pic) item.profilePictureUrl = pic;
+          } catch {}
+        }
+        return item;
+      })
+    );
 
     return {
       success: true,
@@ -144,19 +158,20 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       waContacts = await evolutionApi.fetchChats(instanceName);
     } catch {}
 
-    const previews: SyncedContactPreview[] = [];
+    const rawPreviews: SyncedContactPreview[] = [];
 
     for (const bday of rawBirthdays) {
       const match = findBestWhatsAppMatch(bday.name, waContacts, 40);
       const isAuto = match.confidence >= 65;
       const matchedWa = match.matchedContact;
 
-      previews.push({
+      rawPreviews.push({
         id: bday.id,
         name: bday.name,
         birthDay: bday.birthDay,
         birthMonth: bday.birthMonth,
         birthYear: null,
+        rawSummary: bday.rawSummary || bday.name,
         source: 'apple_calendar',
         matchedPhone: match.suggestedPhone || '',
         matchedName: matchedWa?.name || '',
@@ -164,20 +179,33 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         profilePictureUrl: matchedWa?.profilePictureUrl || null,
         matchScore: match.confidence,
         isAutoMatched: isAuto,
-        selected: isAuto,
 
-        // Defaults for card customization
+        // Greeting Defaults
         mode: 'ai',
-        aiRelationship: 'Amigo',
         aiTone: 'casual',
         aiNotes: '',
+        templateId: '',
+        customMessage: '',
         autoSend: false,
         sendTimeStart: '09:30',
         sendTimeEnd: '11:45',
       });
     }
 
-    previews.sort((a, b) => b.matchScore - a.matchScore);
+    rawPreviews.sort((a, b) => b.matchScore - a.matchScore);
+
+    // Fetch real WhatsApp profile pictures in parallel
+    const previews = await Promise.all(
+      rawPreviews.map(async item => {
+        if (item.matchedPhone && !item.profilePictureUrl) {
+          try {
+            const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, item.matchedPhone);
+            if (pic) item.profilePictureUrl = pic;
+          } catch {}
+        }
+        return item;
+      })
+    );
 
     return {
       success: true,
@@ -201,14 +229,14 @@ export async function saveSingleSyncedContactAction(contact: {
   birthYear?: number | null;
   source: ContactSource;
   profilePictureUrl?: string | null;
-  mode: 'ai' | 'manual';
-  aiRelationship: string;
-  aiTone: 'casual' | 'divertido' | 'formal' | 'emotivo';
+  mode: WishMode;
+  templateId?: string;
+  customMessage?: string;
+  aiTone: AiTone;
   aiNotes?: string;
   autoSend: boolean;
   sendTimeStart?: string;
   sendTimeEnd?: string;
-  customMessage?: string;
 }): Promise<{ success: boolean; contactId?: string; error?: string }> {
   try {
     const userId = await getAuthenticatedUserId();
@@ -225,7 +253,7 @@ export async function saveSingleSyncedContactAction(contact: {
       } catch {}
     }
 
-    const created = await dbCreateContact(userId, {
+    const createdId = await dbCreateContact(userId, {
       name: contact.name.trim(),
       phone: contact.phone.trim(),
       birthDay: contact.birthDay,
@@ -234,10 +262,10 @@ export async function saveSingleSyncedContactAction(contact: {
       targetType: 'individual',
       profilePictureUrl: profilePic || undefined,
       mode: contact.mode || 'ai',
-      aiRelationship: contact.aiRelationship || 'Amigo',
-      aiTone: contact.aiTone || 'casual',
-      aiNotes: contact.aiNotes?.trim() || undefined,
-      customMessage: contact.customMessage?.trim() || undefined,
+      templateId: contact.mode === 'template' ? contact.templateId : undefined,
+      customMessage: contact.mode === 'manual' ? contact.customMessage?.trim() : undefined,
+      aiTone: contact.mode === 'ai' ? contact.aiTone || 'casual' : undefined,
+      aiNotes: contact.mode === 'ai' ? contact.aiNotes?.trim() || undefined : undefined,
       autoSend: contact.autoSend ?? false,
       sendTimeStart: contact.sendTimeStart || '09:30',
       sendTimeEnd: contact.sendTimeEnd || '11:45',
@@ -248,7 +276,7 @@ export async function saveSingleSyncedContactAction(contact: {
     revalidatePath('/contacts');
     revalidatePath('/dashboard');
 
-    return { success: true, contactId: created };
+    return { success: true, contactId: createdId };
   } catch (error: any) {
     console.error('saveSingleSyncedContactAction error:', error);
     return { success: false, error: error.message || 'Error al guardar contacto' };
@@ -264,14 +292,14 @@ export async function batchApproveSyncedContacts(
     birthYear?: number | null;
     source: ContactSource;
     profilePictureUrl?: string | null;
-    mode?: 'ai' | 'manual';
-    aiRelationship?: string;
-    aiTone?: 'casual' | 'divertido' | 'formal' | 'emotivo';
+    mode?: WishMode;
+    templateId?: string;
+    customMessage?: string;
+    aiTone?: AiTone;
     aiNotes?: string;
     autoSend?: boolean;
     sendTimeStart?: string;
     sendTimeEnd?: string;
-    customMessage?: string;
   }>
 ): Promise<{ success: boolean; count?: number; error?: string }> {
   try {
@@ -305,10 +333,10 @@ export async function batchApproveSyncedContacts(
         targetType: 'individual',
         profilePictureUrl: profilePic || undefined,
         mode: contact.mode || 'ai',
-        aiRelationship: contact.aiRelationship || 'Amigo',
-        aiTone: contact.aiTone || 'casual',
-        aiNotes: contact.aiNotes?.trim() || undefined,
-        customMessage: contact.customMessage?.trim() || undefined,
+        templateId: contact.mode === 'template' ? contact.templateId : undefined,
+        customMessage: contact.mode === 'manual' ? contact.customMessage?.trim() : undefined,
+        aiTone: contact.mode === 'ai' ? contact.aiTone || 'casual' : undefined,
+        aiNotes: contact.mode === 'ai' ? contact.aiNotes?.trim() || undefined : undefined,
         autoSend: contact.autoSend ?? false,
         sendTimeStart: contact.sendTimeStart || '09:30',
         sendTimeEnd: contact.sendTimeEnd || '11:45',

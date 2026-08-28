@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
-import { getContacts } from '@/lib/firebase/firestore';
+import { getContacts, getTemplates } from '@/lib/firebase/firestore';
 import { ContactsTable } from '@/components/contacts/contacts-table';
 import { Users } from 'lucide-react';
 
@@ -25,7 +25,10 @@ export default async function ContactsPage() {
   const userId = await getUserId();
   if (!userId) return null; // Handled by middleware
 
-  const contacts = await getContacts(userId);
+  const [contacts, templates] = await Promise.all([
+    getContacts(userId),
+    getTemplates(userId),
+  ]);
   const activeContactsCount = contacts.filter(c => c.isActive).length;
 
   return (
@@ -40,7 +43,7 @@ export default async function ContactsPage() {
         </div>
       </div>
 
-      <ContactsTable contacts={contacts} />
+      <ContactsTable contacts={contacts} templates={templates} />
     </div>
   );
 }

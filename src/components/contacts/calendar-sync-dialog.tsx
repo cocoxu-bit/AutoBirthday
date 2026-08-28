@@ -10,7 +10,7 @@ import {
   batchApproveSyncedContacts,
   SyncedContactPreview 
 } from '@/app/(dashboard)/contacts/sync-actions';
-import { WhatsAppChatContact } from '@/types';
+import { WhatsAppChatContact, Template, WishMode, AiTone } from '@/types';
 import { 
   X, 
   Sparkles, 
@@ -21,20 +21,14 @@ import {
   Search, 
   Check, 
   ArrowRight, 
-  HelpCircle,
-  Users,
-  ChevronDown,
-  Edit3,
-  Heart,
-  Smile,
-  Briefcase,
-  UserCheck,
-  Send,
-  ShieldCheck,
-  Clock,
-  ChevronRight,
-  Zap,
-  Phone
+  Users, 
+  Edit3, 
+  Phone, 
+  FileText, 
+  PenTool, 
+  ShieldCheck, 
+  Zap, 
+  MessageSquare
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -42,18 +36,7 @@ const MONTH_NAMES = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
 ];
 
-const RELATIONSHIPS = [
-  'Amigo/a',
-  'Mejor amigo/a',
-  'Pareja ❤️',
-  'Hermano/a',
-  'Padre/Madre',
-  'Familia',
-  'Compañero/a trabajo',
-  'Cliente/Jefe'
-];
-
-const TONES: Array<{ id: 'casual' | 'divertido' | 'emotivo' | 'formal'; label: string; icon: string }> = [
+const TONES: Array<{ id: AiTone; label: string; icon: string }> = [
   { id: 'casual', label: 'Casual', icon: '😊' },
   { id: 'divertido', label: 'Divertido', icon: '🎉' },
   { id: 'emotivo', label: 'Emotivo', icon: '❤️' },
@@ -62,9 +45,10 @@ const TONES: Array<{ id: 'casual' | 'divertido' | 'emotivo' | 'formal'; label: s
 
 interface CalendarSyncDialogProps {
   onClose: () => void;
+  templates?: Template[];
 }
 
-export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
+export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDialogProps) {
   const [step, setStep] = useState<'connect' | 'deck' | 'completed'>('connect');
   const [activeTab, setActiveTab] = useState<'google' | 'apple'>('google');
   const [loading, setLoading] = useState(false);
@@ -72,9 +56,8 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
 
   // iCloud Input
   const [iCloudUrl, setICloudUrl] = useState('');
-  const [showICloudGuide, setShowICloudGuide] = useState(false);
 
-  // Deck State (1 a 1)
+  // Review Deck State
   const [cards, setCards] = useState<SyncedContactPreview[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [availableWhatsAppContacts, setAvailableWhatsAppContacts] = useState<WhatsAppChatContact[]>([]);
@@ -82,7 +65,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
   const [skippedCount, setSkippedCount] = useState(0);
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
 
-  // WhatsApp Change Modal for Current Card
+  // WhatsApp Change Modal
   const [showChangeWaModal, setShowChangeWaModal] = useState(false);
   const [waSearchTerm, setWaSearchTerm] = useState('');
 
@@ -93,7 +76,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
 
     try {
       const accessToken = await requestGoogleCalendarAccessToken();
-      setStatusMessage('Analizando cumpleaños y cruzando con tu WhatsApp...');
+      setStatusMessage('Analizando cumpleaños y rescatando fotos de WhatsApp...');
 
       const result = await syncGoogleCalendarAction(accessToken);
 
@@ -165,14 +148,32 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
     });
   };
 
+  // Advance index or finish
+  const advanceDeck = () => {
+    if (currentIndex + 1 < cards.length) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setStep('completed');
+    }
+  };
+
   // Save current card and advance
   const handleSaveAndNext = async () => {
     if (!currentCard) return;
 
     if (!currentCard.matchedPhone || currentCard.matchedPhone.trim().length < 6) {
-      toast.error('Vincula un teléfono o chat de WhatsApp para este contacto antes de guardar.');
+      toast.error('Vincula un teléfono o chat de WhatsApp para este contacto.');
       setShowChangeWaModal(true);
       return;
+    }
+
+    if (currentCard.mode === 'manual' && !currentCard.customMessage?.trim()) {
+      toast.error('Escribe el mensaje personalizado o cambia al modo IA.');
+      return;
+    }
+
+    if (currentCard.mode === 'template' && !currentCard.templateId && templates.length > 0) {
+      updateCurrentCard({ templateId: templates[0].id });
     }
 
     setIsSavingCurrent(true);
@@ -186,18 +187,18 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
         source: currentCard.source,
         profilePictureUrl: currentCard.profilePictureUrl,
         mode: currentCard.mode,
-        aiRelationship: currentCard.aiRelationship,
+        templateId: currentCard.templateId,
+        customMessage: currentCard.customMessage,
         aiTone: currentCard.aiTone,
         aiNotes: currentCard.aiNotes,
         autoSend: currentCard.autoSend,
         sendTimeStart: currentCard.sendTimeStart,
         sendTimeEnd: currentCard.sendTimeEnd,
-        customMessage: currentCard.customMessage,
       });
 
       if (res.success) {
         setSavedCount(prev => prev + 1);
-        toast.success(`✅ ${currentCard.name} guardado/a`, { duration: 1500 });
+        toast.success(`✅ ${currentCard.name} añadido`, { duration: 1500 });
         advanceDeck();
       } else {
         toast.error(res.error || 'Error al guardar contacto');
@@ -213,15 +214,6 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
   const handleSkipCurrent = () => {
     setSkippedCount(prev => prev + 1);
     advanceDeck();
-  };
-
-  // Advance index or finish
-  const advanceDeck = () => {
-    if (currentIndex + 1 < cards.length) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      setStep('completed');
-    }
   };
 
   // Fast Pass: Approve all remaining with default AI
@@ -244,8 +236,10 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
           source: c.source,
           profilePictureUrl: c.profilePictureUrl,
           mode: c.mode || 'ai',
-          aiRelationship: c.aiRelationship || 'Amigo',
+          templateId: c.templateId,
+          customMessage: c.customMessage,
           aiTone: c.aiTone || 'casual',
+          aiNotes: c.aiNotes,
           autoSend: c.autoSend ?? false,
           sendTimeStart: c.sendTimeStart || '09:30',
           sendTimeEnd: c.sendTimeEnd || '11:45',
@@ -278,7 +272,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[94vh] overflow-hidden">
         
         {/* MODAL HEADER */}
         <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
@@ -288,14 +282,14 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                {step === 'connect' ? 'Sincronizar Calendario' : step === 'deck' ? 'Revisión 1 a 1 (Tinder-Deck)' : '¡Sincronización Lista!'}
+                {step === 'connect' ? 'Sincronizar Calendario' : step === 'deck' ? `Revisar Cumpleaños (${currentIndex + 1} de ${cards.length})` : '¡Sincronización Completada!'}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
                 {step === 'connect' 
-                  ? 'Importa tus cumpleaños desde Google o Apple sin archivos' 
+                  ? 'Importa automáticamente desde Google o Apple sin archivos' 
                   : step === 'deck' 
-                  ? `Tarjeta ${currentIndex + 1} de ${cards.length}`
-                  : 'Contactos añadidos a tu cuenta'}
+                  ? 'Revisa a quién se enviará la felicitación y personalízala'
+                  : 'Contactos añadidos a tu agenda'}
               </p>
             </div>
           </div>
@@ -312,7 +306,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
           {/* ========================================================= */}
-          {/* STEP 1: CONECTAR CALENDARIO (GOOGLE / APPLE)               */}
+          {/* STEP 1: CONECTAR CALENDARIO                               */}
           {/* ========================================================= */}
           {step === 'connect' && (
             <div className="space-y-6">
@@ -398,7 +392,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
                     <span>•</span>
                     <span>⚡ Cero descargas</span>
                     <span>•</span>
-                    <span>🤖 Cruce con WhatsApp</span>
+                    <span>📸 Fotos de WhatsApp</span>
                   </div>
                 </div>
               )}
@@ -452,18 +446,24 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
           )}
 
           {/* ========================================================= */}
-          {/* STEP 2: MODO TINDER DECK (1 A 1)                          */}
+          {/* STEP 2: REVISIÓN LIMPIA Y CLARA 1 A 1                      */}
           {/* ========================================================= */}
           {step === 'deck' && currentCard && (
             <div className="space-y-4">
               
-              {/* Deck Progress Bar & Counters */}
+              {/* Progress Bar & Counters */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span>Contacto {currentIndex + 1} de {cards.length}</span>
+                  <span className="text-violet-900">Contacto {currentIndex + 1} de {cards.length}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">✨ {savedCount} guardados</span>
-                    {skippedCount > 0 && <span className="text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">⏭️ {skippedCount}</span>}
+                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
+                      ✨ {savedCount} guardados
+                    </span>
+                    {skippedCount > 0 && (
+                      <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold text-[11px]">
+                        ⏭️ {skippedCount} omitidos
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
@@ -474,146 +474,234 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
                 </div>
               </div>
 
-              {/* MAIN TINDER CARD */}
-              <div className="bg-gradient-to-b from-white to-slate-50/80 border-2 border-violet-100 rounded-3xl p-5 sm:p-6 shadow-xl shadow-violet-500/5 space-y-5">
+              {/* MAIN CONTACT CARD */}
+              <div className="bg-white border-2 border-slate-100 rounded-3xl p-4 sm:p-5 shadow-lg shadow-slate-200/50 space-y-4 text-left">
                 
-                {/* Profile Header & Photo */}
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                {/* 1. VISUAL COMPARISON: CALENDAR EVENT vs WHATSAPP MATCH */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 sm:p-4 space-y-3">
                   
-                  {/* WhatsApp Profile Avatar (Large) */}
-                  <div className="relative shrink-0">
-                    {currentCard.profilePictureUrl ? (
-                      <img 
-                        src={currentCard.profilePictureUrl} 
-                        alt={currentCard.name} 
-                        className="w-20 h-20 sm:w-22 sm:h-22 rounded-full object-cover shadow-lg border-4 border-white ring-2 ring-violet-200" 
-                      />
-                    ) : (
-                      <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-lg border-4 border-white ring-2 ring-violet-200">
-                        {currentCard.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-md border-2 border-white" title="WhatsApp">
-                      💬
+                  {/* Calendar Event Source */}
+                  <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-1 shrink-0">
+                        <Calendar className="w-3.5 h-3.5 text-violet-600" />
+                        Calendario:
+                      </span>
+                      <span className="font-bold text-xs sm:text-sm text-slate-800 truncate" title={currentCard.rawSummary || currentCard.name}>
+                        &ldquo;{currentCard.rawSummary || currentCard.name}&rdquo;
+                      </span>
+                    </div>
+                    <span className="shrink-0 px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full font-black text-xs">
+                      🎂 {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
                     </span>
                   </div>
 
-                  {/* Name & Birthday info */}
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        {currentCard.name}
-                      </h3>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800">
-                        🎂 {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
-                      </span>
+                  {/* WhatsApp Matched Target with Photo */}
+                  <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      
+                      {/* Avatar / Photo with WhatsApp badge */}
+                      <div className="relative shrink-0">
+                        {currentCard.profilePictureUrl ? (
+                          <img 
+                            src={currentCard.profilePictureUrl} 
+                            alt="" 
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-sm border-2 border-white ring-2 ring-emerald-400" 
+                          />
+                        ) : (
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-base shadow-sm border-2 border-white ring-2 ring-emerald-400">
+                            {currentCard.name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] shadow border-2 border-white" title="WhatsApp">
+                          💬
+                        </span>
+                      </div>
+
+                      {/* WhatsApp Contact Details */}
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                          Destino en WhatsApp:
+                        </p>
+                        {currentCard.matchedPhone ? (
+                          <>
+                            <p className="font-black text-sm sm:text-base text-slate-900 truncate">
+                              {currentCard.matchedName || currentCard.name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-slate-500 font-mono">+{currentCard.matchedPhone}</span>
+                              {currentCard.matchScore > 0 && (
+                                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                                  {currentCard.matchScore}% Match
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs font-bold text-amber-700">⚠️ No se encontró chat automático</p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* WhatsApp Binding Status */}
-                    <div className="pt-1">
-                      {currentCard.matchedPhone ? (
-                        <div className="inline-flex flex-wrap items-center gap-2 bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-2xl text-xs text-emerald-800">
-                          <span className="font-bold">📱 {currentCard.matchedName || currentCard.matchedPhone}</span>
-                          {currentCard.matchScore > 0 && (
-                            <span className="text-[10px] font-black bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded-md">
-                              {currentCard.matchScore}% Match
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setShowChangeWaModal(true)}
-                            className="text-violet-700 hover:text-violet-900 font-bold underline text-[11px] ml-1"
-                          >
-                            Cambiar
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-2xl text-xs text-amber-800">
-                          <span>⚠️ Sin teléfono vinculado</span>
-                          <button
-                            type="button"
-                            onClick={() => setShowChangeWaModal(true)}
-                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded-lg text-[11px]"
-                          >
-                            ➕ Vincular WhatsApp
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    {/* Change Button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowChangeWaModal(true)}
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-violet-700 shadow-sm shrink-0 transition-colors"
+                    >
+                      {currentCard.matchedPhone ? 'Cambiar' : '➕ Vincular'}
+                    </button>
                   </div>
+
                 </div>
 
-                <hr className="border-slate-100" />
-
-                {/* GREETING CONFIGURATION ON THE CARD */}
-                <div className="space-y-4 text-left">
+                {/* 2. GREETING CONFIGURATION (3 MODES: AI | TEMPLATE | MANUAL) */}
+                <div className="space-y-3 pt-1">
                   
-                  {/* 1. Relationship Pills */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-violet-600" />
-                      ¿Quién es para ti? (Relación IA)
+                  {/* Mode Selector Tabs */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      ¿Cómo quieres felicitar a este contacto?
                     </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {RELATIONSHIPS.map(rel => {
-                        const isSelected = currentCard.aiRelationship === rel;
-                        return (
-                          <button
-                            key={rel}
-                            type="button"
-                            onClick={() => updateCurrentCard({ aiRelationship: rel })}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                              isSelected
-                                ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 scale-105'
-                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                            }`}
-                          >
-                            {rel}
-                          </button>
-                        );
-                      })}
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl">
+                      <button
+                        type="button"
+                        onClick={() => updateCurrentCard({ mode: 'ai' })}
+                        className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          currentCard.mode === 'ai'
+                            ? 'bg-white text-violet-900 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                        <span>IA Mágica</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateCurrentCard({ mode: 'template' })}
+                        className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          currentCard.mode === 'template'
+                            ? 'bg-white text-violet-900 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Plantilla</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateCurrentCard({ mode: 'manual' })}
+                        className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                          currentCard.mode === 'manual'
+                            ? 'bg-white text-violet-900 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <PenTool className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Mensaje Fijo</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* 2. Tone Pills */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                      Tono de la felicitación
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {TONES.map(tone => {
-                        const isSelected = currentCard.aiTone === tone.id;
-                        return (
-                          <button
-                            key={tone.id}
-                            type="button"
-                            onClick={() => updateCurrentCard({ aiTone: tone.id })}
-                            className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border ${
-                              isSelected
-                                ? 'bg-violet-50 border-violet-500 text-violet-900 shadow-sm font-black'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{tone.icon}</span>
-                            <span>{tone.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  {/* MODE A: AI GENERATION */}
+                  {currentCard.mode === 'ai' && (
+                    <div className="space-y-2.5 bg-violet-50/50 border border-violet-100 p-3.5 rounded-2xl">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase">
+                          Tono de la felicitación IA:
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                          {TONES.map(tone => {
+                            const isSelected = currentCard.aiTone === tone.id;
+                            return (
+                              <button
+                                key={tone.id}
+                                type="button"
+                                onClick={() => updateCurrentCard({ aiTone: tone.id })}
+                                className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all border ${
+                                  isSelected
+                                    ? 'bg-violet-600 border-violet-600 text-white shadow-sm font-black'
+                                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                }`}
+                              >
+                                <span>{tone.icon}</span>
+                                <span>{tone.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
 
-                  {/* 3. Send Mode (Approval vs Direct) */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-violet-600" />
-                      Modo de Envío
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          placeholder="💡 Notas opcionales para la IA (ej: Le gusta el tenis y viajar...)"
+                          value={currentCard.aiNotes || ''}
+                          onChange={e => updateCurrentCard({ aiNotes: e.target.value })}
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MODE B: TEMPLATE SELECTION */}
+                  {currentCard.mode === 'template' && (
+                    <div className="space-y-2 bg-indigo-50/50 border border-indigo-100 p-3.5 rounded-2xl">
+                      <label className="text-[11px] font-bold text-slate-600 uppercase">
+                        Selecciona una Plantilla:
+                      </label>
+                      {templates.length === 0 ? (
+                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Se usará el mensaje por defecto.</p>
+                      ) : (
+                        <select
+                          value={currentCard.templateId || templates[0]?.id || ''}
+                          onChange={e => updateCurrentCard({ templateId: e.target.value })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        >
+                          {templates.map(tpl => (
+                            <option key={tpl.id} value={tpl.id}>
+                              {tpl.title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+
+                  {/* MODE C: MANUAL CUSTOM MESSAGE */}
+                  {currentCard.mode === 'manual' && (
+                    <div className="space-y-1.5 bg-emerald-50/50 border border-emerald-100 p-3.5 rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase">
+                          Mensaje Personalizado:
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => updateCurrentCard({ customMessage: (currentCard.customMessage || '') + ' {nombre}' })}
+                          className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200 hover:bg-emerald-50"
+                        >
+                          + Insertar &ldquo;{'{nombre}'}&rdquo;
+                        </button>
+                      </div>
+                      <textarea
+                        rows={2}
+                        placeholder="¡Muchas felicidades {nombre}! Que tengas un día genial 🎂"
+                        value={currentCard.customMessage || ''}
+                        onChange={e => updateCurrentCard({ customMessage: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* 3. SEND MODE TOGGLE */}
+                  <div className="pt-1">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => updateCurrentCard({ autoSend: false })}
-                        className={`p-2.5 rounded-xl text-left border transition-all ${
+                        className={`p-2.5 rounded-2xl text-left border transition-all ${
                           !currentCard.autoSend
                             ? 'bg-violet-50/80 border-violet-500 text-violet-900 shadow-sm'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -622,42 +710,31 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
                         <p className="font-bold text-xs flex items-center gap-1">
                           🛡️ Pedir Aprobación
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Te avisa por WhatsApp para que des el visto bueno.</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Te avisa por WhatsApp el día del cumple para dar el visto bueno.</p>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => updateCurrentCard({ autoSend: true })}
-                        className={`p-2.5 rounded-xl text-left border transition-all ${
+                        className={`p-2.5 rounded-2xl text-left border transition-all ${
                           currentCard.autoSend
                             ? 'bg-violet-50/80 border-violet-500 text-violet-900 shadow-sm'
                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
-                          🚀 Envío 100% Automático
+                          🚀 Envío Automático
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5">Se envía solo en la mañana de su cumpleaños.</p>
                       </button>
                     </div>
                   </div>
 
-                  {/* 4. Optional AI Notes */}
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      placeholder="💡 Notas extra para la IA (ej: Le gusta el fútbol, viajar...)"
-                      value={currentCard.aiNotes || ''}
-                      onChange={e => updateCurrentCard({ aiNotes: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    />
-                  </div>
-
                 </div>
               </div>
 
-              {/* TINDER-STYLE ACTION BUTTONS */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              {/* ACTION BUTTONS */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
                 
                 {/* Skip Button */}
                 <button
@@ -666,7 +743,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
                   disabled={isSavingCurrent}
                   className="py-3.5 px-4 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-2xl font-bold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border border-slate-200/80 hover:border-red-200"
                 >
-                  <span>❌ Omitir</span>
+                  <span>❌ Omitir contacto</span>
                 </button>
 
                 {/* Save & Next Button */}
@@ -690,9 +767,9 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
                 </button>
               </div>
 
-              {/* Fast Pass / Batch Remaining Option */}
+              {/* Batch Remaining Option */}
               {cards.length - currentIndex > 1 && (
-                <div className="text-center pt-2">
+                <div className="text-center pt-1">
                   <button
                     type="button"
                     onClick={handleApproveAllRemaining}
@@ -700,7 +777,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
                     className="text-xs text-violet-600 hover:text-violet-800 font-bold underline inline-flex items-center gap-1"
                   >
                     <Zap className="w-3.5 h-3.5" />
-                    <span>Aprobar todos los restantes ({cards.length - currentIndex}) con IA rápida</span>
+                    <span>Guardar los restantes ({cards.length - currentIndex}) con IA rápida</span>
                   </button>
                 </div>
               )}
@@ -709,7 +786,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
           )}
 
           {/* ========================================================= */}
-          {/* STEP 3: CELEBRATION COMPLETED SCREEN                      */}
+          {/* STEP 3: CELEBRACIÓN Y FIN                                 */}
           {/* ========================================================= */}
           {step === 'completed' && (
             <div className="py-8 px-4 text-center space-y-6">
@@ -773,7 +850,7 @@ export function CalendarSyncDialog({ onClose }: CalendarSyncDialogProps) {
               />
             </div>
 
-            {/* Custom Phone Direct Input */}
+            {/* Direct Number Input */}
             <div className="bg-violet-50/70 p-3 rounded-2xl border border-violet-100 flex items-center gap-2">
               <Phone className="w-4 h-4 text-violet-600 shrink-0" />
               <input

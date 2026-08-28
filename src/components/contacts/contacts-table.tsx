@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteContact } from '@/app/(dashboard)/contacts/actions';
-import { Contact } from '@/types';
+import { Contact, Template } from '@/types';
 import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { 
   Search, 
@@ -24,9 +24,10 @@ const MONTH_NAMES = [
 
 interface ContactsTableProps {
   contacts: Contact[];
+  templates?: Template[];
 }
 
-export function ContactsTable({ contacts }: ContactsTableProps) {
+export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -213,7 +214,7 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
       )}
 
       {isImportOpen && (
-        <CalendarSyncDialog onClose={() => setIsImportOpen(false)} />
+        <CalendarSyncDialog onClose={() => setIsImportOpen(false)} templates={templates} />
       )}
 
     </div>
