@@ -12,7 +12,7 @@ import {
   fetchWhatsAppGroupsAction, 
   fetchWhatsAppContactsAction 
 } from '@/app/(dashboard)/contacts/actions';
-import { Template, WhatsAppGroup, WhatsAppChatContact } from '@/types';
+import { Template, WhatsAppGroup, WhatsAppChatContact, AiTone } from '@/types';
 import { 
   MessageSquare, 
   Users, 
@@ -23,8 +23,24 @@ import {
   Phone, 
   UserCheck, 
   Check,
-  RotateCw
+  RotateCw,
+  PenTool,
+  FileText
 } from 'lucide-react';
+
+const TONES: Array<{ id: AiTone; label: string; icon: string }> = [
+  { id: 'casual', label: 'Casual', icon: '😊' },
+  { id: 'divertido', label: 'Divertido', icon: '🎉' },
+  { id: 'emotivo', label: 'Emotivo', icon: '❤️' },
+  { id: 'formal', label: 'Formal', icon: '🤝' },
+];
+
+const AI_TONE_EXAMPLES: Record<AiTone, string> = {
+  casual: '¡Muchas felicidades {nombre}! 🎉🎂 Que tengas un día genial rodeado de los tuyos. ¡Un abrazo grande!',
+  divertido: '¡Feliz cumple {nombre}! 🍻🎂 ¡A celebrarlo por todo lo alto como se merece y que no falten las risas!',
+  emotivo: '¡Feliz cumpleaños {nombre}! ❤️✨ Deseo de todo corazón que pases un día maravilloso y súper especial. ¡Te mando un abrazo enorme!',
+  formal: '¡Feliz cumpleaños, {nombre}! 🎂 Le deseo un excelente día y muchos éxitos tanto personales como profesionales.',
+};
 
 interface ContactFormProps {
   initialData?: Partial<ContactFormData> & { id?: string };
@@ -499,173 +515,183 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
       </div>
 
       {/* 3. Modo de Felicitación */}
-      <div className="p-6 bg-white/60 backdrop-blur rounded-3xl border border-white/40 shadow-sm space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Modo de Redacción</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="p-6 bg-white/60 backdrop-blur rounded-3xl border border-white/40 shadow-sm space-y-5">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Configuración de la Felicitación</h3>
+          <p className="text-slate-500 text-xs mt-0.5">
+            Elige cómo se redactará el mensaje de felicitación para este contacto.
+          </p>
+        </div>
+
+        {/* 3 Tabs (1. Mensaje Fijo, 2. Plantilla, 3. IA Mágica) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <label className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${
             mode === 'manual' 
-              ? 'border-violet-500 bg-violet-50/80 shadow-sm' 
+              ? 'border-violet-500 bg-violet-50/80 shadow-sm font-bold' 
               : 'border-slate-200 bg-white/50 hover:bg-slate-50'
           }`}>
             <input type="radio" value="manual" {...form.register('mode')} className="hidden" />
-            <div className="font-bold text-slate-900 text-sm">Mensaje Fijo</div>
-            <p className="text-xs text-slate-500 mt-1">Escribe exactamente lo que se enviará.</p>
+            <div className="flex items-center gap-2 text-slate-900 text-sm">
+              <PenTool className="w-4 h-4 text-emerald-600" />
+              <span>Mensaje Fijo</span>
+            </div>
+            <p className="text-xs text-slate-500 font-normal mt-1">Escribe exactamente lo que se enviará.</p>
           </label>
 
           <label className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${
             mode === 'template' 
-              ? 'border-violet-500 bg-violet-50/80 shadow-sm' 
+              ? 'border-violet-500 bg-violet-50/80 shadow-sm font-bold' 
               : 'border-slate-200 bg-white/50 hover:bg-slate-50'
           }`}>
             <input type="radio" value="template" {...form.register('mode')} className="hidden" />
-            <div className="font-bold text-slate-900 text-sm">Usar Plantilla</div>
-            <p className="text-xs text-slate-500 mt-1">Usa un mensaje predefinido con variables como {'{nombre}'}.</p>
+            <div className="flex items-center gap-2 text-slate-900 text-sm">
+              <FileText className="w-4 h-4 text-indigo-600" />
+              <span>Usar Plantilla</span>
+            </div>
+            <p className="text-xs text-slate-500 font-normal mt-1">Mensaje guardado con variables como {'{nombre}'}.</p>
           </label>
 
           <label className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${
             mode === 'ai' 
-              ? 'border-violet-500 bg-violet-50/80 shadow-sm' 
+              ? 'border-violet-500 bg-violet-50/80 shadow-sm font-bold' 
               : 'border-slate-200 bg-white/50 hover:bg-slate-50'
           }`}>
             <input type="radio" value="ai" {...form.register('mode')} className="hidden" />
-            <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+            <div className="flex items-center gap-2 text-slate-900 text-sm">
               <Sparkles className="w-4 h-4 text-violet-600" />
-              Generado por IA ✨
+              <span>IA Mágica ✨</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Google Gemini redactará un mensaje único y natural cada año.</p>
+            <p className="text-xs text-slate-500 font-normal mt-1">Redactará un mensaje único y natural cada año.</p>
           </label>
         </div>
 
+        {/* MODE 1: MANUAL */}
         {mode === 'manual' && (
-          <div className="mt-4 space-y-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Mensaje Personalizado</label>
-              <textarea 
-                {...form.register('customMessage')} 
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none min-h-[100px]"
-                placeholder="Escribe el mensaje exacto de felicitación..."
-              />
-              {form.formState.errors.customMessage && (
-                <p className="text-red-500 text-xs">{form.formState.errors.customMessage.message}</p>
-              )}
-            </div>
-
-            {form.watch('customMessage') && (
-              <div className="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/90 space-y-2">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
-                  Vista previa en WhatsApp
-                </span>
-                <div className="relative p-3.5 bg-white rounded-2xl rounded-tl-sm border border-slate-200/90 shadow-sm max-w-lg">
-                  <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
-                    {form.watch('customMessage')}
-                  </p>
-                  <div className="flex justify-end items-center gap-1 mt-1 text-[10px] text-slate-400">
-                    <span>09:30</span>
-                    <span className="text-emerald-500 font-bold">✓✓</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {mode === 'template' && (
-          <div className="mt-4 space-y-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Seleccionar Plantilla</label>
-              <select 
-                {...form.register('templateId')} 
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium"
+          <div className="space-y-3 bg-emerald-50/40 border border-emerald-100 p-4.5 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Texto del Mensaje</label>
+              <button
+                type="button"
+                onClick={() => form.setValue('customMessage', (form.getValues('customMessage') || '') + ' {nombre}')}
+                className="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-50"
               >
-                <option value="">-- Elige una plantilla guardada --</option>
-                {templates.map(t => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </select>
-              {form.formState.errors.templateId && (
-                <p className="text-red-500 text-xs">{form.formState.errors.templateId.message}</p>
-              )}
+                + Insertar &ldquo;{'{nombre}'}&rdquo;
+              </button>
             </div>
-
-            {/* Live WhatsApp Preview */}
-            {selectedTemplate ? (
-              <div className="mt-3 p-4 bg-slate-50/90 rounded-2xl border border-slate-200/90 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
-                    Vista previa de felicitación
-                  </span>
-                  <span className="text-[11px] font-semibold text-violet-700 bg-violet-100/90 px-2.5 py-0.5 rounded-full">
-                    {selectedTemplate.title}
-                  </span>
-                </div>
-                
-                <div className="relative p-4 bg-white rounded-2xl rounded-tl-sm border border-slate-200/90 shadow-sm max-w-lg">
-                  <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
-                    {selectedTemplate.content
-                      .replace(/{nombre}/gi, contactName ? contactName.split(' ')[0] : 'Lucas')
-                      .replace(/{edad}/gi, calculatedAge ? String(calculatedAge) : '28')}
-                  </p>
-                  <div className="flex justify-end items-center gap-1 mt-1.5 text-[10px] text-slate-400">
-                    <span>09:30</span>
-                    <span className="text-emerald-500 font-bold">✓✓</span>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-slate-500">
-                  💡 <span className="font-semibold">Sustitución en vivo:</span> Las variables <code className="text-violet-600 font-bold font-mono">{"{nombre}"}</code> y <code className="text-violet-600 font-bold font-mono">{"{edad}"}</code> se rellenarán automáticamente con los datos de este contacto al felicitar.
-                </p>
-              </div>
-            ) : (
-              <div className="p-4 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-500">
-                Selecciona una plantilla en el desplegable para ver cómo se verá la felicitación en WhatsApp.
-              </div>
+            <textarea 
+              {...form.register('customMessage')} 
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none min-h-[90px]"
+              placeholder="¡Muchas felicidades {nombre}! 🎂 Que pases un gran día."
+            />
+            {form.formState.errors.customMessage && (
+              <p className="text-red-500 text-xs">{form.formState.errors.customMessage.message}</p>
             )}
           </div>
         )}
 
-        {mode === 'ai' && (
-          <div className="mt-4 space-y-4 p-4.5 bg-violet-50/40 rounded-2xl border border-violet-100">
-            {targetType === 'group' && (
-              <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-100/80 p-2.5 rounded-xl font-medium">
-                <Users className="w-4 h-4 shrink-0" />
-                <span>La IA adaptará automáticamente el mensaje en tono grupal festivo para el grupo de WhatsApp.</span>
-              </div>
+        {/* MODE 2: TEMPLATE */}
+        {mode === 'template' && (
+          <div className="space-y-3 bg-indigo-50/40 border border-indigo-100 p-4.5 rounded-2xl">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">Seleccionar Plantilla</label>
+            <select 
+              {...form.register('templateId')} 
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium"
+            >
+              <option value="">-- Elige una plantilla guardada --</option>
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>{t.title}</option>
+              ))}
+            </select>
+            {form.formState.errors.templateId && (
+              <p className="text-red-500 text-xs">{form.formState.errors.templateId.message}</p>
             )}
+          </div>
+        )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Relación / Vínculo (Opcional)</label>
-                <input 
-                  {...form.register('aiRelationship')} 
-                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none" 
-                  placeholder="Ej. amigo de la infancia, prima, compañero de pádel..."
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Tono del Mensaje</label>
-                <select 
-                  {...form.register('aiTone')} 
-                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium"
-                >
-                  <option value="casual">Casual (cercano y natural)</option>
-                  <option value="divertido">Divertido (gracioso y con bromas)</option>
-                  <option value="emotivo">Emotivo (cariñoso y sentimental)</option>
-                  <option value="formal">Formal (respetuoso y profesional)</option>
-                </select>
+        {/* MODE 3: AI */}
+        {mode === 'ai' && (
+          <div className="space-y-4 p-4.5 bg-violet-50/40 rounded-2xl border border-violet-100">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Tono del Mensaje IA</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {TONES.map(tone => {
+                  const isSelected = form.watch('aiTone') === tone.id;
+                  return (
+                    <button
+                      key={tone.id}
+                      type="button"
+                      onClick={() => form.setValue('aiTone', tone.id)}
+                      className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border ${
+                        isSelected
+                          ? 'bg-violet-600 border-violet-600 text-white shadow-sm font-black'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span>{tone.icon}</span>
+                      <span>{tone.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Notas o Anécdotas para la IA (Opcional)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Notas o Detalles para la IA (Opcional)</label>
               <textarea 
                 {...form.register('aiNotes')} 
-                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none min-h-[70px]" 
-                placeholder="Ej. Siempre pierde al FIFA, le gusta el café de especialidad, mote 'El Máquina'..."
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none min-h-[70px]" 
+                placeholder="Ej. Le gusta el tenis, cumple 30 años, viaja mucho..."
               />
             </div>
           </div>
         )}
+
+        {/* REALISTIC WHATSAPP CHAT PREVIEW (BALLOON / BURBUJA) */}
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 text-slate-700">
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+              Vista previa en WhatsApp
+            </span>
+            <span className="text-[11px] font-normal text-slate-400">
+              {targetType === 'group' ? `en el grupo "${form.watch('groupName') || 'Grupo'}"` : `así lo recibirá ${contactName ? contactName.split(' ')[0] : 'tu contacto'}`}
+            </span>
+          </div>
+
+          <div className="bg-[#efeae2] p-4 rounded-2xl border border-slate-200/90 shadow-inner">
+            {targetType === 'group' && form.watch('groupName') && (
+              <div className="flex items-center justify-center pb-2">
+                <span className="bg-slate-800/60 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                  👥 Grupo: {form.watch('groupName')}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <div className="bg-[#dcf8c6] text-slate-900 rounded-2xl rounded-tr-none px-3.5 py-2.5 max-w-[92%] sm:max-w-[85%] shadow-sm text-sm leading-relaxed space-y-1">
+                {targetType === 'group' && form.watch('mentionInGroup') && (
+                  <span className="font-bold text-violet-700 mr-1.5">
+                    @{contactName ? contactName.split(' ')[0] : 'Contacto'}
+                  </span>
+                )}
+
+                <span className="whitespace-pre-wrap font-sans text-slate-900">
+                  {mode === 'manual'
+                    ? (form.watch('customMessage') || '¡Muchas felicidades {nombre}! 🎂').replace(/\{nombre\}/gi, contactName ? contactName.split(' ')[0] : 'Lucas')
+                    : mode === 'template'
+                    ? (selectedTemplate ? selectedTemplate.content : '¡Muchas felicidades {nombre}! 🎂').replace(/\{nombre\}/gi, contactName ? contactName.split(' ')[0] : 'Lucas')
+                    : (AI_TONE_EXAMPLES[form.watch('aiTone') || 'casual']).replace(/\{nombre\}/gi, contactName ? contactName.split(' ')[0] : 'Lucas')}
+                </span>
+
+                <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500 font-medium pt-0.5">
+                  <span>09:30</span>
+                  <span className="text-sky-500 font-bold">✓✓</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* 4. Aprobación y Horarios */}

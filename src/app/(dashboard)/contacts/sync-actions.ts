@@ -8,7 +8,7 @@ import { evolutionApi } from '@/lib/evolution-api/client';
 import { fetchGoogleCalendarBirthdays } from '@/lib/integrations/google-calendar';
 import { fetchICloudCalendarBirthdays } from '@/lib/integrations/icloud-calendar';
 import { findBestWhatsAppMatch } from '@/lib/parsers/fuzzy-match';
-import { WhatsAppChatContact, ContactSource, WishMode, AiTone } from '@/types';
+import { WhatsAppChatContact, WhatsAppGroup, ContactSource, WishMode, AiTone, TargetType } from '@/types';
 
 async function getAuthenticatedUserId(): Promise<string> {
   const cookieStore = await cookies();
@@ -35,6 +35,12 @@ export interface SyncedContactPreview {
   matchScore: number;
   isAutoMatched: boolean;
 
+  // Target Destination
+  targetType: TargetType;
+  groupId?: string;
+  groupName?: string;
+  mentionInGroup?: boolean;
+
   // On-the-fly Greeting Customization
   mode: WishMode;
   templateId?: string;
@@ -50,6 +56,7 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
   success: boolean;
   items?: SyncedContactPreview[];
   availableWhatsAppContacts?: WhatsAppChatContact[];
+  availableGroups?: WhatsAppGroup[];
   error?: string;
 }> {
   try {
@@ -63,11 +70,17 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       };
     }
 
-    // Fetch user's WhatsApp contacts for cross-referencing
+    // Fetch user's WhatsApp contacts & groups in parallel
     const instanceName = `autocumple-${userId}`;
     let waContacts: WhatsAppChatContact[] = [];
+    let waGroups: WhatsAppGroup[] = [];
     try {
-      waContacts = await evolutionApi.fetchChats(instanceName);
+      const [c, g] = await Promise.all([
+        evolutionApi.fetchChats(instanceName),
+        evolutionApi.fetchGroups(instanceName),
+      ]);
+      waContacts = c;
+      waGroups = g;
     } catch {}
 
     const rawPreviews: SyncedContactPreview[] = [];
@@ -91,6 +104,12 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         profilePictureUrl: matchedWa?.profilePictureUrl || null,
         matchScore: match.confidence,
         isAutoMatched: isAuto,
+
+        // Target Destination Default
+        targetType: 'individual',
+        groupId: undefined,
+        groupName: undefined,
+        mentionInGroup: true,
 
         // Greeting Defaults (Default to fixed message)
         mode: 'manual',
@@ -124,6 +143,7 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       success: true,
       items: previews,
       availableWhatsAppContacts: waContacts,
+      availableGroups: waGroups,
     };
   } catch (error: any) {
     console.error('syncGoogleCalendarAction error:', error);
@@ -138,6 +158,7 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
   success: boolean;
   items?: SyncedContactPreview[];
   availableWhatsAppContacts?: WhatsAppChatContact[];
+  availableGroups?: WhatsAppGroup[];
   error?: string;
 }> {
   try {
@@ -151,11 +172,17 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       };
     }
 
-    // Fetch user's WhatsApp contacts for cross-referencing
+    // Fetch user's WhatsApp contacts & groups in parallel
     const instanceName = `autocumple-${userId}`;
     let waContacts: WhatsAppChatContact[] = [];
+    let waGroups: WhatsAppGroup[] = [];
     try {
-      waContacts = await evolutionApi.fetchChats(instanceName);
+      const [c, g] = await Promise.all([
+        evolutionApi.fetchChats(instanceName),
+        evolutionApi.fetchGroups(instanceName),
+      ]);
+      waContacts = c;
+      waGroups = g;
     } catch {}
 
     const rawPreviews: SyncedContactPreview[] = [];
@@ -179,6 +206,12 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         profilePictureUrl: matchedWa?.profilePictureUrl || null,
         matchScore: match.confidence,
         isAutoMatched: isAuto,
+
+        // Target Destination Default
+        targetType: 'individual',
+        groupId: undefined,
+        groupName: undefined,
+        mentionInGroup: true,
 
         // Greeting Defaults (Default to fixed message)
         mode: 'manual',
@@ -211,6 +244,7 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       success: true,
       items: previews,
       availableWhatsAppContacts: waContacts,
+      availableGroups: waGroups,
     };
   } catch (error: any) {
     console.error('syncICloudCalendarAction error:', error);
@@ -229,6 +263,10 @@ export async function saveSingleSyncedContactAction(contact: {
   birthYear?: number | null;
   source: ContactSource;
   profilePictureUrl?: string | null;
+  targetType?: TargetType;
+  groupId?: string;
+  groupName?: string;
+  mentionInGroup?: boolean;
   mode: WishMode;
   templateId?: string;
   customMessage?: string;
@@ -259,9 +297,12 @@ export async function saveSingleSyncedContactAction(contact: {
       birthDay: contact.birthDay,
       birthMonth: contact.birthMonth,
       birthYear: null,
-      targetType: 'individual',
+      targetType: contact.targetType || 'individual',
+      groupId: contact.targetType === 'group' ? contact.groupId : undefined,
+      groupName: contact.targetType === 'group' ? contact.groupName : undefined,
+      mentionInGroup: contact.targetType === 'group' ? (contact.mentionInGroup ?? true) : undefined,
       profilePictureUrl: profilePic || undefined,
-      mode: contact.mode || 'ai',
+      mode: contact.mode || 'manual',
       templateId: contact.mode === 'template' ? contact.templateId : undefined,
       customMessage: contact.mode === 'manual' ? contact.customMessage?.trim() : undefined,
       aiTone: contact.mode === 'ai' ? contact.aiTone || 'casual' : undefined,
@@ -292,6 +333,10 @@ export async function batchApproveSyncedContacts(
     birthYear?: number | null;
     source: ContactSource;
     profilePictureUrl?: string | null;
+    targetType?: TargetType;
+    groupId?: string;
+    groupName?: string;
+    mentionInGroup?: boolean;
     mode?: WishMode;
     templateId?: string;
     customMessage?: string;
@@ -330,9 +375,12 @@ export async function batchApproveSyncedContacts(
         birthDay: contact.birthDay,
         birthMonth: contact.birthMonth,
         birthYear: null,
-        targetType: 'individual',
+        targetType: contact.targetType || 'individual',
+        groupId: contact.targetType === 'group' ? contact.groupId : undefined,
+        groupName: contact.targetType === 'group' ? contact.groupName : undefined,
+        mentionInGroup: contact.targetType === 'group' ? (contact.mentionInGroup ?? true) : undefined,
         profilePictureUrl: profilePic || undefined,
-        mode: contact.mode || 'ai',
+        mode: contact.mode || 'manual',
         templateId: contact.mode === 'template' ? contact.templateId : undefined,
         customMessage: contact.mode === 'manual' ? contact.customMessage?.trim() : undefined,
         aiTone: contact.mode === 'ai' ? contact.aiTone || 'casual' : undefined,

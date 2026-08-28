@@ -10,7 +10,7 @@ import {
   getWhatsAppProfilePicAction,
   SyncedContactPreview 
 } from '@/app/(dashboard)/contacts/sync-actions';
-import { WhatsAppChatContact, Template, WishMode, AiTone } from '@/types';
+import { WhatsAppChatContact, WhatsAppGroup, Template, WishMode, AiTone, TargetType } from '@/types';
 import { 
   X, 
   Sparkles, 
@@ -23,12 +23,14 @@ import {
   ArrowRight, 
   ChevronLeft,
   Users, 
+  User,
   Edit3, 
   Phone, 
   FileText, 
   PenTool, 
   ShieldCheck, 
-  MessageSquare
+  MessageSquare,
+  AtSign
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -52,6 +54,26 @@ const AI_TONE_EXAMPLES: Record<AiTone, string> = {
   formal: '¡Feliz cumpleaños, {nombre}! 🎂 Le deseo un excelente día y muchos éxitos tanto personales como profesionales.',
 };
 
+function getDaysUntilBirthday(day: number, month: number): { text: string; isToday: boolean; isTomorrow: boolean } {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  let nextBday = new Date(currentYear, month - 1, day);
+  
+  today.setHours(0, 0, 0, 0);
+  nextBday.setHours(0, 0, 0, 0);
+  
+  if (nextBday.getTime() < today.getTime()) {
+    nextBday = new Date(currentYear + 1, month - 1, day);
+  }
+  
+  const diffTime = nextBday.getTime() - today.getTime();
+  const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (days === 0) return { text: '¡Hoy!', isToday: true, isTomorrow: false };
+  if (days === 1) return { text: '¡Mañana!', isToday: false, isTomorrow: true };
+  return { text: `Faltan ${days} días`, isToday: false, isTomorrow: false };
+}
+
 interface CalendarSyncDialogProps {
   onClose: () => void;
   templates?: Template[];
@@ -73,6 +95,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
   const [cards, setCards] = useState<SyncedContactPreview[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [availableWhatsAppContacts, setAvailableWhatsAppContacts] = useState<WhatsAppChatContact[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<WhatsAppGroup[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
@@ -114,7 +137,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
 
     try {
       const accessToken = await requestGoogleCalendarAccessToken();
-      setStatusMessage('Analizando cumpleaños y rescatando fotos de WhatsApp...');
+      setStatusMessage('Analizando cumpleaños, chats y grupos de WhatsApp...');
 
       const result = await syncGoogleCalendarAction(accessToken);
 
@@ -138,6 +161,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
       setSavedCount(0);
       setSkippedCount(0);
       setAvailableWhatsAppContacts(result.availableWhatsAppContacts || []);
+      setAvailableGroups(result.availableGroups || []);
       setStep('deck');
       toast.success(`🎉 ¡${result.items.length} cumpleaños detectados!`);
     } catch (err: any) {
@@ -181,6 +205,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
       setSavedCount(0);
       setSkippedCount(0);
       setAvailableWhatsAppContacts(result.availableWhatsAppContacts || []);
+      setAvailableGroups(result.availableGroups || []);
       setStep('deck');
       toast.success(`🍏 ¡${result.items.length} cumpleaños detectados en Apple Calendar!`);
     } catch (err: any) {
@@ -229,6 +254,11 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
       return;
     }
 
+    if (currentCard.targetType === 'group' && !currentCard.groupId && availableGroups.length > 0) {
+      const defaultGroup = availableGroups[0];
+      updateCurrentCard({ groupId: defaultGroup.id, groupName: defaultGroup.subject });
+    }
+
     const messageToSave = currentCard.mode === 'manual' 
       ? (currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE)
       : undefined;
@@ -247,6 +277,10 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
         birthYear: null,
         source: currentCard.source,
         profilePictureUrl: currentCard.profilePictureUrl,
+        targetType: currentCard.targetType || 'individual',
+        groupId: currentCard.targetType === 'group' ? (currentCard.groupId || availableGroups[0]?.id) : undefined,
+        groupName: currentCard.targetType === 'group' ? (currentCard.groupName || availableGroups[0]?.subject) : undefined,
+        mentionInGroup: currentCard.targetType === 'group' ? (currentCard.mentionInGroup ?? true) : undefined,
         mode: currentCard.mode || 'manual',
         templateId: templateIdToSave,
         customMessage: messageToSave,
@@ -292,23 +326,26 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
     ? (currentCard.matchedName || currentCard.name).split(' ')[0] 
     : 'Amigo/a';
 
-  let livePreviewText = '';
+  let livePreviewBody = '';
   if (currentCard) {
     if (currentCard.mode === 'manual') {
       const raw = currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE;
-      livePreviewText = raw.replace(/\{nombre\}/gi, contactFirstName);
+      livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
     } else if (currentCard.mode === 'template') {
       const tpl = templates.find(t => t.id === currentCard.templateId) || templates[0];
       const raw = tpl ? tpl.content : DEFAULT_FIXED_MESSAGE;
-      livePreviewText = raw.replace(/\{nombre\}/gi, contactFirstName);
+      livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
     } else if (currentCard.mode === 'ai') {
       const example = AI_TONE_EXAMPLES[currentCard.aiTone || 'casual'];
-      livePreviewText = example.replace(/\{nombre\}/gi, contactFirstName);
+      livePreviewBody = example.replace(/\{nombre\}/gi, contactFirstName);
       if (currentCard.aiNotes?.trim()) {
-        livePreviewText += `\n\n*(La IA adaptará el texto según tus notas: "${currentCard.aiNotes.trim()}")*`;
+        livePreviewBody += `\n\n*(La IA adaptará el texto según tus notas: "${currentCard.aiNotes.trim()}")*`;
       }
     }
   }
+
+  const daysInfo = currentCard ? getDaysUntilBirthday(currentCard.birthDay, currentCard.birthMonth) : null;
+  const currentGroupName = currentCard?.groupName || (availableGroups.find(g => g.id === currentCard?.groupId)?.subject) || 'Grupo de WhatsApp';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -365,7 +402,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     ✨ {savedCount} guardados
                   </span>
                   {skippedCount > 0 && (
-                    <span className="text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full font-bold text-[11px]">
+                    <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold text-[11px]">
                       ⏭️ {skippedCount} omitidos
                     </span>
                   )}
@@ -564,6 +601,11 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-50 border border-amber-200/80 text-amber-900 rounded-full font-black text-xs shadow-sm">
                       🎂 {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
+                      {daysInfo && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.2 rounded-md ml-0.5">
+                          {daysInfo.text}
+                        </span>
+                      )}
                     </span>
 
                     {currentCard.matchScore > 0 && (
@@ -591,13 +633,111 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
 
                 <hr className="border-slate-100" />
 
-                {/* 2. GREETING CONFIGURATION (GENEROUS SPACING & DEFAULT FIXED MESSAGE) */}
+                {/* 2. DESTINO DE LA FELICITACIÓN (CHAT PRIVADO VS GRUPO) */}
+                <div className="space-y-2.5 text-left">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
+                    ¿Dónde quieres enviar la felicitación?
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateCurrentCard({ targetType: 'individual' })}
+                      className={`p-3 rounded-2xl text-left border transition-all flex items-center gap-2.5 ${
+                        currentCard.targetType !== 'group'
+                          ? 'bg-violet-50 border-violet-500 text-violet-900 shadow-sm font-bold'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <User className="w-4 h-4 text-violet-600 shrink-0" />
+                      <div>
+                        <p className="text-xs font-black">Chat Privado</p>
+                        <p className="text-[10px] text-slate-500 font-normal">Directo a su WhatsApp</p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaultGroup = availableGroups[0];
+                        updateCurrentCard({ 
+                          targetType: 'group',
+                          groupId: currentCard.groupId || defaultGroup?.id,
+                          groupName: currentCard.groupName || defaultGroup?.subject,
+                          mentionInGroup: currentCard.mentionInGroup ?? true,
+                        });
+                      }}
+                      className={`p-3 rounded-2xl text-left border transition-all flex items-center gap-2.5 ${
+                        currentCard.targetType === 'group'
+                          ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm font-bold'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-xs font-black">Grupo de WhatsApp</p>
+                        <p className="text-[10px] text-slate-500 font-normal">Amigos, familia, etc.</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Group Selector Sub-block */}
+                  {currentCard.targetType === 'group' && (
+                    <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-2.5 mt-2 animate-in fade-in duration-200">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-emerald-900 uppercase">
+                          Selecciona el Grupo de WhatsApp:
+                        </label>
+                        {availableGroups.length === 0 ? (
+                          <p className="text-xs text-emerald-700">No se detectaron grupos en tu cuenta de WhatsApp.</p>
+                        ) : (
+                          <select
+                            value={currentCard.groupId || availableGroups[0]?.id || ''}
+                            onChange={e => {
+                              const selectedId = e.target.value;
+                              const group = availableGroups.find(g => g.id === selectedId);
+                              updateCurrentCard({
+                                groupId: selectedId,
+                                groupName: group?.subject || '',
+                              });
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          >
+                            {availableGroups.map(g => (
+                              <option key={g.id} value={g.id}>
+                                👥 {g.subject}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      {/* Mention Checkbox */}
+                      <label className="flex items-center gap-2 cursor-pointer pt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={currentCard.mentionInGroup ?? true}
+                          onChange={e => updateCurrentCard({ mentionInGroup: e.target.checked })}
+                          className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                        />
+                        <span className="text-xs font-bold text-emerald-900">
+                          Etiquetar con mención @{contactFirstName} en el grupo
+                        </span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                <hr className="border-slate-100" />
+
+                {/* 3. GREETING CONFIGURATION (GENEROUS SPACING & DEFAULT FIXED MESSAGE) */}
                 <div className="space-y-4 text-left">
                   
                   {/* Mode Selector Tabs (1: Mensaje Fijo, 2: Plantilla, 3: IA Mágica) */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                      Configuración de la Felicitación:
+                      Configuración del Mensaje:
                     </label>
                     <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-100 rounded-2xl">
                       
@@ -735,23 +875,42 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     </div>
                   )}
 
-                  {/* 3. REALISTIC WHATSAPP CHAT PREVIEW (BALLOON / BURBUJA) */}
+                  {/* 4. REALISTIC WHATSAPP CHAT PREVIEW (BALLOON / BURBUJA) */}
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                       <span className="flex items-center gap-1.5 text-slate-700">
                         <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
                         Vista previa en WhatsApp
                       </span>
-                      <span className="text-[11px] font-normal text-slate-400 lowercase">
-                        así lo recibirá {contactFirstName}
+                      <span className="text-[11px] font-normal text-slate-400">
+                        {currentCard.targetType === 'group' ? `en el grupo "${currentGroupName}"` : `así lo recibirá ${contactFirstName}`}
                       </span>
                     </div>
 
                     {/* WhatsApp Chat Simulation */}
                     <div className="bg-[#efeae2] p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-inner">
+                      
+                      {/* Group Header Badge inside chat preview if target is group */}
+                      {currentCard.targetType === 'group' && (
+                        <div className="flex items-center justify-center pb-2">
+                          <span className="bg-slate-800/60 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-xs">
+                            👥 Grupo: {currentGroupName}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] text-slate-900 rounded-2xl rounded-tr-none px-3.5 py-2.5 max-w-[92%] sm:max-w-[88%] shadow-sm text-xs sm:text-sm leading-relaxed space-y-1">
-                          <p className="whitespace-pre-wrap font-sans text-slate-900">{livePreviewText}</p>
+                          
+                          {/* Group @mention tag */}
+                          {currentCard.targetType === 'group' && currentCard.mentionInGroup && (
+                            <span className="font-bold text-violet-700 mr-1.5">
+                              @{contactFirstName}
+                            </span>
+                          )}
+
+                          <span className="whitespace-pre-wrap font-sans text-slate-900">{livePreviewBody}</span>
+                          
                           <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500 font-medium pt-0.5">
                             <span>09:30</span>
                             <span className="text-sky-500 font-bold">✓✓</span>
@@ -761,7 +920,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     </div>
                   </div>
 
-                  {/* 4. SEND MODE TOGGLE */}
+                  {/* 5. SEND MODE TOGGLE */}
                   <div className="pt-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
                       Momento de Envío:
