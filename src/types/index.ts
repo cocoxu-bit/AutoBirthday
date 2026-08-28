@@ -5,7 +5,7 @@ export type AiTone = 'casual' | 'divertido' | 'formal' | 'emotivo';
 export type WishStatus = 'draft' | 'waiting_approval' | 'approved' | 'queued' | 'sent' | 'failed' | 'cancelled' | 'expired';
 export type WhatsAppInstanceStatus = 'disconnected' | 'connecting' | 'connected';
 export type TargetType = 'individual' | 'group';
-export type ContactSource = 'manual' | 'csv' | 'calendar_ics' | 'vcard_vcf';
+export type ContactSource = 'manual' | 'csv' | 'calendar_ics' | 'vcard_vcf' | 'google_calendar' | 'apple_calendar';
 
 export interface WhatsAppGroup {
   id: string;          // Group JID (e.g. 12036302482394@g.us)

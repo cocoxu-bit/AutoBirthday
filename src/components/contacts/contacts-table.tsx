@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact } from '@/types';
-import { ImportWizardDialog } from '@/components/contacts/import-wizard-dialog';
+import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { 
   Search, 
   UserPlus, 
@@ -14,7 +14,7 @@ import {
   Trash2, 
   Users, 
   ChevronRight,
-  UploadCloud
+  Calendar
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -78,10 +78,10 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
             type="button"
             onClick={() => setIsImportOpen(true)}
             className="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2.5 bg-white/90 hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-sm text-xs sm:text-sm font-bold shrink-0"
-            title="Importar cumpleaños desde Google Calendar, Apple Calendar o Contactos"
+            title="Sincronizar cumpleaños directamente desde Google Calendar o Apple Calendar"
           >
-            <UploadCloud className="w-4 h-4 text-violet-600" />
-            <span>Importar</span>
+            <Calendar className="w-4 h-4 text-violet-600" />
+            <span>Sincronizar Calendario</span>
           </button>
 
           {/* Add Contact CTA */}
@@ -213,7 +213,7 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
       )}
 
       {isImportOpen && (
-        <ImportWizardDialog onClose={() => setIsImportOpen(false)} />
+        <CalendarSyncDialog onClose={() => setIsImportOpen(false)} />
       )}
 
     </div>

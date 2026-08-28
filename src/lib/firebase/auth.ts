@@ -76,6 +76,27 @@ export async function signInWithGoogle() {
   }
 }
 
+export async function requestGoogleCalendarAccessToken(): Promise<string> {
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+    provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
+    provider.setCustomParameters({ prompt: 'consent' });
+
+    const userCredential = await signInWithPopup(auth, provider);
+    const credential = GoogleAuthProvider.credentialFromResult(userCredential);
+    const accessToken = credential?.accessToken;
+
+    if (!accessToken) {
+      throw new Error('No se pudo obtener el token de acceso de Google Calendar.');
+    }
+
+    return accessToken;
+  } catch (error: any) {
+    throw new Error(mapAuthError(error));
+  }
+}
+
 export async function signOutUser() {
   try {
     await signOut(auth);
