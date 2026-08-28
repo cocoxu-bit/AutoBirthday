@@ -254,11 +254,14 @@ class EvolutionAPIClient {
           ? chat.lastMessage.messageTimestamp * 1000 
           : chat.updatedAt ? new Date(chat.updatedAt).getTime() : 0;
 
+        const pic = chat.profilePictureUrl || chat.profilePicUrl || chat.avatar || null;
+
         contacts.push({
           jid,
           phone: `+${phone}`,
           name,
           pushName: chat.lastMessage?.pushName || chat.pushName,
+          profilePictureUrl: pic,
           lastActivity: time,
         });
       }
@@ -270,11 +273,17 @@ class EvolutionAPIClient {
 
         const phone = jid.replace(/@.*$/, '');
         const name = c.pushName || c.name || c.verifiedName || phone;
+        const pic = c.profilePictureUrl || c.profilePicUrl || c.avatar || null;
 
         if (seen.has(phone)) {
           const existing = contacts.find(item => item.phone === `+${phone}`);
-          if (existing && (!existing.name || existing.name === phone) && name !== phone) {
-            existing.name = name;
+          if (existing) {
+            if ((!existing.name || existing.name === phone) && name !== phone) {
+              existing.name = name;
+            }
+            if (!existing.profilePictureUrl && pic) {
+              existing.profilePictureUrl = pic;
+            }
           }
           continue;
         }
@@ -285,6 +294,7 @@ class EvolutionAPIClient {
           phone: `+${phone}`,
           name,
           pushName: c.pushName,
+          profilePictureUrl: pic,
           lastActivity: 0,
         });
       }

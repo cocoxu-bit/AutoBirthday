@@ -106,18 +106,13 @@ export async function fetchGoogleCalendarBirthdays(accessToken: string): Promise
           let birthYear: number | null = null;
 
           if (parts.length >= 3) {
-            const rawYear = parseInt(parts[0], 10);
             birthMonth = parseInt(parts[1], 10);
             birthDay = parseInt(parts[2], 10);
-            
-            // Only keep year if it represents a realistic birth year (not the current calendar year recurrence)
-            if (rawYear > 1900 && rawYear <= new Date().getFullYear() - 1) {
-              birthYear = rawYear;
-            }
           } else {
             birthDay = dateObj.getUTCDate();
             birthMonth = dateObj.getUTCMonth() + 1;
           }
+          birthYear = null; // Explicitly null to prevent wrong birth years
 
           if (!birthDay || !birthMonth || birthMonth < 1 || birthMonth > 12) continue;
 

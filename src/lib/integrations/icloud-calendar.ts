@@ -40,7 +40,7 @@ export async function fetchICloudCalendarBirthdays(calendarUrl: string): Promise
       name: p.name,
       birthDay: p.birthDay,
       birthMonth: p.birthMonth,
-      birthYear: p.birthYear || null,
+      birthYear: null,
       rawSummary: p.name,
       source: 'apple' as const,
     }));

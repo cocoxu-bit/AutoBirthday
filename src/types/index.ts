@@ -19,6 +19,7 @@ export interface WhatsAppChatContact {
   phone: string;
   name: string;
   pushName?: string;
+  profilePictureUrl?: string | null;
 }
 
 export interface Contact<T = Timestamp> {
