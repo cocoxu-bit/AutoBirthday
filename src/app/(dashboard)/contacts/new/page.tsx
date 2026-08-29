@@ -29,21 +29,12 @@ export default async function NewContactPage() {
   const templates = await getTemplates(userId);
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Link 
-          href="/contacts" 
-          className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Nuevo Contacto</h1>
-          <p className="text-slate-500 mt-1">Añade los datos de la persona a felicitar.</p>
-        </div>
-      </div>
-
-      <ContactForm templates={templates} />
+    <div className="max-w-xl mx-auto">
+      <ContactForm 
+        templates={templates} 
+        title="Nuevo Contacto"
+        subtitle="Añade los datos de la persona a felicitar."
+      />
     </div>
   );
 }

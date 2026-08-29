@@ -41,21 +41,13 @@ export default async function EditContactPage({
   const templates = await getTemplates(userId);
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Link 
-          href="/contacts" 
-          className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Editar Contacto</h1>
-          <p className="text-slate-500 mt-1">Modificando los datos de {contact.name}.</p>
-        </div>
-      </div>
-
-      <ContactForm initialData={contact} templates={templates} />
+    <div className="max-w-xl mx-auto">
+      <ContactForm 
+        initialData={contact} 
+        templates={templates} 
+        title="Editar Contacto"
+        subtitle={`Modificando los datos de ${contact.name}.`}
+      />
     </div>
   );
 }
