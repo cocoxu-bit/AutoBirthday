@@ -24,8 +24,7 @@ import {
   PenTool, 
   FileText, 
   Sparkles,
-  ArrowLeft,
-  Smartphone
+  ArrowLeft
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -49,6 +48,15 @@ const AI_TONE_EXAMPLES: Record<AiTone, string> = {
   formal: '¡Feliz cumpleaños, {nombre}! 🎂 Le deseo un excelente día y muchos éxitos tanto personales como profesionales.',
 };
 
+function isValidSavedName(name?: string, phone?: string): boolean {
+  if (!name) return false;
+  const clean = name.trim();
+  if (!clean || clean === 'Você' || clean === 'You') return false;
+  if (/^[\d+\s\-()]+$/.test(clean)) return false;
+  if (phone && clean.replace(/\D/g, '') === phone.replace(/\D/g, '')) return false;
+  return true;
+}
+
 interface ContactFormProps {
   initialData?: Partial<ContactFormData> & { id?: string; profilePictureUrl?: string | null };
   templates: Template[];
@@ -67,7 +75,6 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
 
   // Profile Picture state
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialData?.profilePictureUrl || null);
-  const [hasContactPicker, setHasContactPicker] = useState(false);
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema) as any,
@@ -102,18 +109,10 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
   const phoneValue = form.watch('phone');
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
-  // Detect Mobile Native Contact Picker API
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window) {
-      setHasContactPicker(true);
-    }
-  }, []);
-
   // Instant Cache Loading via localStorage
   useEffect(() => {
     async function loadData() {
       // 1. Instant load from local storage
-      let merged: WhatsAppChatContact[] = [];
       try {
         const cachedGroups = localStorage.getItem('autobirthday_cached_groups');
         const cachedContacts = localStorage.getItem('autobirthday_cached_contacts');
@@ -126,10 +125,12 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
         
         const map = new Map<string, WhatsAppChatContact>();
         for (const item of [...c1, ...c2]) {
-          const clean = (item.phone || item.jid || '').replace(/\D/g, '');
-          if (clean) map.set(clean, item);
+          if (isValidSavedName(item.name, item.phone)) {
+            const clean = (item.phone || item.jid || '').replace(/\D/g, '');
+            if (clean) map.set(clean, item);
+          }
         }
-        merged = Array.from(map.values());
+        const merged = Array.from(map.values());
         if (merged.length > 0) setAllContacts(merged);
       } catch {}
 
@@ -146,8 +147,10 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
         
         const map = new Map<string, WhatsAppChatContact>();
         for (const item of [...loadedContacts, ...phoneList]) {
-          const clean = (item.phone || item.jid || '').replace(/\D/g, '');
-          if (clean) map.set(clean, item);
+          if (isValidSavedName(item.name, item.phone)) {
+            const clean = (item.phone || item.jid || '').replace(/\D/g, '');
+            if (clean) map.set(clean, item);
+          }
         }
         const updated = Array.from(map.values());
         setAllContacts(updated);
@@ -208,66 +211,6 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
     toast.success(`Contacto "${c.name}" vinculado 🎉`);
   };
 
-  // Sync / Pick from Phone Agenda into unified pool
-  const handleSyncPhoneAgenda = async () => {
-    if ('contacts' in navigator && 'ContactsManager' in window) {
-      try {
-        const props = ['name', 'tel'];
-        const opts = { multiple: true };
-        const selected = await (navigator as any).contacts.select(props, opts);
-        if (selected && selected.length > 0) {
-          const imported: WhatsAppChatContact[] = selected.map((c: any) => {
-            const rawName = c.name?.[0] || 'Contacto';
-            const rawPhone = (c.tel?.[0] || '').replace(/\D/g, '');
-            return {
-              jid: `${rawPhone}@s.whatsapp.net`,
-              name: rawName,
-              phone: `+${rawPhone}`,
-            };
-          }).filter((c: WhatsAppChatContact) => c.phone.length > 5);
-
-          // If single contact selected, fill directly
-          if (imported.length === 1) {
-            const single = imported[0];
-            const cleanPhone = single.phone.replace(/\D/g, '');
-            form.setValue('name', single.name);
-            form.setValue('phone', cleanPhone);
-            setIsContactDropdownOpen(false);
-            setContactSearch('');
-            
-            getWhatsAppProfilePicAction(cleanPhone).then(pic => {
-              if (pic) {
-                setProfilePictureUrl(pic);
-                form.setValue('profilePictureUrl', pic);
-              }
-            }).catch(() => {});
-            
-            toast.success(`Contacto vinculado: ${single.name}`);
-          } else {
-            // Save to phone pool and merge
-            const currentPhoneStored = localStorage.getItem('autobirthday_phone_contacts');
-            const prev: WhatsAppChatContact[] = currentPhoneStored ? JSON.parse(currentPhoneStored) : [];
-            const combinedPhone = [...prev, ...imported];
-            localStorage.setItem('autobirthday_phone_contacts', JSON.stringify(combinedPhone));
-            
-            // Merge with state
-            const map = new Map<string, WhatsAppChatContact>();
-            for (const item of [...allContacts, ...imported]) {
-              const clean = (item.phone || item.jid || '').replace(/\D/g, '');
-              if (clean) map.set(clean, item);
-            }
-            setAllContacts(Array.from(map.values()));
-            toast.success(`¡${imported.length} contactos de tu agenda sincronizados!`);
-          }
-        }
-      } catch (err: any) {
-        console.warn('Device contact picker cancelled:', err);
-      }
-    } else {
-      toast.info('💡 La importación directa de agenda funciona en navegadores móviles (Chrome Android / Safari)');
-    }
-  };
-
   async function onSubmit(data: ContactFormData) {
     setIsSubmitting(true);
     try {
@@ -320,10 +263,14 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
     }
   }
 
-  const filteredContacts = allContacts.filter(c => 
-    c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-    c.phone.includes(contactSearch)
-  ).slice(0, 25);
+  // Filter contacts with actual names only
+  const filteredContacts = allContacts
+    .filter(c => isValidSavedName(c.name, c.phone))
+    .filter(c => 
+      c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+      c.phone.includes(contactSearch)
+    )
+    .slice(0, 30);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-xl mx-auto pb-20 relative">
@@ -362,7 +309,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
           </p>
         </div>
 
-        {/* UNIFIED SEARCH BOX */}
+        {/* UNIFIED SEARCH BOX (ZERO EXTRA BUTTONS) */}
         <div ref={contactDropdownRef} className="space-y-1.5 text-left relative">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-violet-600" />
@@ -388,27 +335,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
           {isContactDropdownOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-30 max-h-64 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-150">
               
-              {/* Native Phone Agenda 1-Tap Sync Prompt */}
-              {hasContactPicker && (
-                <button
-                  type="button"
-                  onClick={handleSyncPhoneAgenda}
-                  className="w-full p-3 text-left bg-emerald-50/70 hover:bg-emerald-100 transition-colors flex items-center justify-between text-emerald-950 group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
-                      📱
-                    </div>
-                    <div>
-                      <p className="font-bold text-xs text-emerald-900">Sincronizar con la Agenda de tu Teléfono</p>
-                      <p className="text-[11px] text-emerald-700">Encuentra a cualquier persona de tus contactos</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-bold text-emerald-700 group-hover:translate-x-0.5 transition-transform">➔</span>
-                </button>
-              )}
-
-              {/* Filtered Contacts (WhatsApp + Agenda) */}
+              {/* Pure Filtered Contacts (WhatsApp + Agenda, ONLY NAMED CONTACTS) */}
               {filteredContacts.length > 0 ? (
                 filteredContacts.map(c => (
                   <button
@@ -437,7 +364,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
                 ))
               ) : contactSearch.trim() ? (
                 <div className="p-3.5 text-center text-xs text-slate-500 space-y-2">
-                  <p>¿No aparece en la lista rápida?</p>
+                  <p>¿No aparece en tus contactos guardados?</p>
                   <button
                     type="button"
                     onClick={() => {

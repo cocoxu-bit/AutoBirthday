@@ -306,7 +306,17 @@ class EvolutionAPIClient {
       // Sort by most recent activity
       contacts.sort((a, b) => b.lastActivity - a.lastActivity);
 
-      const result: WhatsAppChatContact[] = contacts.map(({ lastActivity, ...c }) => c);
+      // Filter out contacts without a real saved name (e.g. raw phone numbers)
+      const validContacts = contacts.filter(c => {
+        if (!c.name) return false;
+        const name = c.name.trim();
+        if (!name || name === 'Você' || name === 'You') return false;
+        if (/^[\d+\s\-()]+$/.test(name)) return false;
+        if (c.phone && name.replace(/\D/g, '') === c.phone.replace(/\D/g, '')) return false;
+        return true;
+      });
+
+      const result: WhatsAppChatContact[] = validContacts.map(({ lastActivity, ...c }) => c);
       this.contactsCache.set(instanceName, {
         data: result,
         expiresAt: Date.now() + 5 * 60 * 1000,
