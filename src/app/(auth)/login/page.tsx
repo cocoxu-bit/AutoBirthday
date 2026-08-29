@@ -86,7 +86,7 @@ export default function LoginPage() {
           className="w-20 h-20 sm:w-22 sm:h-22 object-contain mx-auto mb-3 drop-shadow-lg" 
           priority 
         />
-        <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-violet-700 to-indigo-700 bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-[#285953] to-emerald-700 bg-clip-text text-transparent">
           AutoBirthday
         </h1>
         <p className="text-slate-500 mt-1 text-sm">
