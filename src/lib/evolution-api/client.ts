@@ -224,7 +224,7 @@ class EvolutionAPIClient {
     }
 
     try {
-      const [chats, contactsPost, contactsGet] = await Promise.all([
+      const [chats, contactsPost, messagesRes] = await Promise.all([
         this.request<any[]>(`/chat/findChats/${instanceName}`, {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
@@ -233,12 +233,28 @@ class EvolutionAPIClient {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
         }).catch(() => []),
-        this.request<any[]>(`/chat/findContacts/${instanceName}`, {
-          method: 'GET',
-        }).catch(() => []),
+        this.request<any>(`/chat/findMessages/${instanceName}`, {
+          method: 'POST',
+          body: JSON.stringify({ where: {}, limit: 1000 }),
+        }).catch(() => ({})),
       ]);
+
+      // Build pushName resolution map from message history (when lastMessage.pushName is 'Você')
+      const msgRecords = messagesRes?.messages?.records || (Array.isArray(messagesRes) ? messagesRes : []);
+      const messageNameMap = new Map<string, string>();
+      for (const m of msgRecords) {
+        const jid = m.key?.remoteJid;
+        const name = m.pushName;
+        if (jid && jid.endsWith('@s.whatsapp.net') && name && name !== 'Você' && name !== 'You') {
+          const phone = jid.replace(/@.*$/, '');
+          const cleanName = name.trim();
+          if (!/^[\d+\s\-()]+$/.test(cleanName) && !messageNameMap.has(phone)) {
+            messageNameMap.set(phone, cleanName);
+          }
+        }
+      }
       
-      const rawContactsList = [...(contactsPost || []), ...(contactsGet || [])];
+      const rawContactsList = [...(contactsPost || [])];
       const contacts: Array<WhatsAppChatContact & { lastActivity: number }> = [];
       const seen = new Set<string>();
 
@@ -251,8 +267,17 @@ class EvolutionAPIClient {
         if (seen.has(phone)) continue;
         seen.add(phone);
 
-        const rawName = chat.lastMessage?.pushName || chat.pushName || chat.name;
-        const name = (!rawName || rawName === 'Você' || rawName === 'You') ? phone : rawName;
+        let rawName = chat.name || chat.pushName;
+        if (!rawName || rawName === 'Você' || rawName === 'You' || /^[\d+\s\-()]+$/.test(rawName.trim())) {
+          if (chat.lastMessage && !chat.lastMessage.key?.fromMe && chat.lastMessage.pushName && chat.lastMessage.pushName !== 'Você') {
+            rawName = chat.lastMessage.pushName;
+          }
+        }
+        if (!rawName || rawName === 'Você' || rawName === 'You' || /^[\d+\s\-()]+$/.test(rawName.trim())) {
+          rawName = messageNameMap.get(phone);
+        }
+
+        const name = rawName && !/^[\d+\s\-()]+$/.test(rawName.trim()) ? rawName.trim() : phone;
         
         const time = chat.lastMessage?.messageTimestamp 
           ? chat.lastMessage.messageTimestamp * 1000 
@@ -276,7 +301,7 @@ class EvolutionAPIClient {
         if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
 
         const phone = jid.replace(/@.*$/, '');
-        const name = c.pushName || c.name || c.verifiedName || phone;
+        let name = c.pushName || c.name || c.verifiedName || messageNameMap.get(phone) || phone;
         const pic = c.profilePictureUrl || c.profilePicUrl || c.avatar || null;
 
         if (seen.has(phone)) {
