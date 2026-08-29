@@ -224,7 +224,7 @@ class EvolutionAPIClient {
     }
 
     try {
-      const [chats, contactsList] = await Promise.all([
+      const [chats, contactsPost, contactsGet] = await Promise.all([
         this.request<any[]>(`/chat/findChats/${instanceName}`, {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
@@ -233,8 +233,12 @@ class EvolutionAPIClient {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
         }).catch(() => []),
+        this.request<any[]>(`/chat/findContacts/${instanceName}`, {
+          method: 'GET',
+        }).catch(() => []),
       ]);
       
+      const rawContactsList = [...(contactsPost || []), ...(contactsGet || [])];
       const contacts: Array<WhatsAppChatContact & { lastActivity: number }> = [];
       const seen = new Set<string>();
 
@@ -267,7 +271,7 @@ class EvolutionAPIClient {
       }
 
       // Process address book contacts
-      for (const c of (contactsList || [])) {
+      for (const c of (rawContactsList || [])) {
         const jid = c.id || c.remoteJid || c.jid;
         if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
 

@@ -30,7 +30,8 @@ import {
   PenTool, 
   ShieldCheck, 
   MessageSquare,
-  AtSign
+  AtSign,
+  Smartphone
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -1066,6 +1067,48 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Phone Agenda Quick Picker */}
+            <button
+              type="button"
+              onClick={async () => {
+                if ('contacts' in navigator && 'ContactsManager' in window) {
+                  try {
+                    const props = ['name', 'tel'];
+                    const opts = { multiple: false };
+                    const selected = await (navigator as any).contacts.select(props, opts);
+                    if (selected && selected.length > 0) {
+                      const c = selected[0];
+                      const rawName = c.name?.[0] || '';
+                      const rawPhone = (c.tel?.[0] || '').replace(/\D/g, '');
+                      if (rawPhone) {
+                        let pic: string | null = null;
+                        try {
+                          pic = await getWhatsAppProfilePicAction(rawPhone);
+                        } catch {}
+
+                        updateCurrentCard({
+                          matchedPhone: rawPhone,
+                          matchedName: rawName || currentCard.name,
+                          profilePictureUrl: pic,
+                          matchScore: 100,
+                        });
+                        setShowChangeWaModal(false);
+                        toast.success(`Vinculado a ${rawName || rawPhone}`);
+                      }
+                    }
+                  } catch (err) {
+                    console.warn('Picker cancelled:', err);
+                  }
+                } else {
+                  toast.info('💡 La importación directa de agenda funciona en navegadores móviles (Chrome Android / Safari)');
+                }
+              }}
+              className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-900 border border-emerald-200/80 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>📱 Elegir de la Agenda del Teléfono</span>
+            </button>
 
             {/* Search Box */}
             <div className="relative">

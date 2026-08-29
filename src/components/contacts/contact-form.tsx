@@ -21,12 +21,12 @@ import {
   Sparkles, 
   Loader2, 
   Search, 
-  Check,
+  Check, 
   RotateCw,
   PenTool,
   FileText,
   ArrowLeft,
-  X
+  Smartphone
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -62,7 +62,6 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
   // WhatsApp Groups & Contacts
   const [groups, setGroups] = useState<WhatsAppGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
-  const [groupSearch, setGroupSearch] = useState('');
 
   const [whatsAppContacts, setWhatsAppContacts] = useState<WhatsAppChatContact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
@@ -72,6 +71,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
 
   // Profile Picture state
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialData?.profilePictureUrl || null);
+  const [hasContactPicker, setHasContactPicker] = useState(false);
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema) as any,
@@ -103,14 +103,23 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
   const mode = form.watch('mode');
   const selectedTemplateId = form.watch('templateId');
   const contactName = form.watch('name');
+  const phoneValue = form.watch('phone');
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
+  // Detect Mobile Native Contact Picker API
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window) {
+      setHasContactPicker(true);
+    }
+  }, []);
+
+  // Instant Cache Loading via localStorage
   useEffect(() => {
     async function loadData(force = false) {
       if (!force) {
         try {
-          const cachedGroups = sessionStorage.getItem('autobirthday_cached_groups');
-          const cachedContacts = sessionStorage.getItem('autobirthday_cached_contacts');
+          const cachedGroups = localStorage.getItem('autobirthday_cached_groups');
+          const cachedContacts = localStorage.getItem('autobirthday_cached_contacts');
           if (cachedGroups) setGroups(JSON.parse(cachedGroups));
           if (cachedContacts) {
             const parsed = JSON.parse(cachedContacts);
@@ -133,8 +142,8 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
         setGroups(loadedGroups);
         setWhatsAppContacts(loadedContacts);
         try {
-          sessionStorage.setItem('autobirthday_cached_groups', JSON.stringify(loadedGroups));
-          sessionStorage.setItem('autobirthday_cached_contacts', JSON.stringify(loadedContacts));
+          localStorage.setItem('autobirthday_cached_groups', JSON.stringify(loadedGroups));
+          localStorage.setItem('autobirthday_cached_contacts', JSON.stringify(loadedContacts));
         } catch {}
       } catch (err) {
         console.warn('Could not load WhatsApp data:', err);
@@ -153,6 +162,22 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Debounced auto-fetch WhatsApp profile photo when phone is manually typed
+  useEffect(() => {
+    if (!phoneValue || phoneValue.length < 9 || profilePictureUrl) return;
+    const timer = setTimeout(async () => {
+      try {
+        const cleanPhone = phoneValue.replace(/\D/g, '');
+        const pic = await getWhatsAppProfilePicAction(cleanPhone);
+        if (pic) {
+          setProfilePictureUrl(pic);
+          form.setValue('profilePictureUrl', pic);
+        }
+      } catch {}
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [phoneValue, profilePictureUrl, form]);
 
   const handleSelectWhatsAppContact = async (contact: WhatsAppChatContact) => {
     const cleanPhone = (contact.phone || contact.jid || '').replace(/\D/g, '');
@@ -177,10 +202,43 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
     toast.success(`Contacto "${contact.name}" seleccionado 🎉`);
   };
 
+  // 1-Tap Pick from Native Phone Agenda
+  const handlePickFromDeviceAgenda = async () => {
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      try {
+        const props = ['name', 'tel'];
+        const opts = { multiple: false };
+        const selected = await (navigator as any).contacts.select(props, opts);
+        if (selected && selected.length > 0) {
+          const c = selected[0];
+          const rawName = c.name?.[0] || '';
+          const rawPhone = (c.tel?.[0] || '').replace(/\D/g, '');
+          if (rawName) form.setValue('name', rawName);
+          if (rawPhone) form.setValue('phone', rawPhone);
+          
+          toast.success(`Importado de la agenda: ${rawName}`);
+          
+          if (rawPhone) {
+            try {
+              const pic = await getWhatsAppProfilePicAction(rawPhone);
+              if (pic) {
+                setProfilePictureUrl(pic);
+                form.setValue('profilePictureUrl', pic);
+              }
+            } catch {}
+          }
+        }
+      } catch (err: any) {
+        console.warn('Device contact picker cancelled:', err);
+      }
+    } else {
+      toast.info('💡 La importación directa de agenda funciona en navegadores móviles (Chrome Android / Safari)');
+    }
+  };
+
   async function onSubmit(data: ContactFormData) {
     setIsSubmitting(true);
     try {
-      // Ensure customMessage is set if in manual mode
       if (data.mode === 'manual' && !data.customMessage) {
         data.customMessage = DEFAULT_FIXED_MESSAGE;
       }
@@ -233,7 +291,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
   const filteredWhatsAppContacts = whatsAppContacts.filter(c => 
     c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
     c.phone.includes(contactSearch)
-  ).slice(0, 15);
+  ).slice(0, 20);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-xl mx-auto space-y-6">
@@ -272,82 +330,114 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
           </p>
         </div>
 
-        {/* WHATSAPP CONTACT AUTOCOMPLETE PICKER */}
-        <div ref={contactDropdownRef} className="text-left relative bg-violet-50/70 border border-violet-100 p-3.5 rounded-2xl space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-violet-950 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-              Buscador Rápido de WhatsApp
-            </label>
-            <span className="text-[11px] font-semibold text-violet-600">
-              {loadingContacts ? 'Cargando...' : `${whatsAppContacts.length} chats vinculados`}
-            </span>
-          </div>
+        {/* AGENDA DEL TELÉFONO + BUSCADOR WHATSAPP */}
+        <div className="space-y-2.5">
+          
+          {/* Native Phone Agenda Button (Instant on mobile) */}
+          <button
+            type="button"
+            onClick={handlePickFromDeviceAgenda}
+            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-900 border border-emerald-200/80 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs active:scale-[0.99]"
+          >
+            <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>📱 Elegir de la Agenda del Teléfono</span>
+          </button>
 
-          <div className="relative">
-            <Search className="w-4 h-4 text-violet-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text"
-              placeholder="🔍 Escribe el nombre o teléfono (ej. Papá, María, Lucas)..."
-              value={contactSearch}
-              onChange={(e) => {
-                setContactSearch(e.target.value);
-                setIsContactDropdownOpen(true);
-              }}
-              onFocus={() => setIsContactDropdownOpen(true)}
-              className="w-full pl-9 pr-4 py-2.5 bg-white border border-violet-200 rounded-xl text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 outline-none font-medium shadow-sm"
-            />
-
-            {isContactDropdownOpen && contactSearch.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 max-h-56 overflow-y-auto divide-y divide-slate-100">
-                {filteredWhatsAppContacts.length > 0 ? (
-                  filteredWhatsAppContacts.map(c => (
-                    <button
-                      key={c.jid || c.phone}
-                      type="button"
-                      onClick={() => handleSelectWhatsAppContact(c)}
-                      className="w-full p-2.5 text-left hover:bg-violet-50 transition-colors flex items-center justify-between gap-2 group"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {c.profilePictureUrl ? (
-                          <img src={c.profilePictureUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-violet-600 group-hover:text-white transition-colors">
-                            {c.name.substring(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="truncate">
-                          <p className="font-bold text-xs text-slate-900 truncate">{c.name}</p>
-                          <p className="text-[11px] text-slate-500 font-mono">{c.phone}</p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold text-violet-600 bg-violet-100 px-2.5 py-1 rounded-full group-hover:bg-violet-600 group-hover:text-white transition-colors shrink-0 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Seleccionar
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="p-3 text-center text-xs text-slate-500 space-y-2">
-                    <p>No se encontró ningún chat con &ldquo;{contactSearch}&rdquo;</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const isDigits = /^[0-9+ ]+$/.test(contactSearch.trim());
-                        if (isDigits) {
-                          form.setValue('phone', contactSearch.trim());
-                        } else {
-                          form.setValue('name', contactSearch.trim());
-                        }
-                        setIsContactDropdownOpen(false);
-                      }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold text-xs transition-colors"
-                    >
-                      <span>➕ Usar &ldquo;{contactSearch.trim()}&rdquo;</span>
-                    </button>
-                  </div>
-                )}
+          {/* WhatsApp Autocomplete Box */}
+          <div ref={contactDropdownRef} className="text-left relative bg-violet-50/70 border border-violet-100 p-3.5 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-violet-950 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                Buscador de WhatsApp
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-violet-600">
+                  {whatsAppContacts.length > 0 ? `${whatsAppContacts.length} chats` : 'Cargando...'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoadingContacts(true);
+                    fetchWhatsAppContactsAction().then(res => {
+                      setWhatsAppContacts(res);
+                      localStorage.setItem('autobirthday_cached_contacts', JSON.stringify(res));
+                      toast.success('Chats de WhatsApp actualizados');
+                    }).finally(() => setLoadingContacts(false));
+                  }}
+                  className="p-1 text-violet-600 hover:text-violet-800 rounded-lg"
+                  title="Actualizar contactos"
+                >
+                  <RotateCw className={`w-3 h-3 ${loadingContacts ? 'animate-spin' : ''}`} />
+                </button>
               </div>
-            )}
+            </div>
+
+            <div className="relative">
+              <Search className="w-4 h-4 text-violet-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input 
+                type="text"
+                placeholder="🔍 Escribe el nombre (ej. Alicia, Papá, Lucas)..."
+                value={contactSearch}
+                onChange={(e) => {
+                  setContactSearch(e.target.value);
+                  setIsContactDropdownOpen(true);
+                }}
+                onFocus={() => setIsContactDropdownOpen(true)}
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-violet-200 rounded-xl text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 outline-none font-medium shadow-sm"
+              />
+
+              {isContactDropdownOpen && contactSearch.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 max-h-56 overflow-y-auto divide-y divide-slate-100">
+                  {filteredWhatsAppContacts.length > 0 ? (
+                    filteredWhatsAppContacts.map(c => (
+                      <button
+                        key={c.jid || c.phone}
+                        type="button"
+                        onClick={() => handleSelectWhatsAppContact(c)}
+                        className="w-full p-2.5 text-left hover:bg-violet-50 transition-colors flex items-center justify-between gap-2 group"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {c.profilePictureUrl ? (
+                            <img src={c.profilePictureUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                              {c.name.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="truncate">
+                            <p className="font-bold text-xs text-slate-900 truncate">{c.name}</p>
+                            <p className="text-[11px] text-slate-500 font-mono">{c.phone}</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-violet-600 bg-violet-100 px-2.5 py-1 rounded-full group-hover:bg-violet-600 group-hover:text-white transition-colors shrink-0 flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Seleccionar
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-3 text-center text-xs text-slate-500 space-y-2">
+                      <p>¿No está en tus chats recientes?</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const isDigits = /^[0-9+ ]+$/.test(contactSearch.trim());
+                          if (isDigits) {
+                            form.setValue('phone', contactSearch.trim().replace(/\D/g, ''));
+                          } else {
+                            form.setValue('name', contactSearch.trim());
+                          }
+                          setIsContactDropdownOpen(false);
+                          toast.success(`Nombre asignado: "${contactSearch.trim()}"`);
+                        }}
+                        className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold text-xs transition-colors"
+                      >
+                        <span>➕ Usar &ldquo;{contactSearch.trim()}&rdquo; directamente</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -359,7 +449,7 @@ export function ContactForm({ initialData, templates }: ContactFormProps) {
               <input 
                 {...form.register('name')} 
                 className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium text-slate-900" 
-                placeholder="Ej. Lucas García"
+                placeholder="Ej. Alicia Pérez"
               />
               {form.formState.errors.name && (
                 <p className="text-red-500 text-xs">{form.formState.errors.name.message}</p>
