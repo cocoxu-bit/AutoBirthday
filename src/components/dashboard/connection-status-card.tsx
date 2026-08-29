@@ -34,34 +34,9 @@ export function ConnectionStatusCard({ initialStatus = 'disconnected', initialPh
     return () => clearInterval(interval);
   }, []);
 
+  // If connected, hide completely to reduce clutter
   if (status === 'connected') {
-    return (
-      <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-500/20 rounded-2xl sm:rounded-3xl backdrop-blur-md shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-slate-900">WhatsApp Conectado y Activo</h4>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                Operativo
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {phone ? `Vinculado a ${phone}.` : 'Sesión vinculada.'} Las felicitaciones automáticas se enviarán a su hora.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/whatsapp"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-100/60 hover:bg-emerald-100 px-3.5 py-1.5 rounded-xl transition-colors shrink-0 self-end sm:self-center"
-        >
-          <span>Gestionar</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-    );
+    return null;
   }
 
   if (status === 'connecting') {

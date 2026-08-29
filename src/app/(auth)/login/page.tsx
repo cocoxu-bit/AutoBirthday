@@ -34,7 +34,7 @@ export default function LoginPage() {
         throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Bienvenido! 🎉");
-      window.location.href = "/whatsapp";
+      window.location.href = "/dashboard";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al iniciar sesión con Google";
@@ -64,7 +64,7 @@ export default function LoginPage() {
         throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Bienvenido de vuelta! 🎉");
-      window.location.href = "/whatsapp";
+      window.location.href = "/dashboard";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al iniciar sesión";
