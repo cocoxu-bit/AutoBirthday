@@ -504,38 +504,21 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     const userId = await getAuthenticatedUserId();
     const instanceName = `autocumple-${userId}`;
 
-    // Verify WhatsApp connection in Evolution API
-    const evoState = await evolutionApi.getConnectionState(instanceName);
-    if (evoState.instance?.state !== 'open') {
-      return {
-        success: false,
-        error: 'Tu WhatsApp no está conectado. Por favor, vincula tu cuenta de WhatsApp primero en la sección de WhatsApp.',
-      };
-    }
-
     const { getContacts } = await import('@/lib/firebase/firestore');
     const { getCachedWhatsAppContacts, prewarmWhatsAppContactsCache } = await import('@/lib/whatsapp/sync-cache');
 
-    // Trigger non-blocking prewarm in background
+    // Trigger non-blocking background pre-warming
     prewarmWhatsAppContactsCache(userId).catch(() => {});
 
-    // Check fast cache first in parallel with groups and existing contacts
-    const [cachedContacts, rawGroups, existingContacts] = await Promise.all([
+    // Fast parallel local Firestore fetch (< 40ms)
+    const [cachedContacts, existingContacts] = await Promise.all([
       getCachedWhatsAppContacts(userId).catch(() => []),
-      evolutionApi.fetchGroups(instanceName).catch(() => []),
       getContacts(userId).catch(() => []),
     ]);
 
     const existingPhones = new Set(
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
-
-    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
-      id: g.id || g.jid,
-      subject: g.subject || g.name || 'Grupo de WhatsApp',
-      pictureUrl: g.pictureUrl || null,
-      size: g.size || (g.participants ? g.participants.length : 0),
-    }));
 
     if (cachedContacts.length > 0) {
       const candidates = cachedContacts.filter(c => !existingPhones.has(c.phone));
@@ -552,8 +535,8 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
         return b.lastActivity - a.lastActivity;
       });
 
-      // Deliver initial batch of 15 contacts instantly (< 200ms)
-      const initialCandidates = candidates.slice(0, 15);
+      // Deliver initial batch of first 3 contacts immediately (< 50ms)
+      const initialCandidates = candidates.slice(0, 3);
       const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
         id: `wa-sync-${c.phone}-${index}`,
         name: c.name,
@@ -580,12 +563,11 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       return {
         success: true,
         items,
-        availableGroups: groupsList,
-        hasMore: candidates.length > 15,
+        hasMore: candidates.length > 3,
       };
     }
 
-    // Fast fallback if cache not yet populated: fetch first page of chats only (< 800ms)
+    // Fast fallback if cache not yet populated: fetch first page of chats only (< 600ms)
     const rawChats = await evolutionApi.fetchChats(instanceName, false).catch(() => []);
     const isInvalidName = (name?: string | null): boolean => {
       if (!name) return true;
@@ -622,7 +604,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
         profilePictureUrl: c.profilePictureUrl || null,
       });
 
-      if (initialCandidates.length >= 15) break;
+      if (initialCandidates.length >= 3) break;
     }
 
     if (initialCandidates.length === 0) {
@@ -658,7 +640,6 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     return {
       success: true,
       items,
-      availableGroups: groupsList,
       hasMore: true,
     };
   } catch (error: any) {
@@ -673,6 +654,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
 export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPhones: string[] = []): Promise<{
   success: boolean;
   items?: WhatsAppSyncItem[];
+  availableGroups?: WhatsAppGroup[];
   error?: string;
 }> {
   try {
@@ -686,15 +668,27 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     const existingContacts = await getContacts(userId).catch(() => []);
     existingContacts.forEach(c => loadedSet.add((c.phone || '').replace(/\D/g, '')));
 
-    let cached = await getCachedWhatsAppContacts(userId).catch(() => []);
-    if (cached.length === 0) {
+    const [cached, rawGroups] = await Promise.all([
+      getCachedWhatsAppContacts(userId).catch(() => []),
+      evolutionApi.fetchGroups(instanceName).catch(() => []),
+    ]);
+
+    let allCached = cached;
+    if (allCached.length === 0) {
       await prewarmWhatsAppContactsCache(userId);
-      cached = await getCachedWhatsAppContacts(userId).catch(() => []);
+      allCached = await getCachedWhatsAppContacts(userId).catch(() => []);
     }
 
-    const remaining = cached.filter(c => !loadedSet.has(c.phone));
+    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
+      id: g.id || g.jid,
+      subject: g.subject || g.name || 'Grupo de WhatsApp',
+      pictureUrl: g.pictureUrl || null,
+      size: g.size || (g.participants ? g.participants.length : 0),
+    }));
+
+    const remaining = allCached.filter(c => !loadedSet.has(c.phone));
     if (remaining.length === 0) {
-      return { success: true, items: [] };
+      return { success: true, items: [], availableGroups: groupsList };
     }
 
     remaining.sort((a, b) => {
@@ -729,6 +723,7 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     return {
       success: true,
       items,
+      availableGroups: groupsList,
     };
   } catch (error: any) {
     console.error('getWhatsAppRemainingContactsForSyncAction error:', error);

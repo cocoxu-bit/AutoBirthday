@@ -181,7 +181,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       setStep('deck');
       setLoading(false);
 
-      // Phase 2: Asynchronous Progressive Stream for remaining contacts
+      // Phase 2: Asynchronous Real Background Loader for remaining contacts
       if (initialResult.hasMore) {
         setIsBackgroundSyncing(true);
         const loadedPhones = initialResult.items.map(i => i.phone);
@@ -189,36 +189,23 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
         getWhatsAppRemainingContactsForSyncAction(loadedPhones)
           .then(remResult => {
             if (remResult.success && remResult.items && remResult.items.length > 0) {
-              const allNewItems = remResult.items;
-              const CHUNK_SIZE = 30;
-              let offset = 0;
-
-              const intervalId = setInterval(() => {
-                const chunk = allNewItems.slice(offset, offset + CHUNK_SIZE);
-                if (chunk.length === 0) {
-                  clearInterval(intervalId);
-                  setIsBackgroundSyncing(false);
-                  return;
+              setCards(prev => {
+                const existingPhoneSet = new Set(prev.map(p => p.phone));
+                const newItems = remResult.items!.filter(item => !existingPhoneSet.has(item.phone));
+                if (newItems.length > 0) {
+                  return [...prev, ...newItems];
                 }
-
-                setCards(prev => {
-                  const existingPhoneSet = new Set(prev.map(p => p.phone));
-                  const validChunk = chunk.filter(item => !existingPhoneSet.has(item.phone));
-                  return [...prev, ...validChunk];
-                });
-
-                offset += CHUNK_SIZE;
-                if (offset >= allNewItems.length) {
-                  clearInterval(intervalId);
-                  setIsBackgroundSyncing(false);
-                }
-              }, 350);
-            } else {
-              setIsBackgroundSyncing(false);
+                return prev;
+              });
+            }
+            if (remResult.availableGroups && remResult.availableGroups.length > 0) {
+              setAvailableGroups(remResult.availableGroups);
             }
           })
           .catch(err => {
             console.warn('Background sync note:', err);
+          })
+          .finally(() => {
             setIsBackgroundSyncing(false);
           });
       }
