@@ -977,7 +977,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                         <p className="font-bold text-xs flex items-center gap-1">
                           🛡️ Pedir Aprobación
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Te avisa por WhatsApp el día del cumple para dar el OK.</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Te avisa por WhatsApp el día del cumpleaños para dar el OK.</p>
                       </button>
 
                       <button
