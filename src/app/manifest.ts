@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Automatiza felicitaciones de cumpleaños con IA por WhatsApp',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#7c3aed',
+    background_color: '#f4fbf8',
+    theme_color: '#285953',
     orientation: 'portrait',
     icons: [
       {

@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#7c3aed",
+  themeColor: "#285953",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
