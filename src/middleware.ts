@@ -7,6 +7,15 @@ export function middleware(request: NextRequest) {
   
   const isAuthRoute = pathname === '/login' || pathname === '/register';
   
+  // Direct onboarding: root / redirects to /register (unauthenticated) or /dashboard (authenticated)
+  if (pathname === '/') {
+    if (session) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/register', request.url));
+    }
+  }
+
   // Protected SaaS dashboard routes
   const isProtectedRoute = 
     pathname === '/dashboard' ||
@@ -25,7 +34,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (session && isAuthRoute) {
-    return NextResponse.redirect(new URL('/whatsapp', request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
