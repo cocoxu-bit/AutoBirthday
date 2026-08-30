@@ -178,3 +178,76 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     };
   }
 }
+
+export async function adminDeleteUserAction(targetUserId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const adminUid = await verifyAdminAuth();
+
+    if (!targetUserId) {
+      return { success: false, error: 'ID de usuario inválido' };
+    }
+
+    if (targetUserId === adminUid) {
+      return { success: false, error: 'No puedes eliminar tu propia cuenta de administrador desde aquí.' };
+    }
+
+    // Verify target user is not admin email
+    const targetDoc = await adminDb.collection('users').doc(targetUserId).get();
+    if (targetDoc.exists) {
+      const targetEmail = (targetDoc.data()?.email || '').toLowerCase().trim();
+      if (ADMIN_EMAILS.includes(targetEmail)) {
+        return { success: false, error: 'No se puede eliminar una cuenta de administrador.' };
+      }
+    }
+
+    // 1. Delete WhatsApp Evolution API instance
+    try {
+      const { evolutionApi } = await import('@/lib/evolution-api/client');
+      await evolutionApi.deleteInstance(`autocumple-${targetUserId}`).catch(() => {});
+    } catch {}
+
+    // 2. Cascade delete subcollections
+    const subcollections = ['contacts', 'wishes', 'templates', 'wa_contacts_cache'];
+    for (const sub of subcollections) {
+      try {
+        const snap = await adminDb.collection('users').doc(targetUserId).collection(sub).get();
+        if (!snap.empty) {
+          const batch = adminDb.batch();
+          snap.docs.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+      } catch {}
+    }
+
+    // 3. Delete any global wishes
+    try {
+      const globalWishes = await adminDb.collection('wishes').where('userId', '==', targetUserId).get();
+      if (!globalWishes.empty) {
+        const batch = adminDb.batch();
+        globalWishes.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    } catch {}
+
+    // 4. Delete user document from Firestore
+    await adminDb.collection('users').doc(targetUserId).delete();
+
+    // 5. Delete user from Firebase Authentication
+    try {
+      await adminAuth.deleteUser(targetUserId);
+    } catch (authErr: any) {
+      console.warn(`[AdminDelete] Auth deletion note for ${targetUserId}:`, authErr?.message);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('adminDeleteUserAction error:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al eliminar usuario',
+    };
+  }
+}

@@ -19,9 +19,16 @@ import {
   Calendar,
   Layers,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
-import { AdminAnalyticsData, AdminUserRecord, getAdminAnalyticsDataAction } from '@/app/admin/actions';
+import { 
+  AdminAnalyticsData, 
+  AdminUserRecord, 
+  getAdminAnalyticsDataAction, 
+  adminDeleteUserAction 
+} from '@/app/admin/actions';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { toast } from 'sonner';
 
@@ -35,6 +42,8 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUserRecord | null>(null);
+  const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -370,8 +379,23 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                       </td>
 
                       {/* Action Detail */}
-                      <td className="py-3.5 px-3 text-right">
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all inline-block" />
+                      <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          {u.email !== 'lucasjimeneznavarro@gmail.com' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUserToDelete(u);
+                              }}
+                              title="Eliminar usuario"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
+                        </div>
                       </td>
                     </tr>
                   );
@@ -458,13 +482,124 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
               <span className="font-black text-emerald-800 text-sm">{selectedUser.wishesSentCount}</span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setSelectedUser(null)}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs transition-colors"
-            >
-              Cerrar
-            </button>
+            <div className="flex items-center gap-2 pt-2">
+              {selectedUser.email !== 'lucasjimeneznavarro@gmail.com' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = selectedUser;
+                    setSelectedUser(null);
+                    setUserToDelete(target);
+                  }}
+                  className="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Eliminar Cuenta</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setSelectedUser(null)}
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DANGEROUS ACTION: DELETE USER CONFIRMATION MODAL */}
+      {userToDelete && (
+        <div 
+          onClick={() => !isDeleting && setUserToDelete(null)}
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-rose-100 shadow-2xl animate-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-slate-900 text-lg leading-tight">
+                  ¿Eliminar usuario definitivamente?
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Esta acción es irreversible y destruirá todos los datos asociados al usuario.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-rose-50/70 border border-rose-200/80 rounded-2xl space-y-2 text-xs text-rose-900">
+              <p className="font-bold">Se eliminarán permanentemente:</p>
+              <ul className="list-disc list-inside space-y-1 text-rose-800 text-[11px]">
+                <li>Cuenta de acceso: <strong className="font-semibold text-rose-950">{userToDelete.email}</strong></li>
+                <li>Instancia y sesión de WhatsApp ({userToDelete.whatsappPhone || 'Sin vincular'})</li>
+                <li>{userToDelete.contactsCount} contactos guardados en su agenda</li>
+                <li>{userToDelete.wishesTotalCount} felicitaciones e historial</li>
+                <li>{userToDelete.templatesCount} plantillas personalizadas</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setUserToDelete(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={async () => {
+                  if (!userToDelete) return;
+                  setIsDeleting(true);
+                  try {
+                    const res = await adminDeleteUserAction(userToDelete.id);
+                    if (res.success) {
+                      toast.success(`Cuenta de ${userToDelete.displayName} eliminada.`);
+                      // Update local state
+                      setData(prev => {
+                        const updatedUsers = prev.users.filter(u => u.id !== userToDelete.id);
+                        const isConnected = userToDelete.whatsappStatus === 'connected';
+                        return {
+                          summary: {
+                            ...prev.summary,
+                            totalUsers: Math.max(0, prev.summary.totalUsers - 1),
+                            whatsappConnectedCount: isConnected 
+                              ? Math.max(0, prev.summary.whatsappConnectedCount - 1) 
+                              : prev.summary.whatsappConnectedCount,
+                            totalContacts: Math.max(0, prev.summary.totalContacts - userToDelete.contactsCount),
+                            totalActiveContacts: Math.max(0, prev.summary.totalActiveContacts - userToDelete.activeContactsCount),
+                            totalWishesSent: Math.max(0, prev.summary.totalWishesSent - userToDelete.wishesSentCount),
+                            totalTemplates: Math.max(0, prev.summary.totalTemplates - userToDelete.templatesCount),
+                          },
+                          users: updatedUsers,
+                        };
+                      });
+                      setUserToDelete(null);
+                    } else {
+                      toast.error(res.error || 'Error al eliminar el usuario.');
+                    }
+                  } catch {
+                    toast.error('Error de red al intentar eliminar el usuario.');
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeleting ? 'Eliminando...' : 'Sí, Eliminar'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
