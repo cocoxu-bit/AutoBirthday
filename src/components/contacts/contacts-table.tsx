@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteContact } from '@/app/(dashboard)/contacts/actions';
@@ -73,39 +74,54 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             placeholder="Buscar contacto..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-slate-200/80 rounded-2xl shadow-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm placeholder:text-slate-400"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-slate-200/80 rounded-2xl shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm placeholder:text-slate-400"
           />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        {/* Action Buttons: 2 rows layout */}
+        <div className="grid grid-cols-2 gap-2 w-full lg:w-auto shrink-0">
           
-          {/* WhatsApp Sync CTA */}
+          {/* Row 1, Col 1: Sincronizar WhatsApp */}
           <button 
             type="button"
             onClick={() => setIsWhatsAppSyncOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-xs text-xs sm:text-sm font-bold shrink-0"
-            title="Importar contactos frecuentes desde tus conversaciones de WhatsApp"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold"
+            title="Importar contactos y cumpleaños desde WhatsApp"
           >
             <WhatsAppIcon className="w-4 h-4" size={18} />
-            <span>Sincronizar WhatsApp</span>
+            <span>Sincronizar</span>
           </button>
 
-          {/* Calendar Sync CTA */}
+          {/* Row 1, Col 2: Sincronizar Calendario (Google + Apple Calendar Icons) */}
           <button 
             type="button"
             onClick={() => setIsImportOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/90 hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-xs text-xs sm:text-sm font-bold shrink-0"
-            title="Sincronizar cumpleaños directamente desde Google Calendar o Apple Calendar"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold"
+            title="Sincronizar cumpleaños desde Google Calendar o Apple Calendar"
           >
-            <Calendar className="w-4 h-4 text-violet-600" />
-            <span>Sincronizar Calendario</span>
+            <div className="flex items-center -space-x-1 shrink-0">
+              <Image 
+                src="/google-calendar-icon.png" 
+                alt="Google Calendar" 
+                width={18} 
+                height={18} 
+                className="w-4 h-4 object-contain" 
+              />
+              <Image 
+                src="/apple-calendar-icon.png" 
+                alt="Apple Calendar" 
+                width={18} 
+                height={18} 
+                className="w-4 h-4 object-contain" 
+              />
+            </div>
+            <span>Sincronizar</span>
           </button>
 
-          {/* Add Contact CTA */}
+          {/* Row 2, Full Width (col-span-2): Añadir Contacto */}
           <Link 
             href="/contacts/new" 
-            className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl transition-all shadow-sm text-xs sm:text-sm font-bold shadow-violet-500/20 shrink-0"
+            className="col-span-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#285953] to-emerald-600 hover:from-[#1f4742] hover:to-emerald-700 text-white rounded-2xl transition-all shadow-md shadow-emerald-500/20 text-xs sm:text-sm font-bold active:scale-[0.99]"
           >
             <UserPlus className="w-4 h-4" />
             <span>Añadir Contacto</span>
