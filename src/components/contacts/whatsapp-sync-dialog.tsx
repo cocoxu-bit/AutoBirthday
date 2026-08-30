@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
-  getWhatsAppRecentChatsForSyncAction,
+  getWhatsAppInitialBatchForSyncAction,
+  getWhatsAppRemainingContactsForSyncAction,
   saveSingleSyncedContactAction,
   getWhatsAppProfilePicAction,
   WhatsAppSyncItem 
@@ -97,6 +98,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   const [skippedCount, setSkippedCount] = useState(0);
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
   const [birthdayError, setBirthdayError] = useState(false);
+  const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
 
   // Templates state
   const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
@@ -142,40 +144,66 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
     }
   }, [currentIndex, cards, step]);
 
-  // Load WhatsApp Chats
+  // Load WhatsApp Chats (2-Phase Progressive Fast Sync)
   const handleStartWhatsAppSync = async () => {
     setLoading(true);
-    setStatusMessage('Cargando contactos y chats de WhatsApp...');
+    setStatusMessage('Cargando tus primeros contactos...');
 
     try {
-      const result = await getWhatsAppRecentChatsForSyncAction();
+      // Phase 1: Fast initial batch (< 800ms)
+      const initialResult = await getWhatsAppInitialBatchForSyncAction();
 
-      if (!result.success || !result.items || result.items.length === 0) {
-        toast.error(result.error || 'No se encontraron conversaciones para sincronizar.');
+      if (!initialResult.success || !initialResult.items || initialResult.items.length === 0) {
+        toast.error(initialResult.error || 'No se encontraron conversaciones para sincronizar.');
         setLoading(false);
         return;
       }
 
       // Seed initial photo cache from server batch
       const initialCache: Record<string, string | null> = {};
-      result.items.forEach(item => {
+      initialResult.items.forEach(item => {
         if (item.phone && item.profilePictureUrl) {
           initialCache[item.phone] = item.profilePictureUrl;
         }
       });
       setPhotoCache(initialCache);
 
-      setCards(result.items);
+      setCards(initialResult.items);
       setCurrentIndex(0);
       setSavedCount(0);
       setSkippedCount(0);
-      setAvailableGroups(result.availableGroups || []);
+      setAvailableGroups(initialResult.availableGroups || []);
       setStep('deck');
-      toast.success(`${result.items.length} contactos listos para revisar`);
+      setLoading(false);
+
+      // Phase 2: Asynchronous Background Loader for all remaining contacts
+      if (initialResult.hasMore) {
+        setIsBackgroundSyncing(true);
+        const loadedPhones = initialResult.items.map(i => i.phone);
+
+        getWhatsAppRemainingContactsForSyncAction(loadedPhones)
+          .then(remResult => {
+            if (remResult.success && remResult.items && remResult.items.length > 0) {
+              setCards(prev => {
+                const existingPhoneSet = new Set(prev.map(p => p.phone));
+                const newItems = remResult.items!.filter(item => !existingPhoneSet.has(item.phone));
+                if (newItems.length > 0) {
+                  return [...prev, ...newItems];
+                }
+                return prev;
+              });
+            }
+          })
+          .catch(err => {
+            console.warn('Background sync note:', err);
+          })
+          .finally(() => {
+            setIsBackgroundSyncing(false);
+          });
+      }
     } catch (err: any) {
       console.error('WhatsApp sync error:', err);
       toast.error(err.message || 'Error al conectar con WhatsApp');
-    } finally {
       setLoading(false);
     }
   };
@@ -376,7 +404,15 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
           {step === 'deck' && (
             <div className="space-y-1.5 pt-0.5">
               <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-                <span className="text-emerald-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
+                  {isBackgroundSyncing && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full animate-pulse">
+                      <Loader2 className="w-2.5 h-2.5 animate-spin text-emerald-600" />
+                      <span>Cargando más...</span>
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
                     {savedCount} guardados
