@@ -5,25 +5,24 @@ import { toast } from 'sonner';
 import { 
   getWhatsAppRecentChatsForSyncAction,
   saveSingleSyncedContactAction,
+  getWhatsAppProfilePicAction,
   WhatsAppSyncItem 
 } from '@/app/(dashboard)/contacts/sync-actions';
 import { WhatsAppGroup, Template, WishMode, AiTone, TargetType } from '@/types';
+import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { 
   X, 
   Sparkles, 
   CheckCircle2, 
-  AlertCircle, 
   Loader2, 
   Check, 
   ArrowRight, 
   ChevronLeft,
   Users, 
   User,
-  Phone, 
   FileText, 
   PenTool, 
   MessageSquare,
-  Smartphone,
   Calendar as CalendarIcon
 } from 'lucide-react';
 
@@ -34,11 +33,11 @@ const MONTH_NAMES = [
 
 const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
 
-const TONES: Array<{ id: AiTone; label: string; icon: string }> = [
-  { id: 'casual', label: 'Casual', icon: '😊' },
-  { id: 'divertido', label: 'Divertido', icon: '🎉' },
-  { id: 'emotivo', label: 'Emotivo', icon: '❤️' },
-  { id: 'formal', label: 'Formal', icon: '🤝' },
+const TONES: Array<{ id: AiTone; label: string }> = [
+  { id: 'casual', label: 'Casual' },
+  { id: 'divertido', label: 'Divertido' },
+  { id: 'emotivo', label: 'Emotivo' },
+  { id: 'formal', label: 'Formal' },
 ];
 
 const AI_TONE_EXAMPLES: Record<AiTone, string> = {
@@ -92,6 +91,9 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
   const [birthdayError, setBirthdayError] = useState(false);
 
+  // Client-side photo cache for instant rendering
+  const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
+
   // Auto-scroll to top when moving to next or previous card
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -100,19 +102,57 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
     setBirthdayError(false);
   }, [currentIndex, step]);
 
+  // On-demand photo prefetching for current card and upcoming cards
+  const fetchAvatarIfNeeded = async (phone: string, initialPic?: string | null) => {
+    if (initialPic) {
+      if (!photoCache[phone]) {
+        setPhotoCache(prev => ({ ...prev, [phone]: initialPic }));
+      }
+      return;
+    }
+    if (photoCache[phone] !== undefined) return;
+
+    try {
+      const pic = await getWhatsAppProfilePicAction(phone);
+      setPhotoCache(prev => ({ ...prev, [phone]: pic }));
+    } catch {
+      setPhotoCache(prev => ({ ...prev, [phone]: null }));
+    }
+  };
+
+  useEffect(() => {
+    if (cards.length > 0 && step === 'deck') {
+      const windowCards = cards.slice(Math.max(0, currentIndex - 1), currentIndex + 5);
+      windowCards.forEach(c => {
+        if (c.phone) {
+          fetchAvatarIfNeeded(c.phone, c.profilePictureUrl);
+        }
+      });
+    }
+  }, [currentIndex, cards, step]);
+
   // Load WhatsApp Chats
   const handleStartWhatsAppSync = async () => {
     setLoading(true);
-    setStatusMessage('Cargando tus conversaciones recientes de WhatsApp...');
+    setStatusMessage('Cargando conversaciones y grupos...');
 
     try {
       const result = await getWhatsAppRecentChatsForSyncAction();
 
       if (!result.success || !result.items || result.items.length === 0) {
-        toast.error(result.error || 'No se encontraron conversaciones recientes para sincronizar.');
+        toast.error(result.error || 'No se encontraron conversaciones para sincronizar.');
         setLoading(false);
         return;
       }
+
+      // Seed initial photo cache from server batch
+      const initialCache: Record<string, string | null> = {};
+      result.items.forEach(item => {
+        if (item.phone && item.profilePictureUrl) {
+          initialCache[item.phone] = item.profilePictureUrl;
+        }
+      });
+      setPhotoCache(initialCache);
 
       setCards(result.items);
       setCurrentIndex(0);
@@ -120,7 +160,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       setSkippedCount(0);
       setAvailableGroups(result.availableGroups || []);
       setStep('deck');
-      toast.success(`💬 ¡${result.items.length} contactos de WhatsApp listos para añadir!`);
+      toast.success(`${result.items.length} contactos listos para revisar`);
     } catch (err: any) {
       console.error('WhatsApp sync error:', err);
       toast.error(err.message || 'Error al conectar con WhatsApp');
@@ -188,6 +228,8 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       ? (currentCard.templateId || templates[0]?.id)
       : undefined;
 
+    const profilePic = photoCache[currentCard.phone] ?? currentCard.profilePictureUrl;
+
     setIsSavingCurrent(true);
     try {
       const res = await saveSingleSyncedContactAction({
@@ -196,8 +238,8 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
         birthDay: currentCard.birthDay,
         birthMonth: currentCard.birthMonth,
         birthYear: null,
-        source: 'whatsapp_sync' as any,
-        profilePictureUrl: currentCard.profilePictureUrl,
+        source: 'manual',
+        profilePictureUrl: profilePic || null,
         targetType: currentCard.targetType || 'individual',
         groupId: currentCard.targetType === 'group' ? (currentCard.groupId || availableGroups[0]?.id) : undefined,
         groupName: currentCard.targetType === 'group' ? (currentCard.groupName || availableGroups[0]?.subject) : undefined,
@@ -214,7 +256,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
       if (res.success) {
         setSavedCount(prev => prev + 1);
-        toast.success(`✅ ${currentCard.name} añadido`, { duration: 1500 });
+        toast.success(`${currentCard.name} añadido`, { duration: 1500 });
         advanceDeck();
       } else {
         toast.error(res.error || 'Error al guardar contacto');
@@ -257,6 +299,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
   const daysInfo = currentCard ? getDaysUntilBirthday(currentCard.birthDay, currentCard.birthMonth) : null;
   const currentGroupName = currentCard?.groupName || (availableGroups.find(g => g.id === currentCard?.groupId)?.subject) || 'Grupo de WhatsApp';
+  const activeAvatar = currentCard ? (photoCache[currentCard.phone] ?? currentCard.profilePictureUrl) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -268,26 +311,16 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
           {/* Top Row: Title, Back Button & Close */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              {step === 'deck' && currentIndex > 0 && (
-                <button
-                  type="button"
-                  onClick={handlePrevious}
-                  className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center shadow-sm hover:scale-105 transition-all"
-                  title="Volver al contacto anterior"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-              )}
-              <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-inner shrink-0">
-                <Smartphone className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200/80 shadow-xs shrink-0">
+                <WhatsAppIcon className="w-5 h-5" size={20} />
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                  {step === 'connect' ? 'Sincronizar por WhatsApp' : step === 'deck' ? 'Revisar Conversaciones' : '¡Sincronización Completada!'}
+                  {step === 'connect' ? 'Sincronizar por WhatsApp' : step === 'deck' ? 'Revisar Contactos' : 'Sincronización Completada'}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
                   {step === 'connect' 
-                    ? 'Importa rápidamente tus contactos frecuentes y programa sus cumpleaños' 
+                    ? 'Importa rápidamente tus contactos de chats y grupos' 
                     : step === 'deck' 
                     ? `Contacto ${currentIndex + 1} de ${cards.length}`
                     : 'Contactos añadidos a tu agenda'}
@@ -310,11 +343,11 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                 <span className="text-emerald-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
-                    ✨ {savedCount} guardados
+                    {savedCount} guardados
                   </span>
                   {skippedCount > 0 && (
                     <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold text-[11px]">
-                      ⏭️ {skippedCount} omitidos
+                      {skippedCount} omitidos
                     </span>
                   )}
                 </div>
@@ -338,8 +371,8 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
           {/* ========================================================= */}
           {step === 'connect' && (
             <div className="bg-slate-50/80 border border-slate-200/80 rounded-3xl p-6 sm:p-8 text-center space-y-6">
-              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl shadow-inner border border-emerald-200 flex items-center justify-center mx-auto text-3xl">
-                💬
+              <div className="w-16 h-16 bg-white rounded-3xl shadow-sm border border-slate-200/80 flex items-center justify-center mx-auto">
+                <WhatsAppIcon className="w-10 h-10" size={40} />
               </div>
 
               <div className="space-y-2 max-w-sm mx-auto">
@@ -347,7 +380,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   Importar Contactos de WhatsApp
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                  Recorreremos tus chats recientes de WhatsApp 1 a 1 para que solo tengas que indicar su fecha de cumpleaños y programar su felicitación.
+                  Recorreremos tus chats y participantes de grupos de WhatsApp para que puedas indicar su fecha de cumpleaños y programar sus felicitaciones.
                 </p>
               </div>
 
@@ -369,14 +402,6 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   </>
                 )}
               </button>
-
-              <div className="flex items-center justify-center gap-4 text-[11px] font-semibold text-slate-600 pt-2">
-                <span>⚡ En orden de actividad</span>
-                <span>•</span>
-                <span>📸 Con fotos de perfil</span>
-                <span>•</span>
-                <span>🔒 Privado y seguro</span>
-              </div>
             </div>
           )}
 
@@ -387,28 +412,28 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
             <div className="space-y-5">
 
               {/* MAIN CONTACT CARD */}
-              <div className="bg-white border-2 border-slate-100 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/40 space-y-6 text-center">
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-6 text-center">
                 
                 {/* 1. BIG CENTERED AVATAR / PROFILE PHOTO */}
                 <div className="flex flex-col items-center">
                   <div className="relative">
-                    {currentCard.profilePictureUrl ? (
+                    {activeAvatar ? (
                       <img 
-                        src={currentCard.profilePictureUrl} 
+                        src={activeAvatar} 
                         alt={currentCard.name} 
-                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-xl border-4 border-white ring-4 ring-emerald-100" 
+                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md border-4 border-white ring-2 ring-emerald-100" 
                       />
                     ) : (
-                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-3xl shadow-xl border-4 border-white ring-4 ring-emerald-100">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-3xl shadow-md border-4 border-white ring-2 ring-emerald-100">
                         {currentCard.name.slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                    <span 
-                      className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-md border-2 border-white" 
+                    <div 
+                      className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-100" 
                       title="Contacto de WhatsApp"
                     >
-                      💬
-                    </span>
+                      <WhatsAppIcon className="w-4 h-4" size={16} />
+                    </div>
                   </div>
 
                   {/* Contact Name & Phone */}
@@ -416,13 +441,13 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     {currentCard.name}
                   </h3>
 
-                  <div className="mt-1 flex items-center justify-center gap-2">
+                  <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
                     <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
                       +{currentCard.phone}
                     </span>
                     {currentCard.pushName && currentCard.pushName !== currentCard.name && (
-                      <span className="text-[11px] text-slate-400">
-                        ({currentCard.pushName})
+                      <span className="text-[11px] text-slate-500 font-medium bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                        {currentCard.pushName}
                       </span>
                     )}
                   </div>
@@ -430,28 +455,28 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
                 <hr className="border-slate-100" />
 
-                {/* 🌟 2. CRITICAL HIGHLIGHTED REQUIRED BIRTHDAY FIELD 🌟 */}
+                {/* 2. REQUIRED BIRTHDAY FIELD */}
                 <div 
                   ref={birthdayRef}
                   className={`p-4 sm:p-5 rounded-2xl text-left space-y-3 transition-all ${
                     birthdayError 
-                      ? 'bg-rose-50 border-2 border-rose-400 ring-4 ring-rose-100 animate-pulse'
+                      ? 'bg-rose-50 border-2 border-rose-400 ring-4 ring-rose-100'
                       : currentCard.birthDay && currentCard.birthMonth
-                      ? 'bg-emerald-50/80 border-2 border-emerald-300/80 shadow-sm'
-                      : 'bg-amber-50/90 border-2 border-amber-300 shadow-sm'
+                      ? 'bg-emerald-50/80 border border-emerald-300 shadow-2xs'
+                      : 'bg-amber-50/70 border border-amber-300 shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                      <span className="text-base">🎂</span>
-                      <span>¿Cuándo es su cumpleaños?</span>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                      <CalendarIcon className="w-4 h-4 text-emerald-700" />
+                      <span>Fecha de Cumpleaños</span>
                     </label>
-                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                    <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
                       currentCard.birthDay && currentCard.birthMonth
                         ? 'bg-emerald-200 text-emerald-900'
                         : 'bg-amber-200 text-amber-900'
                     }`}>
-                      {currentCard.birthDay && currentCard.birthMonth ? 'Listo' : 'Obligatorio'}
+                      {currentCard.birthDay && currentCard.birthMonth ? 'Completado' : 'Requerido'}
                     </span>
                   </div>
 
@@ -500,13 +525,12 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
                   {/* Days Info Badge */}
                   {daysInfo ? (
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-white/90 px-3 py-1.5 rounded-xl border border-emerald-200">
-                      <span>🎉</span>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-white/90 px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
                       <span>{currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]} — <strong>{daysInfo.text}</strong></span>
                     </div>
                   ) : (
-                    <p className="text-[11px] text-slate-500">
-                      💡 Selecciona el día y el mes en el que cumple años para programar su mensaje automático.
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Selecciona el día y mes en el que cumple años para programar su mensaje automático.
                     </p>
                   )}
                 </div>
@@ -735,7 +759,6 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                                 }`}
                               >
-                                <span>{tone.icon}</span>
                                 <span>{tone.label}</span>
                               </button>
                             );
@@ -746,7 +769,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       <div className="space-y-1">
                         <input
                           type="text"
-                          placeholder="💡 Notas opcionales para la IA (ej: Le gusta el fútbol, cumple 25...)"
+                          placeholder="Notas opcionales para la IA (ej: Le gusta el fútbol, cumple 25...)"
                           value={currentCard.aiNotes || ''}
                           onChange={e => updateCurrentCard({ aiNotes: e.target.value })}
                           className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -759,7 +782,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                       <span className="flex items-center gap-1.5 text-slate-700">
-                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                        <WhatsAppIcon className="w-3.5 h-3.5" size={16} />
                         Vista previa en WhatsApp
                       </span>
                       <span className="text-[11px] font-normal text-slate-400">
@@ -771,7 +794,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       {currentCard.targetType === 'group' && (
                         <div className="flex items-center justify-center pb-2">
                           <span className="bg-slate-800/60 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-xs">
-                            👥 Grupo: {currentGroupName}
+                            Grupo: {currentGroupName}
                           </span>
                         </div>
                       )}
@@ -809,7 +832,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
-                          🛡️ Pedir Aprobación
+                          Pedir Aprobación
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Te avisa por WhatsApp el día del cumple para dar el OK.</p>
                       </button>
@@ -824,7 +847,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
-                          🚀 Envío Automático
+                          Envío Automático
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Se envía solo en la mañana de su cumpleaños.</p>
                       </button>
@@ -842,8 +865,8 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
           {/* ========================================================= */}
           {step === 'completed' && (
             <div className="py-8 px-4 text-center space-y-6">
-              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner animate-bounce">
-                🎉
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
 
               <div className="space-y-2">
@@ -867,31 +890,31 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
         </div>
 
-        {/* STICKY FOOTER ACTION BUTTONS (ALWAYS VISIBLE IN DECK REVIEW) */}
+        {/* STICKY FOOTER ACTION BUTTONS (CLEAN, BALANCED 3-BUTTON DESIGN) */}
         {step === 'deck' && currentCard && (
-          <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 flex items-center gap-2.5 shadow-xs">
+          <div className="px-4 sm:px-6 py-3.5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 flex items-center gap-2 sm:gap-3 shadow-xs">
             {/* Previous Button */}
-            {currentIndex > 0 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                disabled={isSavingCurrent}
-                className="py-3 px-3.5 bg-white hover:bg-slate-100 text-slate-700 rounded-2xl font-bold text-xs sm:text-sm border border-slate-200 shadow-sm transition-all shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
-                title="Volver al contacto anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Anterior</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0 || isSavingCurrent}
+              className="flex-1 min-h-[48px] py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm border border-slate-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed active:scale-[0.98]"
+              title="Volver al contacto anterior"
+            >
+              <ChevronLeft className="w-4 h-4 shrink-0" />
+              <span>Anterior</span>
+            </button>
 
             {/* Skip Button */}
             <button
               type="button"
               onClick={handleSkipCurrent}
               disabled={isSavingCurrent}
-              className="flex-1 py-3 px-4 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-2xl font-bold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 border border-slate-200/80 hover:border-red-200"
+              className="flex-1 min-h-[48px] py-2.5 px-3 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs sm:text-sm border border-slate-200/80 hover:border-rose-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
+              title="Omitir este contacto y pasar al siguiente"
             >
-              <span>❌ Omitir</span>
+              <X className="w-4 h-4 shrink-0 text-slate-400" />
+              <span>Omitir</span>
             </button>
 
             {/* Save & Next Button */}
@@ -899,17 +922,17 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
               type="button"
               onClick={handleSaveAndNext}
               disabled={isSavingCurrent}
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="flex-[1.3] min-h-[48px] py-2.5 px-3 sm:px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isSavingCurrent ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                   <span>Guardando...</span>
                 </>
               ) : (
                 <>
-                  <span>Guardar Contacto</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <Check className="w-4 h-4 shrink-0" />
+                  <span>Guardar</span>
                 </>
               )}
             </button>

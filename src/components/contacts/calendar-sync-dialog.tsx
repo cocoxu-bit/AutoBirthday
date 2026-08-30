@@ -11,6 +11,7 @@ import {
   SyncedContactPreview 
 } from '@/app/(dashboard)/contacts/sync-actions';
 import { WhatsAppChatContact, WhatsAppGroup, Template, WishMode, AiTone, TargetType } from '@/types';
+import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { 
   X, 
   Sparkles, 
@@ -504,14 +505,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       </>
                     )}
                   </button>
-
-                  <div className="flex items-center justify-center gap-4 text-[11px] font-semibold text-slate-600 pt-2">
-                    <span>🔒 Solo lectura</span>
-                    <span>•</span>
-                    <span>⚡ Cero descargas</span>
-                    <span>•</span>
-                    <span>📸 Fotos de WhatsApp</span>
-                  </div>
                 </div>
               )}
 
@@ -586,12 +579,12 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                         {(currentCard.matchedName || currentCard.name).slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                    <span 
-                      className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-md border-2 border-white" 
+                    <div 
+                      className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-100" 
                       title="Vinculado a WhatsApp"
                     >
-                      💬
-                    </span>
+                      <WhatsAppIcon className="w-4 h-4" size={16} />
+                    </div>
                   </div>
 
                   {/* Contact Name & Birthday Badge */}
@@ -971,8 +964,8 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
           {/* ========================================================= */}
           {step === 'completed' && (
             <div className="py-8 px-4 text-center space-y-6">
-              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner animate-bounce">
-                🎉
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
 
               <div className="space-y-2">
@@ -996,31 +989,31 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
 
         </div>
 
-        {/* STICKY FOOTER ACTION BUTTONS (ALWAYS VISIBLE IN DECK REVIEW) */}
+        {/* STICKY FOOTER ACTION BUTTONS (CLEAN, BALANCED 3-BUTTON DESIGN) */}
         {step === 'deck' && currentCard && (
-          <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 flex items-center gap-2.5 shadow-xs">
+          <div className="px-4 sm:px-6 py-3.5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 flex items-center gap-2 sm:gap-3 shadow-xs">
             {/* Previous Button */}
-            {currentIndex > 0 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                disabled={isSavingCurrent}
-                className="py-3 px-3.5 bg-white hover:bg-slate-100 text-slate-700 rounded-2xl font-bold text-xs sm:text-sm border border-slate-200 shadow-sm transition-all shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
-                title="Volver al contacto anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Anterior</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0 || isSavingCurrent}
+              className="flex-1 min-h-[48px] py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm border border-slate-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed active:scale-[0.98]"
+              title="Volver al contacto anterior"
+            >
+              <ChevronLeft className="w-4 h-4 shrink-0" />
+              <span>Anterior</span>
+            </button>
 
             {/* Skip Button */}
             <button
               type="button"
               onClick={handleSkipCurrent}
               disabled={isSavingCurrent}
-              className="flex-1 py-3 px-4 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-2xl font-bold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 border border-slate-200/80 hover:border-red-200"
+              className="flex-1 min-h-[48px] py-2.5 px-3 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs sm:text-sm border border-slate-200/80 hover:border-rose-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
+              title="Omitir este contacto y pasar al siguiente"
             >
-              <span>❌ Omitir</span>
+              <X className="w-4 h-4 shrink-0 text-slate-400" />
+              <span>Omitir</span>
             </button>
 
             {/* Save & Next Button */}
@@ -1028,17 +1021,17 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               type="button"
               onClick={handleSaveAndNext}
               disabled={isSavingCurrent}
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-violet-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="flex-[1.3] min-h-[48px] py-2.5 px-3 sm:px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-violet-500/20 rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isSavingCurrent ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                   <span>Guardando...</span>
                 </>
               ) : (
                 <>
-                  <span>Guardar Contacto</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <Check className="w-4 h-4 shrink-0" />
+                  <span>Guardar</span>
                 </>
               )}
             </button>

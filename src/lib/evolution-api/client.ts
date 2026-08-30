@@ -354,6 +354,37 @@ class EvolutionAPIClient {
     }
   }
 
+  async fetchAllGroupsWithParticipants(instanceName: string): Promise<any[]> {
+    try {
+      const groups = await this.request<any[]>(`/group/fetchAllGroups/${instanceName}?getParticipants=true`, {
+        method: 'GET',
+      }).catch(() => []);
+      return groups || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async fetchMessagesBatch(instanceName: string, maxPages = 3): Promise<any[]> {
+    try {
+      const promises = Array.from({ length: maxPages }, (_, i) => i + 1).map(page =>
+        this.request<any>(`/chat/findMessages/${instanceName}`, {
+          method: 'POST',
+          body: JSON.stringify({ where: {}, page, offset: 1000 }),
+        }).catch(() => ({}))
+      );
+      const results = await Promise.all(promises);
+      const allRecords: any[] = [];
+      for (const res of results) {
+        const records = res?.messages?.records || (Array.isArray(res) ? res : []);
+        allRecords.push(...records);
+      }
+      return allRecords;
+    } catch {
+      return [];
+    }
+  }
+
   async fetchProfilePictureUrl(instanceName: string, numberOrJid: string): Promise<string | null> {
     try {
       const cleanNumber = numberOrJid.replace(/[@+]/g, '').trim();

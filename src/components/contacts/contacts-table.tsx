@@ -8,6 +8,7 @@ import { deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact, Template } from '@/types';
 import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { WhatsAppSyncDialog } from '@/components/contacts/whatsapp-sync-dialog';
+import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { 
   Search, 
   UserPlus, 
@@ -16,7 +17,6 @@ import {
   Users, 
   ChevronRight,
   Calendar,
-  Smartphone,
   Sparkles
 } from 'lucide-react';
 
@@ -84,10 +84,10 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
           <button 
             type="button"
             onClick={() => setIsWhatsAppSyncOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-xs text-xs sm:text-sm font-bold shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-xs text-xs sm:text-sm font-bold shrink-0"
             title="Importar contactos frecuentes desde tus conversaciones de WhatsApp"
           >
-            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <WhatsAppIcon className="w-4 h-4" size={18} />
             <span>Sincronizar WhatsApp</span>
           </button>
 
@@ -134,9 +134,9 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
               <button
                 type="button"
                 onClick={() => setIsWhatsAppSyncOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm shadow-emerald-600/20"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm shadow-emerald-600/20"
               >
-                <Smartphone className="w-3.5 h-3.5" />
+                <WhatsAppIcon className="w-4 h-4" size={18} />
                 <span>Sincronizar WhatsApp</span>
               </button>
 

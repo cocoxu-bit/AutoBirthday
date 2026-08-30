@@ -513,46 +513,158 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
 
     const { getContacts } = await import('@/lib/firebase/firestore');
 
-    const [waChats, waGroups, existingContacts] = await Promise.all([
-      evolutionApi.fetchChats(instanceName, true),
-      evolutionApi.fetchGroups(instanceName, true),
-      getContacts(userId),
+    // Fetch in parallel: direct chats, all groups with participants, message history, and existing Firestore contacts
+    const [rawChats, rawGroups, rawMessages, existingContacts] = await Promise.all([
+      evolutionApi.fetchChats(instanceName, true).catch(() => []),
+      evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
+      evolutionApi.fetchMessagesBatch(instanceName, 3).catch(() => []),
+      getContacts(userId).catch(() => []),
     ]);
 
-    // Set of existing clean phone numbers to avoid duplicates
+    // Set of existing clean phone numbers to avoid showing already added contacts
     const existingPhones = new Set(
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
 
-    // Filter chats: must have a real phone number and not already registered in contacts
-    const unaddedChats = waChats.filter(c => {
-      const cleanPhone = (c.phone || '').replace(/\D/g, '');
-      if (!cleanPhone || cleanPhone.length < 6) return false;
-      if (existingPhones.has(cleanPhone)) return false;
-      return true;
-    });
+    // 1. Build pushName resolution map from message history (1-on-1 chats and group messages)
+    const nameMap = new Map<string, string>();
+    for (const m of (rawMessages || [])) {
+      const sender = m.key?.participant || m.key?.remoteJid || '';
+      const name = m.pushName;
+      if (sender && sender.endsWith('@s.whatsapp.net') && name && name !== 'Você' && name !== 'You') {
+        const phone = sender.replace(/@.*$/, '').replace(/\D/g, '');
+        const cleanName = name.trim();
+        if (!/^[\d+\s\-()]+$/.test(cleanName) && !nameMap.has(phone)) {
+          nameMap.set(phone, cleanName);
+        }
+      }
+    }
 
-    if (unaddedChats.length === 0) {
-      if (waChats.length > 0 && existingContacts.length > 0) {
+    // 2. Build consolidated map of contacts
+    interface CandidateContact {
+      phone: string;
+      name: string;
+      pushName?: string;
+      profilePictureUrl?: string | null;
+      lastActivity: number;
+      hasRealName: boolean;
+      groupContext?: string;
+    }
+
+    const contactMap = new Map<string, CandidateContact>();
+
+    // A. Add individual 1-on-1 chats
+    for (const c of (rawChats || [])) {
+      const cleanPhone = (c.phone || c.jid || '').replace(/\D/g, '');
+      if (!cleanPhone || cleanPhone.length < 6 || existingPhones.has(cleanPhone)) continue;
+
+      let name = c.name || c.pushName;
+      if (!name || name === 'Você' || name === 'You' || /^[\d+\s\-()]+$/.test(name.trim())) {
+        name = nameMap.get(cleanPhone);
+      }
+
+      const hasRealName = Boolean(name && name !== 'Você' && name !== 'You' && !/^[\d+\s\-()]+$/.test(name.trim()));
+      const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone})`;
+
+      contactMap.set(cleanPhone, {
+        phone: cleanPhone,
+        name: displayName,
+        pushName: c.pushName || nameMap.get(cleanPhone),
+        profilePictureUrl: c.profilePictureUrl || null,
+        lastActivity: (c as any).lastActivity || 0,
+        hasRealName,
+      });
+    }
+
+    // B. Extract and add all group participants
+    const groupsList: WhatsAppGroup[] = [];
+    for (const g of (rawGroups || [])) {
+      const gId = g.id || g.jid;
+      const gSubject = g.subject || g.name || 'Grupo de WhatsApp';
+      
+      groupsList.push({
+        id: gId,
+        subject: gSubject,
+        pictureUrl: g.pictureUrl || null,
+        size: g.size || (g.participants ? g.participants.length : 0),
+      });
+
+      for (const p of (g.participants || [])) {
+        const rawPhone = p.phoneNumber || p.id || '';
+        const cleanPhone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!cleanPhone || cleanPhone.length < 6 || existingPhones.has(cleanPhone)) continue;
+
+        const resolvedName = nameMap.get(cleanPhone);
+
+        if (!contactMap.has(cleanPhone)) {
+          const hasRealName = Boolean(resolvedName);
+          const displayName = resolvedName || `${gSubject} (…${cleanPhone.slice(-4)})`;
+
+          contactMap.set(cleanPhone, {
+            phone: cleanPhone,
+            name: displayName,
+            pushName: resolvedName,
+            profilePictureUrl: null,
+            lastActivity: 0,
+            hasRealName,
+            groupContext: gSubject,
+          });
+        } else if (!contactMap.get(cleanPhone)!.hasRealName && resolvedName) {
+          const existing = contactMap.get(cleanPhone)!;
+          existing.name = resolvedName;
+          existing.pushName = resolvedName;
+          existing.hasRealName = true;
+        }
+      }
+    }
+
+    const allCandidates = Array.from(contactMap.values());
+
+    if (allCandidates.length === 0) {
+      if (existingContacts.length > 0) {
         return {
           success: false,
-          error: '¡Todos tus contactos recientes de WhatsApp ya están guardados en tu agenda!',
+          error: '¡Todos tus contactos y participantes de grupos de WhatsApp ya están guardados en tu agenda!',
         };
       }
       return {
         success: false,
-        error: 'No se encontraron conversaciones recientes con contactos en tu WhatsApp.',
+        error: 'No se encontraron conversaciones ni participantes de grupos en tu WhatsApp.',
       };
     }
 
-    const items: WhatsAppSyncItem[] = unaddedChats.map((c, index) => {
-      const cleanPhone = (c.phone || '').replace(/\D/g, '');
+    // Sort: Contacts with identified real names first, then by activity
+    allCandidates.sort((a, b) => {
+      if (a.hasRealName && !b.hasRealName) return -1;
+      if (!a.hasRealName && b.hasRealName) return 1;
+      return b.lastActivity - a.lastActivity;
+    });
+
+    // Prefetch real WhatsApp profile picture URLs in parallel for the first 35 contacts
+    const firstBatchSize = Math.min(35, allCandidates.length);
+    const prefetchedPics = await Promise.all(
+      allCandidates.slice(0, firstBatchSize).map(async c => {
+        try {
+          const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+          return { phone: c.phone, pic };
+        } catch {
+          return { phone: c.phone, pic: null };
+        }
+      })
+    );
+
+    const picMap = new Map<string, string | null>();
+    prefetchedPics.forEach(item => {
+      if (item.pic) picMap.set(item.phone, item.pic);
+    });
+
+    const items: WhatsAppSyncItem[] = allCandidates.map((c, index) => {
       return {
-        id: `wa-sync-${cleanPhone}-${index}`,
+        id: `wa-sync-${c.phone}-${index}`,
         name: c.name,
-        phone: cleanPhone,
+        phone: c.phone,
         pushName: c.pushName,
-        profilePictureUrl: c.profilePictureUrl || null,
+        profilePictureUrl: picMap.get(c.phone) || c.profilePictureUrl || null,
         birthDay: 0,
         birthMonth: 0,
         targetType: 'individual',
@@ -573,7 +685,7 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
     return {
       success: true,
       items,
-      availableGroups: waGroups,
+      availableGroups: groupsList.length > 0 ? groupsList : undefined,
     };
   } catch (error: any) {
     console.error('getWhatsAppRecentChatsForSyncAction error:', error);
