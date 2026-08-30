@@ -649,18 +649,9 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
             {/* MODE 1: MANUAL FIXED MESSAGE */}
             {mode === 'manual' && (
               <div className="space-y-2 bg-emerald-50/40 border border-emerald-100 p-4 rounded-2xl">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 uppercase">
-                    Texto del mensaje:
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => form.setValue('customMessage', (form.getValues('customMessage') || DEFAULT_FIXED_MESSAGE) + ' {nombre}')}
-                    className="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-50 shadow-2xs"
-                  >
-                    + Añadir &ldquo;{'{nombre}'}&rdquo;
-                  </button>
-                </div>
+                <label className="text-xs font-bold text-slate-700 uppercase block">
+                  Texto del mensaje:
+                </label>
                 <textarea
                   rows={3}
                   placeholder={DEFAULT_FIXED_MESSAGE}

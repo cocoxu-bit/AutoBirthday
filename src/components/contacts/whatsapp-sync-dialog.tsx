@@ -25,7 +25,8 @@ import {
   PenTool, 
   MessageSquare,
   Calendar as CalendarIcon,
-  Plus
+  Plus,
+  Edit3
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -33,7 +34,7 @@ const MONTH_NAMES = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
 ];
 
-const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
+const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
 
 const TONES: Array<{ id: AiTone; label: string }> = [
   { id: 'casual', label: 'Casual' },
@@ -132,7 +133,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
   useEffect(() => {
     if (cards.length > 0 && step === 'deck') {
-      const windowCards = cards.slice(Math.max(0, currentIndex - 1), currentIndex + 5);
+      const windowCards = cards.slice(Math.max(0, currentIndex - 1), currentIndex + 8);
       windowCards.forEach(c => {
         if (c.phone) {
           fetchAvatarIfNeeded(c.phone, c.profilePictureUrl);
@@ -144,7 +145,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   // Load WhatsApp Chats
   const handleStartWhatsAppSync = async () => {
     setLoading(true);
-    setStatusMessage('Cargando contactos de WhatsApp...');
+    setStatusMessage('Cargando contactos y chats de WhatsApp...');
 
     try {
       const result = await getWhatsAppRecentChatsForSyncAction();
@@ -302,8 +303,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   let livePreviewBody = '';
   if (currentCard) {
     if (currentCard.mode === 'manual') {
-      const raw = currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE;
-      livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
+      livePreviewBody = currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE;
     } else if (currentCard.mode === 'template') {
       const tpl = currentTemplates.find(t => t.id === currentCard.templateId) || currentTemplates[0];
       const raw = tpl ? tpl.content : DEFAULT_FIXED_MESSAGE;
@@ -472,10 +472,17 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </div>
                   </div>
 
-                  {/* Contact Name Only (No phone clutter) */}
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-3">
-                    {currentCard.name}
-                  </h3>
+                  {/* Editable Contact Name Input */}
+                  <div className="mt-3 w-full max-w-xs mx-auto">
+                    <input
+                      type="text"
+                      value={currentCard.name}
+                      onChange={e => updateCurrentCard({ name: e.target.value })}
+                      placeholder="Nombre del contacto"
+                      className="w-full text-center text-xl sm:text-2xl font-black text-slate-900 tracking-tight bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded-xl px-2 py-1 focus:outline-none transition-colors"
+                      title="Haz clic para editar el nombre si lo deseas"
+                    />
+                  </div>
                 </div>
 
                 <hr className="border-slate-100" />
@@ -737,21 +744,12 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </div>
                   </div>
 
-                  {/* MODE A: MANUAL FIXED MESSAGE */}
+                  {/* MODE A: MANUAL FIXED MESSAGE (NO VARIABLES BUTTON) */}
                   {currentCard.mode === 'manual' && (
                     <div className="space-y-2 bg-emerald-50/40 border border-emerald-100 p-4 rounded-2xl">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-700 uppercase">
-                          Texto del mensaje:
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => updateCurrentCard({ customMessage: (currentCard.customMessage || DEFAULT_FIXED_MESSAGE) + ' {nombre}' })}
-                          className="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-50 shadow-2xs"
-                        >
-                          + Añadir &ldquo;{'{nombre}'}&rdquo;
-                        </button>
-                      </div>
+                      <label className="text-xs font-bold text-slate-700 uppercase block">
+                        Texto del mensaje:
+                      </label>
                       <textarea
                         rows={3}
                         placeholder={DEFAULT_FIXED_MESSAGE}
@@ -964,15 +962,15 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
               <span>Anterior</span>
             </button>
 
-            {/* Skip Button */}
+            {/* Skip Button (Soft light-red background) */}
             <button
               type="button"
               onClick={handleSkipCurrent}
               disabled={isSavingCurrent}
-              className="flex-1 min-h-[48px] py-2.5 px-3 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs sm:text-sm border border-slate-200/80 hover:border-rose-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex-1 min-h-[48px] py-2.5 px-3 bg-red-50 hover:bg-red-100/90 text-rose-700 hover:text-rose-800 font-bold text-xs sm:text-sm border border-red-200/90 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
               title="Omitir este contacto y pasar al siguiente"
             >
-              <X className="w-4 h-4 shrink-0 text-slate-400" />
+              <X className="w-4 h-4 shrink-0 text-rose-500" />
               <span>Omitir</span>
             </button>
 

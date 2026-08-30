@@ -401,13 +401,13 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   type="button"
                   onClick={() => {
                     if (savedCount > 0) {
-                      toast.success(`Guardado: ${savedCount} contactos añadidos.`);
+                      toast.success(`Guardado: ${savedCount} contactos añadidos a tu agenda. Podrás continuar cuando quieras.`);
                     }
                     onClose();
                   }}
                   className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-2xs transition-colors"
                 >
-                  Guardar y salir
+                  Guardar y seguir luego
                 </button>
               )}
 
@@ -808,21 +808,12 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     </div>
                   </div>
 
-                  {/* MODE A: MANUAL FIXED MESSAGE (SPACIOUS & PROMINENT) */}
+                  {/* MODE A: MANUAL FIXED MESSAGE */}
                   {currentCard.mode === 'manual' && (
                     <div className="space-y-2 bg-emerald-50/40 border border-emerald-100 p-4 rounded-2xl">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-700 uppercase">
-                          Texto del mensaje:
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => updateCurrentCard({ customMessage: (currentCard.customMessage || DEFAULT_FIXED_MESSAGE) + ' {nombre}' })}
-                          className="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-50 shadow-2xs"
-                        >
-                          + Añadir &ldquo;{'{nombre}'}&rdquo;
-                        </button>
-                      </div>
+                      <label className="text-xs font-bold text-slate-700 uppercase block">
+                        Texto del mensaje:
+                      </label>
                       <textarea
                         rows={3}
                         placeholder={DEFAULT_FIXED_MESSAGE}
@@ -1041,15 +1032,15 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               <span>Anterior</span>
             </button>
 
-            {/* Skip Button */}
+            {/* Skip Button (Soft light-red background) */}
             <button
               type="button"
               onClick={handleSkipCurrent}
               disabled={isSavingCurrent}
-              className="flex-1 min-h-[48px] py-2.5 px-3 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs sm:text-sm border border-slate-200/80 hover:border-rose-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex-1 min-h-[48px] py-2.5 px-3 bg-red-50 hover:bg-red-100/90 text-rose-700 hover:text-rose-800 font-bold text-xs sm:text-sm border border-red-200/90 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
               title="Omitir este contacto y pasar al siguiente"
             >
-              <X className="w-4 h-4 shrink-0 text-slate-400" />
+              <X className="w-4 h-4 shrink-0 text-rose-500" />
               <span>Omitir</span>
             </button>
 
