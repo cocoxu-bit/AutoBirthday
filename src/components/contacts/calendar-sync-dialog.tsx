@@ -619,10 +619,18 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     </div>
                   </div>
 
-                  {/* Contact Name & Birthday Badge */}
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-3">
-                    {currentCard.matchedName || currentCard.name}
-                  </h3>
+                  {/* Contact Name (Editable with pencil on right) */}
+                  <div className="mt-3 relative w-full max-w-xs mx-auto group">
+                    <input
+                      type="text"
+                      value={currentCard.matchedName || currentCard.name}
+                      onChange={e => updateCurrentCard({ matchedName: e.target.value, name: e.target.value })}
+                      placeholder="Nombre del contacto"
+                      className="w-full text-center text-xl sm:text-2xl font-black text-slate-900 tracking-tight bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-violet-500 rounded-2xl py-1 pl-6 pr-7 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all cursor-text"
+                      title="Editar nombre"
+                    />
+                    <Edit3 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors pointer-events-none" />
+                  </div>
 
                   <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-50 border border-amber-200/80 text-amber-900 rounded-full font-black text-xs shadow-sm">

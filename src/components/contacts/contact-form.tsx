@@ -493,7 +493,7 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
                   type="number" 
                   {...form.register('birthYear', { valueAsNumber: true })} 
                   className="w-full px-2.5 sm:px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium text-center sm:text-left" 
-                  placeholder="Opcional"
+                  placeholder="Opc."
                 />
               </div>
             </div>

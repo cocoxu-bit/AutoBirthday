@@ -472,20 +472,17 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </div>
                   </div>
 
-                  {/* Editable Contact Name Input with Visual Cue */}
-                  <div className="mt-3 w-full max-w-sm mx-auto space-y-1">
-                    <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-500">
-                      <Edit3 className="w-3 h-3 text-emerald-600" />
-                      <span>Nombre del contacto (editable)</span>
-                    </div>
+                  {/* Editable Contact Name Input with pencil on right */}
+                  <div className="mt-3 relative w-full max-w-xs mx-auto group">
                     <input
                       type="text"
                       value={currentCard.name}
                       onChange={e => updateCurrentCard({ name: e.target.value })}
                       placeholder="Nombre del contacto"
-                      className="w-full text-center text-xl sm:text-2xl font-black text-slate-900 tracking-tight bg-slate-50/80 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-2xs"
-                      title="Haz clic para editar el nombre si lo deseas"
+                      className="w-full text-center text-xl sm:text-2xl font-black text-slate-900 tracking-tight bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded-2xl py-1 pl-6 pr-7 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-text"
+                      title="Editar nombre"
                     />
+                    <Edit3 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors pointer-events-none" />
                   </div>
                 </div>
 
@@ -567,7 +564,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                         onChange={e => updateCurrentCard({ birthYear: e.target.value ? Number(e.target.value) : null })}
                         className="w-full h-10 px-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
                       >
-                        <option value="">Opcional</option>
+                        <option value="">Opc.</option>
                         {yearOptions.map(y => (
                           <option key={y} value={y}>
                             {y}
