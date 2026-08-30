@@ -44,13 +44,37 @@ export async function deleteAccount() {
   try {
     const userId = await getAuthenticatedUserId();
     
-    // Delete user from Auth
+    // 0. Mark user as deleted to silence disconnection webhooks
+    await adminDb.collection('users').doc(userId).set({
+      isDeleted: true,
+      isDeleting: true,
+    }, { merge: true }).catch(() => {});
+
+    // 1. Delete WhatsApp Evolution API instance
+    try {
+      const { evolutionApi } = await import('@/lib/evolution-api/client');
+      await evolutionApi.deleteInstance(`autocumple-${userId}`).catch(() => {});
+    } catch {}
+
+    // 2. Delete user from Auth
     await adminAuth.deleteUser(userId);
     
-    // Delete user profile and subcollections
+    // 3. Delete user profile and subcollections
+    const subcollections = ['contacts', 'wishes', 'templates', 'wa_contacts_cache'];
+    for (const sub of subcollections) {
+      try {
+        const snap = await adminDb.collection('users').doc(userId).collection(sub).get();
+        if (!snap.empty) {
+          const batch = adminDb.batch();
+          snap.docs.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+      } catch {}
+    }
+    
     await adminDb.collection('users').doc(userId).delete();
     
-    // Delete wishes for user
+    // 4. Delete wishes for user
     const wishesSnap = await adminDb.collection('wishes').where('userId', '==', userId).get();
     for (const d of wishesSnap.docs) {
       await d.ref.delete();

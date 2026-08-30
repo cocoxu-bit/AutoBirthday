@@ -494,6 +494,12 @@ export async function adminDeleteUserAction(targetUserId: string): Promise<{
       }
     }
 
+    // 0. Mark user as deleted in Firestore first so incoming webhook events immediately abort
+    await adminDb.collection('users').doc(targetUserId).set({
+      isDeleted: true,
+      isDeleting: true,
+    }, { merge: true }).catch(() => {});
+
     // 1. Delete WhatsApp Evolution API instance
     try {
       await evolutionApi.deleteInstance(`autocumple-${targetUserId}`).catch(() => {});

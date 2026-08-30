@@ -218,22 +218,22 @@ export async function disconnectInstance() {
   try {
     const userId = await getAuthenticatedUserId();
     const instanceName = `autocumple-${userId}`;
-    
+    await adminDb.collection('users').doc(userId).set({
+      whatsappInstance: {
+        instanceName,
+        status: 'disconnected',
+        intentionalDisconnect: true,
+        phoneNumber: null,
+        updatedAt: Timestamp.now()
+      }
+    }, { merge: true });
+
     try {
       await evolutionApi.logout(instanceName);
       await evolutionApi.deleteInstance(instanceName);
     } catch (e) {
       console.warn("Evolution delete failed:", e);
     }
-    
-    await adminDb.collection('users').doc(userId).set({
-      whatsappInstance: {
-        instanceName,
-        status: 'disconnected',
-        phoneNumber: null,
-        updatedAt: Timestamp.now()
-      }
-    }, { merge: true });
     
     return { success: true };
   } catch (error: any) {

@@ -27,7 +27,15 @@ export async function POST(req: Request) {
       if (!isSystemInstance && instanceName.startsWith('autocumple-')) {
         const userId = instanceName.replace('autocumple-', '');
         const userDoc = await adminDb.collection('users').doc(userId).get();
-        const prevStatus = userDoc.data()?.whatsappInstance?.status;
+
+        // If user doc doesn't exist or account was deleted, ignore completely
+        if (!userDoc.exists || userDoc.data()?.isDeleted || userDoc.data()?.isDeleting) {
+          return NextResponse.json({ success: true, message: 'User deleted, webhook ignored' });
+        }
+
+        const userData = userDoc.data();
+        const prevStatus = userData?.whatsappInstance?.status;
+        const wasIntentionalDisconnect = userData?.whatsappInstance?.intentionalDisconnect === true;
 
         await adminDb.collection('users').doc(userId).set({
           whatsappInstance: {
@@ -41,16 +49,16 @@ export async function POST(req: Request) {
         if (state === 'open') {
           import('@/lib/whatsapp/sync-cache').then(m => m.prewarmWhatsAppContactsCache(userId)).catch(() => {});
 
-          const userPhone = userDoc.data()?.whatsappInstance?.phoneNumber;
+          const userPhone = userData?.whatsappInstance?.phoneNumber;
           if (userPhone) {
             const { sendWelcomeMessageIfNotSent } = await import('@/lib/notifications/assistant');
-            await sendWelcomeMessageIfNotSent(userId, userPhone, userDoc.data()?.displayName);
+            await sendWelcomeMessageIfNotSent(userId, userPhone, userData?.displayName);
           }
         }
 
-        // If instance unexpectedly disconnected (and was previously connected), send alert from system bot
-        if (state === 'close' && prevStatus === 'connected') {
-          const userPhone = userDoc.data()?.whatsappInstance?.phoneNumber;
+        // If instance unexpectedly disconnected (and was NOT an intentional logout or account deletion), send alert from system bot
+        if (state === 'close' && prevStatus === 'connected' && !wasIntentionalDisconnect && !userData?.isDeleted) {
+          const userPhone = userData?.whatsappInstance?.phoneNumber;
           if (userPhone) {
             try {
               const alertMsg = `⚠️ *AutoBirthday: Alerta de Desconexión*\n\n` +
