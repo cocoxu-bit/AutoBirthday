@@ -19,19 +19,20 @@ export async function POST(request: Request) {
       const userDocRef = adminDb.collection('users').doc(userId);
       const userDoc = await userDocRef.get();
 
-      if (!userDoc.exists) {
-        await userDocRef.set({
-          displayName: decodedToken.name || decodedToken.email?.split('@')[0] || 'Usuario',
-          email: decodedToken.email || '',
-          timezone: 'Europe/Madrid',
+      await userDocRef.set({
+        displayName: decodedToken.name || decodedToken.email?.split('@')[0] || 'Usuario',
+        email: decodedToken.email || '',
+        timezone: 'Europe/Madrid',
+        updatedAt: new Date(),
+        ...(!userDoc.exists ? {
           createdAt: new Date(),
           whatsappInstance: {
             instanceName: `autocumple-${userId}`,
             status: 'disconnected',
             updatedAt: new Date(),
           },
-        }, { merge: true });
-      }
+        } : {}),
+      }, { merge: true });
     } catch (dbErr) {
       console.warn('Could not auto-create user profile document:', dbErr);
     }

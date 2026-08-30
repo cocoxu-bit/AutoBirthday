@@ -430,17 +430,26 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
               <p className="text-[11px] text-slate-500">Envío 100% desatendido vs Aprobación manual previa.</p>
             </div>
 
-            {/* Metric C: Uso de Mensajes con IA */}
+            {/* Metric C: Desglose de Mensajería (Fijo vs Plantilla vs IA) */}
             <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mensajes con IA</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tipos de Mensaje</span>
                 <Bot className="w-4 h-4 text-purple-600" />
               </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-black text-slate-900">{summary.aiModeContactsRate}%</p>
-                <span className="text-xs text-slate-400">de contactos</span>
+              <div className="space-y-1 pt-0.5">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                  <span className="flex items-center gap-1">✍️ Fijo</span>
+                  <span className="font-bold text-slate-900">{summary.totalFixedModeContacts} ({summary.fixedModeContactsRate}%)</span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                  <span className="flex items-center gap-1">📋 Plantilla</span>
+                  <span className="font-bold text-slate-900">{summary.totalTemplateModeContacts} ({summary.templateModeContactsRate}%)</span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-purple-700">
+                  <span className="flex items-center gap-1 font-bold">🤖 Con IA</span>
+                  <span className="font-bold text-purple-900">{summary.totalAiModeContacts} ({summary.aiModeContactsRate}%)</span>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-500">Redactados dinámicamente con IA vs plantillas fijas.</p>
             </div>
 
             {/* Metric D: Usuarios en Riesgo (Desconectados) */}
@@ -881,6 +890,25 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <span className="text-[10px] font-bold uppercase text-slate-400 block">Felicitaciones</span>
                 <span className="text-xs font-black text-emerald-800 block mt-0.5">{selectedUser.wishesSentCount} enviadas</span>
+              </div>
+            </div>
+
+            {/* Contact Modes Breakdown */}
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
+              <span className="text-[10px] font-bold uppercase text-slate-400 block">Tipos de Mensaje Configurados</span>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="bg-white p-2 rounded-xl border border-slate-200/60">
+                  <span className="text-[10px] text-slate-500 block">✍️ Mensaje Fijo</span>
+                  <span className="font-bold text-slate-900">{selectedUser.fixedModeContactsCount}</span>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-slate-200/60">
+                  <span className="text-[10px] text-slate-500 block">📋 Plantilla</span>
+                  <span className="font-bold text-slate-900">{selectedUser.templateModeContactsCount}</span>
+                </div>
+                <div className="bg-purple-50 p-2 rounded-xl border border-purple-200/60">
+                  <span className="text-[10px] text-purple-700 block font-semibold">🤖 Con IA</span>
+                  <span className="font-bold text-purple-900">{selectedUser.aiModeContactsCount}</span>
+                </div>
               </div>
             </div>
 

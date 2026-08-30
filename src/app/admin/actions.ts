@@ -27,6 +27,8 @@ export interface AdminUserRecord {
   isActivated: boolean;
   isAtRisk: boolean;
   autoSendContactsCount: number;
+  fixedModeContactsCount: number;
+  templateModeContactsCount: number;
   aiModeContactsCount: number;
 }
 
@@ -62,6 +64,11 @@ export interface AdminAnalyticsData {
     activatedUsersRate: number;
     atRiskUsersCount: number;
     autoSendContactsRate: number;
+    totalFixedModeContacts: number;
+    fixedModeContactsRate: number;
+    totalTemplateModeContacts: number;
+    templateModeContactsRate: number;
+    totalAiModeContacts: number;
     aiModeContactsRate: number;
     totalFailedWishes: number;
   };
@@ -139,6 +146,9 @@ export async function getAdminAnalyticsDataAction(): Promise<{
       const contactsCount = contacts.length;
       const activeContactsCount = contacts.filter((c: any) => c.isActive !== false).length;
       const autoSendContactsCount = contacts.filter((c: any) => c.autoSend === true).length;
+      
+      const fixedModeContactsCount = contacts.filter((c: any) => c.mode === 'manual' || (!c.mode && !c.templateId)).length;
+      const templateModeContactsCount = contacts.filter((c: any) => c.mode === 'template' || Boolean(c.templateId)).length;
       const aiModeContactsCount = contacts.filter((c: any) => c.mode === 'ai').length;
 
       const wishesSentCount = wishes.filter((w: any) => w.status === 'sent').length;
@@ -151,15 +161,43 @@ export async function getAdminAnalyticsDataAction(): Promise<{
         u.whatsappInstance?.status === 'connected' ? 'connected' :
         u.whatsappInstance?.status === 'qrcode' ? 'qrcode' : 'disconnected';
 
+      let resolvedEmail = u.email;
+      let resolvedDisplayName = u.displayName || u.name;
+      let resolvedPhotoURL = u.photoURL;
+
+      // If email is missing in Firestore, resolve directly from Firebase Authentication
+      if (!resolvedEmail || resolvedEmail === 'Sin correo') {
+        try {
+          const authRecord = await adminAuth.getUser(userId);
+          if (authRecord.email) {
+            resolvedEmail = authRecord.email;
+            if (!resolvedDisplayName && authRecord.displayName) {
+              resolvedDisplayName = authRecord.displayName;
+            }
+            if (!resolvedPhotoURL && authRecord.photoURL) {
+              resolvedPhotoURL = authRecord.photoURL;
+            }
+            // Auto backfill to Firestore so it stays synced
+            adminDb.collection('users').doc(userId).set({
+              email: authRecord.email,
+              displayName: resolvedDisplayName || authRecord.email.split('@')[0],
+            }, { merge: true }).catch(() => {});
+          }
+        } catch {
+          // User document exists in Firestore but was created as test mock / orphan before auth
+          resolvedEmail = 'Doc huérfano (Sin Auth)';
+        }
+      }
+
       const isActivated = contactsCount >= 5;
       const isAtRisk = contactsCount > 0 && waStatus === 'disconnected';
       const isSuspended = Boolean(u.isSuspended);
 
       const userRecord: AdminUserRecord = {
         id: userId,
-        email: u.email || 'Sin correo',
-        displayName: u.displayName || u.name || 'Usuario',
-        photoURL: u.photoURL || null,
+        email: resolvedEmail || 'Sin correo',
+        displayName: resolvedDisplayName || 'Usuario',
+        photoURL: resolvedPhotoURL || null,
         createdAt: createdAtStr,
         createdAtMs,
         whatsappStatus: waStatus,
@@ -173,6 +211,8 @@ export async function getAdminAnalyticsDataAction(): Promise<{
         isActivated,
         isAtRisk,
         autoSendContactsCount,
+        fixedModeContactsCount,
+        templateModeContactsCount,
         aiModeContactsCount,
       };
 
@@ -204,6 +244,12 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const totalAutoSendContacts = users.reduce((acc, u) => acc + u.autoSendContactsCount, 0);
     const autoSendContactsRate = totalContacts > 0 ? Math.round((totalAutoSendContacts / totalContacts) * 100) : 0;
 
+    const totalFixedModeContacts = users.reduce((acc, u) => acc + u.fixedModeContactsCount, 0);
+    const fixedModeContactsRate = totalContacts > 0 ? Math.round((totalFixedModeContacts / totalContacts) * 100) : 0;
+
+    const totalTemplateModeContacts = users.reduce((acc, u) => acc + u.templateModeContactsCount, 0);
+    const templateModeContactsRate = totalContacts > 0 ? Math.round((totalTemplateModeContacts / totalContacts) * 100) : 0;
+
     const totalAiModeContacts = users.reduce((acc, u) => acc + u.aiModeContactsCount, 0);
     const aiModeContactsRate = totalContacts > 0 ? Math.round((totalAiModeContacts / totalContacts) * 100) : 0;
 
@@ -225,6 +271,11 @@ export async function getAdminAnalyticsDataAction(): Promise<{
           activatedUsersRate,
           atRiskUsersCount,
           autoSendContactsRate,
+          totalFixedModeContacts,
+          fixedModeContactsRate,
+          totalTemplateModeContacts,
+          templateModeContactsRate,
+          totalAiModeContacts,
           aiModeContactsRate,
           totalFailedWishes,
         },
