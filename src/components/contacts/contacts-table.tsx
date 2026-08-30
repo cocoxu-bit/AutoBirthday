@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact, Template } from '@/types';
 import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
+import { WhatsAppSyncDialog } from '@/components/contacts/whatsapp-sync-dialog';
 import { 
   Search, 
   UserPlus, 
@@ -14,7 +15,9 @@ import {
   Trash2, 
   Users, 
   ChevronRight,
-  Calendar
+  Calendar,
+  Smartphone,
+  Sparkles
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -32,6 +35,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
 
   // Filter contacts by name or group name
   const filteredContacts = contacts.filter(c => 
@@ -59,7 +63,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
     <div className="space-y-4">
       
       {/* SEARCH AND ACTIONS */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
         
         {/* Minimal Search input */}
         <div className="relative flex-1">
@@ -74,11 +78,24 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          
+          {/* WhatsApp Sync CTA */}
+          <button 
+            type="button"
+            onClick={() => setIsWhatsAppSyncOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-xs text-xs sm:text-sm font-bold shrink-0"
+            title="Importar contactos frecuentes desde tus conversaciones de WhatsApp"
+          >
+            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <span>Sincronizar WhatsApp</span>
+          </button>
+
+          {/* Calendar Sync CTA */}
           <button 
             type="button"
             onClick={() => setIsImportOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2.5 bg-white/90 hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-sm text-xs sm:text-sm font-bold shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/90 hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-xs text-xs sm:text-sm font-bold shrink-0"
             title="Sincronizar cumpleaños directamente desde Google Calendar o Apple Calendar"
           >
             <Calendar className="w-4 h-4 text-violet-600" />
@@ -98,7 +115,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
 
       {/* MINIMALIST WHATSAPP-STYLE CONTACT LIST */}
       {filteredContacts.length === 0 ? (
-        <div className="text-center py-16 bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="text-center py-12 sm:py-16 bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-sm space-y-5 px-4">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-100 text-violet-600 shadow-inner">
             <UserPlus className="w-7 h-7" />
           </div>
@@ -109,17 +126,35 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             <p className="text-slate-500 text-xs max-w-sm mx-auto font-medium">
               {searchTerm 
                 ? 'Prueba a buscar con otro nombre.'
-                : 'Añade a tu primer cumpleañero para automatizar sus felicitaciones.'}
+                : 'Añade o sincroniza contactos para empezar a automatizar tus felicitaciones.'}
             </p>
           </div>
           {!searchTerm && (
-            <div className="pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsWhatsAppSyncOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm shadow-emerald-600/20"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Sincronizar WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsImportOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-all shadow-xs"
+              >
+                <Calendar className="w-3.5 h-3.5 text-violet-600" />
+                <span>Sincronizar Calendario</span>
+              </button>
+
               <Link 
                 href="/contacts/new" 
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors shadow-sm text-xs font-bold"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-bold transition-all shadow-xs"
               >
-                <UserPlus className="w-4 h-4" />
-                <span>Añadir Primer Contacto</span>
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Añadir Manualmente</span>
               </Link>
             </div>
           )}
@@ -215,6 +250,10 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
 
       {isImportOpen && (
         <CalendarSyncDialog onClose={() => setIsImportOpen(false)} templates={templates} />
+      )}
+
+      {isWhatsAppSyncOpen && (
+        <WhatsAppSyncDialog onClose={() => setIsWhatsAppSyncOpen(false)} templates={templates} />
       )}
 
     </div>

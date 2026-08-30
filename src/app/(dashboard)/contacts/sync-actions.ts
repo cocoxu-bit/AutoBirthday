@@ -463,3 +463,123 @@ export async function getWhatsAppProfilePicAction(phone: string): Promise<string
     return null;
   }
 }
+
+export interface WhatsAppSyncItem {
+  id: string;
+  name: string;
+  phone: string;
+  pushName?: string;
+  profilePictureUrl?: string | null;
+  
+  // Required Birthday fields to be filled by user
+  birthDay: number;
+  birthMonth: number;
+  
+  // Target Destination
+  targetType: TargetType;
+  groupId?: string;
+  groupName?: string;
+  mentionInGroup?: boolean;
+
+  // On-the-fly Greeting Customization
+  mode: WishMode;
+  templateId?: string;
+  customMessage?: string;
+  aiTone: AiTone;
+  aiNotes: string;
+  autoSend: boolean;
+  sendTimeStart: string;
+  sendTimeEnd: string;
+}
+
+export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
+  success: boolean;
+  items?: WhatsAppSyncItem[];
+  availableGroups?: WhatsAppGroup[];
+  error?: string;
+}> {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+
+    // Verify WhatsApp connection in Evolution API
+    const evoState = await evolutionApi.getConnectionState(instanceName);
+    if (evoState.instance?.state !== 'open') {
+      return {
+        success: false,
+        error: 'Tu WhatsApp no está conectado. Por favor, vincula tu cuenta de WhatsApp primero en la sección de WhatsApp.',
+      };
+    }
+
+    const { getContacts } = await import('@/lib/firebase/firestore');
+
+    const [waChats, waGroups, existingContacts] = await Promise.all([
+      evolutionApi.fetchChats(instanceName, true),
+      evolutionApi.fetchGroups(instanceName, true),
+      getContacts(userId),
+    ]);
+
+    // Set of existing clean phone numbers to avoid duplicates
+    const existingPhones = new Set(
+      existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
+    );
+
+    // Filter chats: must have a real phone number and not already registered in contacts
+    const unaddedChats = waChats.filter(c => {
+      const cleanPhone = (c.phone || '').replace(/\D/g, '');
+      if (!cleanPhone || cleanPhone.length < 6) return false;
+      if (existingPhones.has(cleanPhone)) return false;
+      return true;
+    });
+
+    if (unaddedChats.length === 0) {
+      if (waChats.length > 0 && existingContacts.length > 0) {
+        return {
+          success: false,
+          error: '¡Todos tus contactos recientes de WhatsApp ya están guardados en tu agenda!',
+        };
+      }
+      return {
+        success: false,
+        error: 'No se encontraron conversaciones recientes con contactos en tu WhatsApp.',
+      };
+    }
+
+    const items: WhatsAppSyncItem[] = unaddedChats.map((c, index) => {
+      const cleanPhone = (c.phone || '').replace(/\D/g, '');
+      return {
+        id: `wa-sync-${cleanPhone}-${index}`,
+        name: c.name,
+        phone: cleanPhone,
+        pushName: c.pushName,
+        profilePictureUrl: c.profilePictureUrl || null,
+        birthDay: 0,
+        birthMonth: 0,
+        targetType: 'individual',
+        groupId: undefined,
+        groupName: undefined,
+        mentionInGroup: true,
+        mode: 'manual',
+        aiTone: 'casual',
+        aiNotes: '',
+        templateId: '',
+        customMessage: '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.',
+        autoSend: false,
+        sendTimeStart: '09:30',
+        sendTimeEnd: '11:45',
+      };
+    });
+
+    return {
+      success: true,
+      items,
+      availableGroups: waGroups,
+    };
+  } catch (error: any) {
+    console.error('getWhatsAppRecentChatsForSyncAction error:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al obtener conversaciones de WhatsApp',
+    };
+  }
+}
