@@ -409,6 +409,12 @@ class EvolutionAPIClient {
       method: 'DELETE',
     });
   }
+
+  async restartInstance(instanceName: string) {
+    return this.request(`/instance/restart/${instanceName}`, {
+      method: 'POST',
+    });
+  }
   
   async fetchInstances() {
     return this.request<any[]>('/instance/fetchInstances', {

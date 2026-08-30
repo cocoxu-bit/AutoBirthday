@@ -2,6 +2,8 @@
 
 import { cookies } from 'next/headers';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { evolutionApi } from '@/lib/evolution-api/client';
+import { executeSendWishes } from '@/lib/scheduler/send-wishes';
 
 const ADMIN_EMAILS = [
   'lucasjimeneznavarro@gmail.com',
@@ -21,6 +23,27 @@ export interface AdminUserRecord {
   wishesSentCount: number;
   wishesTotalCount: number;
   templatesCount: number;
+  isSuspended: boolean;
+  isActivated: boolean;
+  isAtRisk: boolean;
+  autoSendContactsCount: number;
+  aiModeContactsCount: number;
+}
+
+export interface AdminWishRecord {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  contactId: string;
+  contactName: string;
+  contactPhone: string;
+  status: 'pending' | 'needs_approval' | 'approved' | 'queued' | 'sent' | 'failed' | 'cancelled';
+  mode: string;
+  message: string;
+  scheduledFor: string;
+  sentAt?: string;
+  errorMessage?: string;
 }
 
 export interface AdminAnalyticsData {
@@ -35,6 +58,12 @@ export interface AdminAnalyticsData {
     totalWishesSent: number;
     totalTemplates: number;
     avgContactsPerUser: number;
+    activatedUsersCount: number;
+    activatedUsersRate: number;
+    atRiskUsersCount: number;
+    autoSendContactsRate: number;
+    aiModeContactsRate: number;
+    totalFailedWishes: number;
   };
   users: AdminUserRecord[];
 }
@@ -66,6 +95,8 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+    let totalFailedWishes = 0;
 
     const userPromises = usersSnap.docs.map(async (doc) => {
       const u = doc.data();
@@ -107,13 +138,22 @@ export async function getAdminAnalyticsDataAction(): Promise<{
 
       const contactsCount = contacts.length;
       const activeContactsCount = contacts.filter((c: any) => c.isActive !== false).length;
+      const autoSendContactsCount = contacts.filter((c: any) => c.autoSend === true).length;
+      const aiModeContactsCount = contacts.filter((c: any) => c.mode === 'ai').length;
+
       const wishesSentCount = wishes.filter((w: any) => w.status === 'sent').length;
+      const wishesFailedCount = wishes.filter((w: any) => w.status === 'failed').length;
+      totalFailedWishes += wishesFailedCount;
       const wishesTotalCount = wishes.length;
       const templatesCount = templatesSnap.docs.length;
 
       const waStatus: 'connected' | 'disconnected' | 'qrcode' = 
         u.whatsappInstance?.status === 'connected' ? 'connected' :
         u.whatsappInstance?.status === 'qrcode' ? 'qrcode' : 'disconnected';
+
+      const isActivated = contactsCount >= 5;
+      const isAtRisk = contactsCount > 0 && waStatus === 'disconnected';
+      const isSuspended = Boolean(u.isSuspended);
 
       const userRecord: AdminUserRecord = {
         id: userId,
@@ -129,6 +169,11 @@ export async function getAdminAnalyticsDataAction(): Promise<{
         wishesSentCount,
         wishesTotalCount,
         templatesCount,
+        isSuspended,
+        isActivated,
+        isAtRisk,
+        autoSendContactsCount,
+        aiModeContactsCount,
       };
 
       return userRecord;
@@ -152,6 +197,16 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const totalTemplates = users.reduce((acc, u) => acc + u.templatesCount, 0);
     const avgContactsPerUser = totalUsers > 0 ? Math.round((totalContacts / totalUsers) * 10) / 10 : 0;
 
+    const activatedUsersCount = users.filter(u => u.isActivated).length;
+    const activatedUsersRate = totalUsers > 0 ? Math.round((activatedUsersCount / totalUsers) * 100) : 0;
+    const atRiskUsersCount = users.filter(u => u.isAtRisk).length;
+
+    const totalAutoSendContacts = users.reduce((acc, u) => acc + u.autoSendContactsCount, 0);
+    const autoSendContactsRate = totalContacts > 0 ? Math.round((totalAutoSendContacts / totalContacts) * 100) : 0;
+
+    const totalAiModeContacts = users.reduce((acc, u) => acc + u.aiModeContactsCount, 0);
+    const aiModeContactsRate = totalContacts > 0 ? Math.round((totalAiModeContacts / totalContacts) * 100) : 0;
+
     return {
       success: true,
       data: {
@@ -166,6 +221,12 @@ export async function getAdminAnalyticsDataAction(): Promise<{
           totalWishesSent,
           totalTemplates,
           avgContactsPerUser,
+          activatedUsersCount,
+          activatedUsersRate,
+          atRiskUsersCount,
+          autoSendContactsRate,
+          aiModeContactsRate,
+          totalFailedWishes,
         },
         users,
       },
@@ -179,6 +240,185 @@ export async function getAdminAnalyticsDataAction(): Promise<{
   }
 }
 
+/**
+ * Fetches all global wishes from top-level wishes collection for auditing & error monitoring
+ */
+export async function getAdminGlobalWishesAction(): Promise<{
+  success: boolean;
+  wishes?: AdminWishRecord[];
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+
+    const wishesSnap = await adminDb
+      .collection('wishes')
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] } as any));
+
+    const usersSnap = await adminDb.collection('users').get();
+    const userMap = new Map<string, { name: string; email: string }>();
+    usersSnap.docs.forEach(d => {
+      const data = d.data();
+      userMap.set(d.id, {
+        name: data.displayName || data.name || 'Usuario',
+        email: data.email || 'Sin correo',
+      });
+    });
+
+    const wishes: AdminWishRecord[] = wishesSnap.docs.map((doc: any) => {
+      const w = doc.data();
+      const user = userMap.get(w.userId) || { name: 'Desconocido', email: 'Sin correo' };
+
+      let schedStr = 'Hoy';
+      if (w.scheduledFor) {
+        if (typeof w.scheduledFor.toDate === 'function') {
+          schedStr = w.scheduledFor.toDate().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        } else if (w.scheduledFor._seconds) {
+          schedStr = new Date(w.scheduledFor._seconds * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        }
+      }
+
+      let sentStr: string | undefined;
+      if (w.sentAt) {
+        if (typeof w.sentAt.toDate === 'function') {
+          sentStr = w.sentAt.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        } else if (w.sentAt._seconds) {
+          sentStr = new Date(w.sentAt._seconds * 1000).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+      }
+
+      return {
+        id: doc.id,
+        userId: w.userId,
+        userName: user.name,
+        userEmail: user.email,
+        contactId: w.contactId,
+        contactName: w.contactName || 'Contacto',
+        contactPhone: w.contactPhone || '',
+        status: w.status || 'pending',
+        mode: w.mode || 'manual',
+        message: w.generatedMessage || w.customMessage || 'Sin mensaje',
+        scheduledFor: schedStr,
+        sentAt: sentStr,
+        errorMessage: w.errorMessage,
+      };
+    });
+
+    return { success: true, wishes };
+  } catch (error: any) {
+    console.error('getAdminGlobalWishesAction error:', error);
+    return { success: false, error: error.message || 'Error al obtener felicitaciones' };
+  }
+}
+
+/**
+ * Diagnostic test to check WhatsApp connection state directly in Evolution API
+ */
+export async function adminTestWhatsAppInstanceAction(targetUserId: string): Promise<{
+  success: boolean;
+  state?: string;
+  phone?: string | null;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+    const instanceName = `autocumple-${targetUserId}`;
+
+    const res: any = await evolutionApi.getConnectionState(instanceName).catch(() => null);
+    const state = res?.instance?.state || 'disconnected';
+    
+    return {
+      success: true,
+      state,
+      phone: res?.instance?.phoneNumber || null,
+      message: state === 'open' ? 'WhatsApp está conectado y operativo en el servidor.' : `Estado en servidor: ${state}`,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Error al contactar con el servidor de WhatsApp.',
+    };
+  }
+}
+
+/**
+ * Restarts a user's WhatsApp instance in Evolution API to clear stuck sockets
+ */
+export async function adminRestartWhatsAppInstanceAction(targetUserId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+    const instanceName = `autocumple-${targetUserId}`;
+
+    await evolutionApi.restartInstance(instanceName);
+    return { success: true };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Error al reiniciar la instancia de WhatsApp.',
+    };
+  }
+}
+
+/**
+ * Suspends or reactivates a user account
+ */
+export async function adminToggleUserStatusAction(targetUserId: string, isSuspended: boolean): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const adminUid = await verifyAdminAuth();
+    if (targetUserId === adminUid) {
+      return { success: false, error: 'No puedes suspender tu propia cuenta de administrador.' };
+    }
+
+    await adminDb.collection('users').doc(targetUserId).set({
+      isSuspended,
+      updatedAt: new Date(),
+    }, { merge: true });
+
+    return { success: true };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Error al actualizar estado del usuario',
+    };
+  }
+}
+
+/**
+ * Retries sending a failed or queued wish immediately
+ */
+export async function adminRetryWishAction(wishId: string, targetUserId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+
+    await adminDb.collection('wishes').doc(wishId).update({
+      status: 'queued',
+      scheduledFor: new Date(Date.now() - 1000),
+      errorMessage: null,
+    });
+
+    await executeSendWishes();
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Error al reintentar envío' };
+  }
+}
+
+/**
+ * Deletes user and performs a full cascade cleanup across all services
+ */
 export async function adminDeleteUserAction(targetUserId: string): Promise<{
   success: boolean;
   error?: string;
@@ -205,7 +445,6 @@ export async function adminDeleteUserAction(targetUserId: string): Promise<{
 
     // 1. Delete WhatsApp Evolution API instance
     try {
-      const { evolutionApi } = await import('@/lib/evolution-api/client');
       await evolutionApi.deleteInstance(`autocumple-${targetUserId}`).catch(() => {});
     } catch {}
 
