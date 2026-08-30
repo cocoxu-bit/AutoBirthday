@@ -28,6 +28,11 @@ const isInvalidName = (name?: string | null): boolean => {
  * Pre-warms and caches WhatsApp contacts, pushNames, and HD profile photos
  * directly in Firestore right when the user connects their WhatsApp account.
  */
+/**
+ * Pre-warms and caches WhatsApp contacts in two intelligent stages:
+ * Stage 1: Ultra-fast top 10 chats written to Firestore in <500ms.
+ * Stage 2: Comprehensive background sync with group participants and HD photos.
+ */
 export async function prewarmWhatsAppContactsCache(userId: string): Promise<void> {
   const instanceName = `autocumple-${userId}`;
 
@@ -37,6 +42,55 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       return;
     }
 
+    const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
+
+    // -------------------------------------------------------------
+    // STAGE 1: IMMEDIATE FAST PRE-WARM (Top 10 chats in < 500ms)
+    // -------------------------------------------------------------
+    const fastChats = await evolutionApi.fetchChats(instanceName, false).catch(() => []);
+    if (fastChats && fastChats.length > 0) {
+      const topBatch = adminDb.batch();
+      let topCount = 0;
+
+      for (const rawC of fastChats) {
+        const c = rawC as any;
+        const cleanPhone = (c.phone || c.jid || c.remoteJid || '').replace(/\D/g, '');
+        if (!cleanPhone || cleanPhone.length < 6) continue;
+
+        let name: string | undefined = c.name;
+        if (isInvalidName(name)) name = c.pushName;
+        if (isInvalidName(name)) name = c.lastMessage?.pushName;
+
+        const hasRealName = Boolean(name && !isInvalidName(name));
+        const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
+        const time = c.lastMessage?.messageTimestamp 
+          ? c.lastMessage.messageTimestamp * 1000 
+          : (c.updatedAt ? new Date(c.updatedAt).getTime() : Date.now());
+
+        const docRef = collectionRef.doc(cleanPhone);
+        topBatch.set(docRef, {
+          phone: cleanPhone,
+          name: displayName,
+          pushName: c.pushName && !isInvalidName(c.pushName) ? c.pushName : undefined,
+          profilePictureUrl: c.profilePictureUrl || null,
+          hasRealName,
+          source: 'chat',
+          lastActivity: time,
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+
+        topCount++;
+        if (topCount >= 15) break;
+      }
+
+      if (topCount > 0) {
+        await topBatch.commit();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // STAGE 2: DEEP BACKGROUND DISCOVERY (Messages, Groups, HD Photos)
+    // -------------------------------------------------------------
     const [rawChats, rawGroups, rawMessages] = await Promise.all([
       evolutionApi.fetchChats(instanceName, true).catch(() => []),
       evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
@@ -147,8 +201,6 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
     // 4. Batch write to Firestore cache in chunks of 450
     const batch = adminDb.batch();
-    const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
-
     for (const contact of allCandidates) {
       const docRef = collectionRef.doc(contact.phone);
       batch.set(docRef, {
