@@ -85,37 +85,37 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
           <button 
             type="button"
             onClick={() => setIsWhatsAppSyncOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold"
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold truncate"
             title="Importar contactos y cumpleaños desde WhatsApp"
           >
-            <WhatsAppIcon className="w-4 h-4" size={18} />
-            <span>Sincronizar</span>
+            <WhatsAppIcon className="w-4 h-4 shrink-0" size={18} />
+            <span className="truncate">Sincronizar WhatsApp</span>
           </button>
 
-          {/* Row 1, Col 2: Sincronizar Calendario (Google + Apple Calendar Icons) */}
+          {/* Row 1, Col 2: Sincronizar Calendario (Google + Apple Calendar Icons separated) */}
           <button 
             type="button"
             onClick={() => setIsImportOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold"
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold truncate"
             title="Sincronizar cumpleaños desde Google Calendar o Apple Calendar"
           >
-            <div className="flex items-center -space-x-1 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <Image 
                 src="/google-calendar-icon.png" 
                 alt="Google Calendar" 
-                width={18} 
-                height={18} 
+                width={16} 
+                height={16} 
                 className="w-4 h-4 object-contain" 
               />
               <Image 
                 src="/apple-calendar-icon.png" 
                 alt="Apple Calendar" 
-                width={18} 
-                height={18} 
+                width={16} 
+                height={16} 
                 className="w-4 h-4 object-contain" 
               />
             </div>
-            <span>Sincronizar</span>
+            <span className="truncate">Sincronizar Calendario</span>
           </button>
 
           {/* Row 2, Full Width (col-span-2): Añadir Contacto */}
@@ -123,7 +123,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             href="/contacts/new" 
             className="col-span-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#285953] to-emerald-600 hover:from-[#1f4742] hover:to-emerald-700 text-white rounded-2xl transition-all shadow-md shadow-emerald-500/20 text-xs sm:text-sm font-bold active:scale-[0.99]"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-4 h-4 shrink-0" />
             <span>Añadir Contacto</span>
           </Link>
         </div>
