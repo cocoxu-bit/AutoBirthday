@@ -345,7 +345,7 @@ export async function saveSingleSyncedContactAction(contact: {
       phone: contact.phone.trim(),
       birthDay: contact.birthDay,
       birthMonth: contact.birthMonth,
-      birthYear: null,
+      birthYear: contact.birthYear || null,
       targetType: contact.targetType || 'individual',
       groupId: contact.targetType === 'group' ? contact.groupId : undefined,
       groupName: contact.targetType === 'group' ? contact.groupName : undefined,
@@ -423,7 +423,7 @@ export async function batchApproveSyncedContacts(
         phone: contact.phone.trim(),
         birthDay: contact.birthDay,
         birthMonth: contact.birthMonth,
-        birthYear: null,
+        birthYear: contact.birthYear || null,
         targetType: contact.targetType || 'individual',
         groupId: contact.targetType === 'group' ? contact.groupId : undefined,
         groupName: contact.targetType === 'group' ? contact.groupName : undefined,
@@ -471,9 +471,10 @@ export interface WhatsAppSyncItem {
   pushName?: string;
   profilePictureUrl?: string | null;
   
-  // Required Birthday fields to be filled by user
+  // Birthday fields
   birthDay: number;
   birthMonth: number;
+  birthYear?: number | null;
   
   // Target Destination
   targetType: TargetType;
@@ -526,15 +527,25 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
 
+    const isInvalidName = (name?: string | null): boolean => {
+      if (!name) return true;
+      const clean = name.trim().toLowerCase();
+      if (!clean) return true;
+      if (clean === 'você' || clean === 'voce' || clean === 'you') return true;
+      if (clean === 'whatsapp' || clean === 'desconocido') return true;
+      if (/^[\d+\s\-()]+$/.test(clean)) return true;
+      return false;
+    };
+
     // 1. Build pushName resolution map from message history (1-on-1 chats and group messages)
     const nameMap = new Map<string, string>();
     for (const m of (rawMessages || [])) {
       const sender = m.key?.participant || m.key?.remoteJid || '';
       const name = m.pushName;
-      if (sender && sender.endsWith('@s.whatsapp.net') && name && name !== 'Você' && name !== 'You') {
+      if (sender && sender.endsWith('@s.whatsapp.net') && !isInvalidName(name)) {
         const phone = sender.replace(/@.*$/, '').replace(/\D/g, '');
-        const cleanName = name.trim();
-        if (!/^[\d+\s\-()]+$/.test(cleanName) && !nameMap.has(phone)) {
+        const cleanName = (name as string).trim();
+        if (!nameMap.has(phone)) {
           nameMap.set(phone, cleanName);
         }
       }
@@ -553,30 +564,35 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
 
     const contactMap = new Map<string, CandidateContact>();
 
-    // A. Add individual 1-on-1 chats
+    // A. Add individual 1-on-1 chats (only valid, non-self contacts with real names)
     for (const c of (rawChats || [])) {
       const cleanPhone = (c.phone || c.jid || '').replace(/\D/g, '');
       if (!cleanPhone || cleanPhone.length < 6 || existingPhones.has(cleanPhone)) continue;
 
-      let name = c.name || c.pushName;
-      if (!name || name === 'Você' || name === 'You' || /^[\d+\s\-()]+$/.test(name.trim())) {
+      let name: string | undefined = c.name;
+      if (isInvalidName(name)) {
+        name = c.pushName;
+      }
+      if (isInvalidName(name)) {
         name = nameMap.get(cleanPhone);
       }
 
-      const hasRealName = Boolean(name && name !== 'Você' && name !== 'You' && !/^[\d+\s\-()]+$/.test(name.trim()));
-      const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone})`;
+      // If still invalid, ignore to prevent junk/Você contacts
+      if (!name || isInvalidName(name)) continue;
+
+      const cleanName = name.trim();
 
       contactMap.set(cleanPhone, {
         phone: cleanPhone,
-        name: displayName,
-        pushName: c.pushName || nameMap.get(cleanPhone),
+        name: cleanName,
+        pushName: c.pushName && !isInvalidName(c.pushName) ? c.pushName : nameMap.get(cleanPhone),
         profilePictureUrl: c.profilePictureUrl || null,
         lastActivity: (c as any).lastActivity || 0,
-        hasRealName,
+        hasRealName: true,
       });
     }
 
-    // B. Extract and add all group participants
+    // B. Extract and add group participants (ONLY if we have a real person name from messages/pushName)
     const groupsList: WhatsAppGroup[] = [];
     for (const g of (rawGroups || [])) {
       const gId = g.id || g.jid;
@@ -596,24 +612,20 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
 
         const resolvedName = nameMap.get(cleanPhone);
 
-        if (!contactMap.has(cleanPhone)) {
-          const hasRealName = Boolean(resolvedName);
-          const displayName = resolvedName || `${gSubject} (…${cleanPhone.slice(-4)})`;
-
-          contactMap.set(cleanPhone, {
-            phone: cleanPhone,
-            name: displayName,
-            pushName: resolvedName,
-            profilePictureUrl: null,
-            lastActivity: 0,
-            hasRealName,
-            groupContext: gSubject,
-          });
-        } else if (!contactMap.get(cleanPhone)!.hasRealName && resolvedName) {
-          const existing = contactMap.get(cleanPhone)!;
-          existing.name = resolvedName;
-          existing.pushName = resolvedName;
-          existing.hasRealName = true;
+        // ONLY include group participants who have a real identified person name!
+        if (resolvedName && !isInvalidName(resolvedName)) {
+          const cleanName = resolvedName.trim();
+          if (!contactMap.has(cleanPhone)) {
+            contactMap.set(cleanPhone, {
+              phone: cleanPhone,
+              name: cleanName,
+              pushName: cleanName,
+              profilePictureUrl: null,
+              lastActivity: 0,
+              hasRealName: true,
+              groupContext: gSubject,
+            });
+          }
         }
       }
     }
@@ -624,21 +636,17 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       if (existingContacts.length > 0) {
         return {
           success: false,
-          error: '¡Todos tus contactos y participantes de grupos de WhatsApp ya están guardados en tu agenda!',
+          error: '¡Todos tus contactos y participantes con nombre de WhatsApp ya están guardados en tu agenda!',
         };
       }
       return {
         success: false,
-        error: 'No se encontraron conversaciones ni participantes de grupos en tu WhatsApp.',
+        error: 'No se encontraron conversaciones con contactos identificados en tu WhatsApp.',
       };
     }
 
-    // Sort: Contacts with identified real names first, then by activity
-    allCandidates.sort((a, b) => {
-      if (a.hasRealName && !b.hasRealName) return -1;
-      if (!a.hasRealName && b.hasRealName) return 1;
-      return b.lastActivity - a.lastActivity;
-    });
+    // Sort by most recent activity timestamp
+    allCandidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
     // Prefetch real WhatsApp profile picture URLs in parallel for the first 35 contacts
     const firstBatchSize = Math.min(35, allCandidates.length);
@@ -667,6 +675,7 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
         profilePictureUrl: picMap.get(c.phone) || c.profilePictureUrl || null,
         birthDay: 0,
         birthMonth: 0,
+        birthYear: null,
         targetType: 'individual',
         groupId: undefined,
         groupName: undefined,

@@ -19,10 +19,20 @@ export async function createTemplate(data: TemplateFormData) {
     const userId = await getAuthenticatedUserId();
     const validatedData = templateFormSchema.parse(data);
     
-    await dbCreateTemplate(userId, validatedData);
+    const id = await dbCreateTemplate(userId, validatedData);
     revalidatePath('/dashboard/templates');
+    revalidatePath('/contacts');
     
-    return { success: true };
+    return { 
+      success: true, 
+      id,
+      template: {
+        id,
+        title: validatedData.title,
+        content: validatedData.content,
+        userId,
+      }
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

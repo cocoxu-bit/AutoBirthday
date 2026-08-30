@@ -13,6 +13,7 @@ import {
   fetchWhatsAppContactsAction 
 } from '@/app/(dashboard)/contacts/actions';
 import { getWhatsAppProfilePicAction } from '@/app/(dashboard)/contacts/sync-actions';
+import { InlineTemplateCreator } from '@/components/templates/inline-template-creator';
 import { Template, WhatsAppGroup, WhatsAppChatContact, AiTone } from '@/types';
 import { 
   MessageSquare, 
@@ -26,6 +27,7 @@ import {
   Sparkles,
   ArrowLeft,
   AlertTriangle,
+  Plus,
   X
 } from 'lucide-react';
 
@@ -70,6 +72,8 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitWarningModal, setShowExitWarningModal] = useState(false);
+  const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   
   // WhatsApp & Phone Contacts (Merged Pool)
   const [groups, setGroups] = useState<WhatsAppGroup[]>([]);
@@ -669,19 +673,29 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
 
             {/* MODE 2: TEMPLATE SELECTION */}
             {mode === 'template' && (
-              <div className="space-y-2 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
-                <label className="text-xs font-bold text-slate-700 uppercase">
-                  Elige una de tus plantillas:
-                </label>
-                {templates.length === 0 ? (
-                  <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Se usará el mensaje por defecto.</p>
+              <div className="space-y-2.5 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 uppercase">
+                    Elige una de tus plantillas:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsTemplateModalOpen(true)}
+                    className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 shadow-2xs transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Nueva Plantilla</span>
+                  </button>
+                </div>
+                {currentTemplates.length === 0 ? (
+                  <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Crea una con el botón superior.</p>
                 ) : (
                   <select
-                    value={form.watch('templateId') || templates[0]?.id || ''}
+                    value={form.watch('templateId') || currentTemplates[0]?.id || ''}
                     onChange={e => form.setValue('templateId', e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   >
-                    {templates.map(tpl => (
+                    {currentTemplates.map(tpl => (
                       <option key={tpl.id} value={tpl.id}>
                         {tpl.title}
                       </option>
@@ -882,6 +896,16 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
           </div>
         </div>
       )}
+
+      {/* INLINE TEMPLATE CREATION MODAL */}
+      <InlineTemplateCreator
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onCreated={newTpl => {
+          setCurrentTemplates(prev => [newTpl, ...prev]);
+          form.setValue('templateId', newTpl.id);
+        }}
+      />
 
     </div>
   );

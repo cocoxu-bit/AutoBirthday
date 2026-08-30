@@ -10,6 +10,7 @@ import {
 } from '@/app/(dashboard)/contacts/sync-actions';
 import { WhatsAppGroup, Template, WishMode, AiTone, TargetType } from '@/types';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
+import { InlineTemplateCreator } from '@/components/templates/inline-template-creator';
 import { 
   X, 
   Sparkles, 
@@ -23,7 +24,8 @@ import {
   FileText, 
   PenTool, 
   MessageSquare,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Plus
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -47,7 +49,7 @@ const AI_TONE_EXAMPLES: Record<AiTone, string> = {
   formal: '¡Feliz cumpleaños, {nombre}! 🎂 Le deseo un excelente día y muchos éxitos tanto personales como profesionales.',
 };
 
-function getDaysUntilBirthday(day: number, month: number): { text: string; isToday: boolean; isTomorrow: boolean } | null {
+function getDaysUntilBirthday(day: number, month: number, year?: number | null): { text: string; isToday: boolean; isTomorrow: boolean; age?: number } | null {
   if (!day || !month) return null;
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -56,16 +58,20 @@ function getDaysUntilBirthday(day: number, month: number): { text: string; isTod
   today.setHours(0, 0, 0, 0);
   nextBday.setHours(0, 0, 0, 0);
   
+  let targetYear = currentYear;
   if (nextBday.getTime() < today.getTime()) {
     nextBday = new Date(currentYear + 1, month - 1, day);
+    targetYear = currentYear + 1;
   }
   
   const diffTime = nextBday.getTime() - today.getTime();
   const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  if (days === 0) return { text: '¡Hoy!', isToday: true, isTomorrow: false };
-  if (days === 1) return { text: '¡Mañana!', isToday: false, isTomorrow: true };
-  return { text: `Faltan ${days} días`, isToday: false, isTomorrow: false };
+  const age = year && year > 1900 && year <= currentYear ? (targetYear - year) : undefined;
+
+  if (days === 0) return { text: '¡Hoy!', isToday: true, isTomorrow: false, age };
+  if (days === 1) return { text: '¡Mañana!', isToday: false, isTomorrow: true, age };
+  return { text: `Faltan ${days} días`, isToday: false, isTomorrow: false, age };
 }
 
 interface WhatsAppSyncDialogProps {
@@ -90,6 +96,10 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   const [skippedCount, setSkippedCount] = useState(0);
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
   const [birthdayError, setBirthdayError] = useState(false);
+
+  // Templates state
+  const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   // Client-side photo cache for instant rendering
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -134,7 +144,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   // Load WhatsApp Chats
   const handleStartWhatsAppSync = async () => {
     setLoading(true);
-    setStatusMessage('Cargando conversaciones y grupos...');
+    setStatusMessage('Cargando contactos de WhatsApp...');
 
     try {
       const result = await getWhatsAppRecentChatsForSyncAction();
@@ -200,6 +210,16 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
     }
   };
 
+  // Finish and continue later
+  const handleSaveAndExit = () => {
+    if (savedCount > 0) {
+      toast.success(`Guardado: ${savedCount} contactos añadidos a tu agenda.`, {
+        duration: 3000,
+      });
+    }
+    onClose();
+  };
+
   // Save current card and advance
   const handleSaveAndNext = async () => {
     if (!currentCard) return;
@@ -225,7 +245,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       : undefined;
 
     const templateIdToSave = currentCard.mode === 'template'
-      ? (currentCard.templateId || templates[0]?.id)
+      ? (currentCard.templateId || currentTemplates[0]?.id)
       : undefined;
 
     const profilePic = photoCache[currentCard.phone] ?? currentCard.profilePictureUrl;
@@ -237,7 +257,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
         phone: currentCard.phone,
         birthDay: currentCard.birthDay,
         birthMonth: currentCard.birthMonth,
-        birthYear: null,
+        birthYear: currentCard.birthYear || null,
         source: 'manual',
         profilePictureUrl: profilePic || null,
         targetType: currentCard.targetType || 'individual',
@@ -285,7 +305,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       const raw = currentCard.customMessage?.trim() || DEFAULT_FIXED_MESSAGE;
       livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
     } else if (currentCard.mode === 'template') {
-      const tpl = templates.find(t => t.id === currentCard.templateId) || templates[0];
+      const tpl = currentTemplates.find(t => t.id === currentCard.templateId) || currentTemplates[0];
       const raw = tpl ? tpl.content : DEFAULT_FIXED_MESSAGE;
       livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
     } else if (currentCard.mode === 'ai') {
@@ -297,18 +317,21 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
     }
   }
 
-  const daysInfo = currentCard ? getDaysUntilBirthday(currentCard.birthDay, currentCard.birthMonth) : null;
+  const daysInfo = currentCard ? getDaysUntilBirthday(currentCard.birthDay, currentCard.birthMonth, currentCard.birthYear) : null;
   const currentGroupName = currentCard?.groupName || (availableGroups.find(g => g.id === currentCard?.groupId)?.subject) || 'Grupo de WhatsApp';
   const activeAvatar = currentCard ? (photoCache[currentCard.phone] ?? currentCard.profilePictureUrl) : null;
+
+  const currentYearNumber = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 100 }, (_, i) => currentYearNumber - i);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[94vh] overflow-hidden">
         
-        {/* STICKY HEADER (ALWAYS FIXED AT TOP WITH PROGRESS) */}
+        {/* STICKY HEADER */}
         <div className="px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/90 backdrop-blur-md shrink-0 space-y-3">
           
-          {/* Top Row: Title, Back Button & Close */}
+          {/* Top Row: Title, Pause Button & Close */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200/80 shadow-xs shrink-0">
@@ -328,12 +351,25 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {step === 'deck' && (
+                <button
+                  type="button"
+                  onClick={handleSaveAndExit}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-2xs transition-colors"
+                  title="Pausar y guardar el progreso actual"
+                >
+                  Guardar y salir
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Sticky Progress Bar & Badges */}
@@ -380,7 +416,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   Importar Contactos de WhatsApp
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                  Recorreremos tus chats y participantes de grupos de WhatsApp para que puedas indicar su fecha de cumpleaños y programar sus felicitaciones.
+                  Recorreremos tus contactos y chats de WhatsApp para que puedas indicar su fecha de cumpleaños y programar sus felicitaciones.
                 </p>
               </div>
 
@@ -436,26 +472,15 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </div>
                   </div>
 
-                  {/* Contact Name & Phone */}
+                  {/* Contact Name Only (No phone clutter) */}
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-3">
                     {currentCard.name}
                   </h3>
-
-                  <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-                    <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                      +{currentCard.phone}
-                    </span>
-                    {currentCard.pushName && currentCard.pushName !== currentCard.name && (
-                      <span className="text-[11px] text-slate-500 font-medium bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                        {currentCard.pushName}
-                      </span>
-                    )}
-                  </div>
                 </div>
 
                 <hr className="border-slate-100" />
 
-                {/* 2. REQUIRED BIRTHDAY FIELD */}
+                {/* 2. REQUIRED BIRTHDAY FIELD WITH OPTIONAL YEAR */}
                 <div 
                   ref={birthdayRef}
                   className={`p-4 sm:p-5 rounded-2xl text-left space-y-3 transition-all ${
@@ -480,8 +505,8 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </span>
                   </div>
 
-                  {/* Day and Month Selectors */}
-                  <div className="grid grid-cols-2 gap-2.5">
+                  {/* Day, Month, and Year Selectors */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
                     
                     {/* Day Selector */}
                     <div>
@@ -491,9 +516,9 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       <select
                         value={currentCard.birthDay || ''}
                         onChange={e => updateCurrentCard({ birthDay: Number(e.target.value) })}
-                        className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                        className="w-full px-2.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
                       >
-                        <option value="">Seleccionar Día</option>
+                        <option value="">Día</option>
                         {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                           <option key={d} value={d}>
                             {d}
@@ -510,12 +535,31 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       <select
                         value={currentCard.birthMonth || ''}
                         onChange={e => updateCurrentCard({ birthMonth: Number(e.target.value) })}
-                        className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs capitalize"
+                        className="w-full px-2.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs capitalize"
                       >
-                        <option value="">Seleccionar Mes</option>
+                        <option value="">Mes</option>
                         {MONTH_NAMES.map((m, idx) => (
                           <option key={m} value={idx + 1} className="capitalize">
                             {m}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Year Selector (Optional) */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Año (opcional):
+                      </label>
+                      <select
+                        value={currentCard.birthYear || ''}
+                        onChange={e => updateCurrentCard({ birthYear: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full px-2.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                      >
+                        <option value="">Opcional</option>
+                        {yearOptions.map(y => (
+                          <option key={y} value={y}>
+                            {y}
                           </option>
                         ))}
                       </select>
@@ -526,7 +570,11 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   {/* Days Info Badge */}
                   {daysInfo ? (
                     <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-white/90 px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
-                      <span>{currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]} — <strong>{daysInfo.text}</strong></span>
+                      <span>
+                        {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
+                        {currentCard.birthYear ? ` de ${currentCard.birthYear}` : ''} — <strong>{daysInfo.text}</strong>
+                        {daysInfo.age ? ` (${daysInfo.age} años)` : ''}
+                      </span>
                     </div>
                   ) : (
                     <p className="text-[11px] text-slate-500 font-medium">
@@ -714,21 +762,32 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </div>
                   )}
 
-                  {/* MODE B: TEMPLATE SELECTION */}
+                  {/* MODE B: TEMPLATE SELECTION WITH INLINE CREATOR */}
                   {currentCard.mode === 'template' && (
-                    <div className="space-y-2 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
-                      <label className="text-xs font-bold text-slate-700 uppercase">
-                        Elige una de tus plantillas:
-                      </label>
-                      {templates.length === 0 ? (
-                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Se usará el mensaje por defecto.</p>
+                    <div className="space-y-2.5 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-700 uppercase">
+                          Elige una de tus plantillas:
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsTemplateModalOpen(true)}
+                          className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 shadow-2xs transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Nueva Plantilla</span>
+                        </button>
+                      </div>
+
+                      {currentTemplates.length === 0 ? (
+                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Crea una con el botón superior.</p>
                       ) : (
                         <select
-                          value={currentCard.templateId || templates[0]?.id || ''}
+                          value={currentCard.templateId || currentTemplates[0]?.id || ''}
                           onChange={e => updateCurrentCard({ templateId: e.target.value })}
                           className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         >
-                          {templates.map(tpl => (
+                          {currentTemplates.map(tpl => (
                             <option key={tpl.id} value={tpl.id}>
                               {tpl.title}
                             </option>
@@ -890,7 +949,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
         </div>
 
-        {/* STICKY FOOTER ACTION BUTTONS (CLEAN, BALANCED 3-BUTTON DESIGN) */}
+        {/* STICKY FOOTER ACTION BUTTONS */}
         {step === 'deck' && currentCard && (
           <div className="px-4 sm:px-6 py-3.5 border-t border-slate-100 bg-white/95 backdrop-blur-md shrink-0 flex items-center gap-2 sm:gap-3 shadow-xs">
             {/* Previous Button */}
@@ -940,6 +999,16 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
         )}
 
       </div>
+
+      {/* INLINE TEMPLATE CREATION MODAL */}
+      <InlineTemplateCreator
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onCreated={newTpl => {
+          setCurrentTemplates(prev => [newTpl, ...prev]);
+          updateCurrentCard({ templateId: newTpl.id });
+        }}
+      />
 
     </div>
   );

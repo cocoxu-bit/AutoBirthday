@@ -12,6 +12,7 @@ import {
 } from '@/app/(dashboard)/contacts/sync-actions';
 import { WhatsAppChatContact, WhatsAppGroup, Template, WishMode, AiTone, TargetType } from '@/types';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
+import { InlineTemplateCreator } from '@/components/templates/inline-template-creator';
 import { 
   X, 
   Sparkles, 
@@ -32,7 +33,8 @@ import {
   ShieldCheck, 
   MessageSquare,
   AtSign,
-  Smartphone
+  Smartphone,
+  Plus
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -56,7 +58,8 @@ const AI_TONE_EXAMPLES: Record<AiTone, string> = {
   formal: '¡Feliz cumpleaños, {nombre}! 🎂 Le deseo un excelente día y muchos éxitos tanto personales como profesionales.',
 };
 
-function getDaysUntilBirthday(day: number, month: number): { text: string; isToday: boolean; isTomorrow: boolean } {
+function getDaysUntilBirthday(day: number, month: number, year?: number | null): { text: string; isToday: boolean; isTomorrow: boolean; age?: number } | null {
+  if (!day || !month) return null;
   const today = new Date();
   const currentYear = today.getFullYear();
   let nextBday = new Date(currentYear, month - 1, day);
@@ -64,16 +67,20 @@ function getDaysUntilBirthday(day: number, month: number): { text: string; isTod
   today.setHours(0, 0, 0, 0);
   nextBday.setHours(0, 0, 0, 0);
   
+  let targetYear = currentYear;
   if (nextBday.getTime() < today.getTime()) {
     nextBday = new Date(currentYear + 1, month - 1, day);
+    targetYear = currentYear + 1;
   }
   
   const diffTime = nextBday.getTime() - today.getTime();
   const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  if (days === 0) return { text: '¡Hoy!', isToday: true, isTomorrow: false };
-  if (days === 1) return { text: '¡Mañana!', isToday: false, isTomorrow: true };
-  return { text: `Faltan ${days} días`, isToday: false, isTomorrow: false };
+  const age = year && year > 1900 && year <= currentYear ? (targetYear - year) : undefined;
+
+  if (days === 0) return { text: '¡Hoy!', isToday: true, isTomorrow: false, age };
+  if (days === 1) return { text: '¡Mañana!', isToday: false, isTomorrow: true, age };
+  return { text: `Faltan ${days} días`, isToday: false, isTomorrow: false, age };
 }
 
 interface CalendarSyncDialogProps {
@@ -82,16 +89,14 @@ interface CalendarSyncDialogProps {
 }
 
 export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDialogProps) {
-  const [step, setStep] = useState<'connect' | 'deck' | 'completed'>('connect');
   const [activeTab, setActiveTab] = useState<'google' | 'apple'>('google');
+  const [step, setStep] = useState<'connect' | 'deck' | 'completed'>('connect');
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [iCloudUrl, setICloudUrl] = useState('');
 
   // Scroll Container Ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // iCloud Input
-  const [iCloudUrl, setICloudUrl] = useState('');
 
   // Review Deck State
   const [cards, setCards] = useState<SyncedContactPreview[]>([]);
@@ -101,6 +106,10 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
   const [savedCount, setSavedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
+
+  // Templates state
+  const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   // WhatsApp Change Modal & Photo Cache
   const [showChangeWaModal, setShowChangeWaModal] = useState(false);
@@ -386,12 +395,29 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {step === 'deck' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (savedCount > 0) {
+                      toast.success(`Guardado: ${savedCount} contactos añadidos.`);
+                    }
+                    onClose();
+                  }}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-2xs transition-colors"
+                >
+                  Guardar y salir
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Sticky Progress Bar & Badges */}
@@ -807,21 +833,32 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     </div>
                   )}
 
-                  {/* MODE B: TEMPLATE SELECTION */}
+                  {/* MODE B: TEMPLATE SELECTION WITH INLINE CREATOR */}
                   {currentCard.mode === 'template' && (
-                    <div className="space-y-2 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
-                      <label className="text-xs font-bold text-slate-700 uppercase">
-                        Elige una de tus plantillas:
-                      </label>
-                      {templates.length === 0 ? (
-                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Se usará el mensaje por defecto.</p>
+                    <div className="space-y-2.5 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-700 uppercase">
+                          Elige una de tus plantillas:
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsTemplateModalOpen(true)}
+                          className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 shadow-2xs transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Nueva Plantilla</span>
+                        </button>
+                      </div>
+
+                      {currentTemplates.length === 0 ? (
+                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Crea una con el botón superior.</p>
                       ) : (
                         <select
-                          value={currentCard.templateId || templates[0]?.id || ''}
+                          value={currentCard.templateId || currentTemplates[0]?.id || ''}
                           onChange={e => updateCurrentCard({ templateId: e.target.value })}
                           className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
                         >
-                          {templates.map(tpl => (
+                          {currentTemplates.map(tpl => (
                             <option key={tpl.id} value={tpl.id}>
                               {tpl.title}
                             </option>
@@ -1130,6 +1167,16 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
           </div>
         </div>
       )}
+
+      {/* INLINE TEMPLATE CREATION MODAL */}
+      <InlineTemplateCreator
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onCreated={newTpl => {
+          setCurrentTemplates(prev => [newTpl, ...prev]);
+          updateCurrentCard({ templateId: newTpl.id });
+        }}
+      />
 
     </div>
   );
