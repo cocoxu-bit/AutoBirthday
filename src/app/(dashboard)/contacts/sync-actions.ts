@@ -632,16 +632,6 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       };
     }
 
-    // Parallel fast photo fetch for first 15 contacts
-    await Promise.all(initialCandidates.map(async c => {
-      if (!c.profilePictureUrl) {
-        try {
-          const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
-          if (pic) c.profilePictureUrl = pic;
-        } catch {}
-      }
-    }));
-
     const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
       id: `wa-sync-${c.phone}-${index}`,
       name: c.name,

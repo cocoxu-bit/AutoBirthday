@@ -144,13 +144,18 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
     }
   }, [currentIndex, cards, step]);
 
+  // Auto-start sync immediately upon dialog open
+  useEffect(() => {
+    handleStartWhatsAppSync();
+  }, []);
+
   // Load WhatsApp Chats (2-Phase Progressive Fast Sync)
   const handleStartWhatsAppSync = async () => {
     setLoading(true);
-    setStatusMessage('Cargando tus primeros contactos...');
+    setStatusMessage('Cargando tus contactos...');
 
     try {
-      // Phase 1: Fast initial batch (< 800ms)
+      // Phase 1: Fast initial batch (< 200ms)
       const initialResult = await getWhatsAppInitialBatchForSyncAction();
 
       if (!initialResult.success || !initialResult.items || initialResult.items.length === 0) {
@@ -176,7 +181,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       setStep('deck');
       setLoading(false);
 
-      // Phase 2: Asynchronous Background Loader for all remaining contacts
+      // Phase 2: Asynchronous Progressive Stream for remaining contacts
       if (initialResult.hasMore) {
         setIsBackgroundSyncing(true);
         const loadedPhones = initialResult.items.map(i => i.phone);
@@ -184,20 +189,36 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
         getWhatsAppRemainingContactsForSyncAction(loadedPhones)
           .then(remResult => {
             if (remResult.success && remResult.items && remResult.items.length > 0) {
-              setCards(prev => {
-                const existingPhoneSet = new Set(prev.map(p => p.phone));
-                const newItems = remResult.items!.filter(item => !existingPhoneSet.has(item.phone));
-                if (newItems.length > 0) {
-                  return [...prev, ...newItems];
+              const allNewItems = remResult.items;
+              const CHUNK_SIZE = 30;
+              let offset = 0;
+
+              const intervalId = setInterval(() => {
+                const chunk = allNewItems.slice(offset, offset + CHUNK_SIZE);
+                if (chunk.length === 0) {
+                  clearInterval(intervalId);
+                  setIsBackgroundSyncing(false);
+                  return;
                 }
-                return prev;
-              });
+
+                setCards(prev => {
+                  const existingPhoneSet = new Set(prev.map(p => p.phone));
+                  const validChunk = chunk.filter(item => !existingPhoneSet.has(item.phone));
+                  return [...prev, ...validChunk];
+                });
+
+                offset += CHUNK_SIZE;
+                if (offset >= allNewItems.length) {
+                  clearInterval(intervalId);
+                  setIsBackgroundSyncing(false);
+                }
+              }, 350);
+            } else {
+              setIsBackgroundSyncing(false);
             }
           })
           .catch(err => {
             console.warn('Background sync note:', err);
-          })
-          .finally(() => {
             setIsBackgroundSyncing(false);
           });
       }
