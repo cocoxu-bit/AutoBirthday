@@ -25,6 +25,7 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full py-1 transition-all rounded-xl",
                 isActive 

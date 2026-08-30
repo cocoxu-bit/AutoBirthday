@@ -15,7 +15,7 @@ async function getUserId() {
   if (!sessionCookie) return null;
   
   try {
-    const decoded = await adminAuth.verifySessionCookie(sessionCookie);
+    const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
     return decoded.uid;
   } catch (error) {
     return null;

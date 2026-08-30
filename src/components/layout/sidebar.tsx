@@ -52,6 +52,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               title={collapsed ? item.label : undefined}
               className={cn(
                 "flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
