@@ -83,13 +83,24 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       waGroups = g;
     } catch {}
 
-    // Strict 1-to-1 unique match assignment
-    const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, 55);
+    // Strict 1-to-1 unique match assignment (threshold 55%)
+    const MIN_MATCH_THRESHOLD = 55;
+    const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, MIN_MATCH_THRESHOLD);
 
-    const rawPreviews: SyncedContactPreview[] = matches.map(m => {
+    // Filter ONLY events that matched a real WhatsApp contact with confidence >= threshold
+    const validMatches = matches.filter(m => m.matchedContact && m.confidence >= MIN_MATCH_THRESHOLD);
+
+    if (validMatches.length === 0) {
+      return {
+        success: false,
+        error: 'No se encontraron cumpleaños en tu Google Calendar que coincidan con tus contactos o chats de WhatsApp.',
+      };
+    }
+
+    const rawPreviews: SyncedContactPreview[] = validMatches.map(m => {
       const bday = m.birthday;
-      const matchedWa = m.matchedContact;
-      const cleanPhone = matchedWa ? (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '') : '';
+      const matchedWa = m.matchedContact!;
+      const cleanPhone = (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '');
 
       return {
         id: bday.id,
@@ -100,9 +111,9 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         rawSummary: bday.rawSummary || bday.name,
         source: 'google_calendar',
         matchedPhone: cleanPhone,
-        matchedName: matchedWa?.name || '',
-        matchedPushName: matchedWa?.pushName,
-        profilePictureUrl: matchedWa?.profilePictureUrl || null,
+        matchedName: matchedWa.name || bday.name,
+        matchedPushName: matchedWa.pushName,
+        profilePictureUrl: matchedWa.profilePictureUrl || null,
         matchScore: m.confidence,
         isAutoMatched: m.isAutoMatched,
 
@@ -124,8 +135,20 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       };
     });
 
-    // Sort: matched contacts with highest score first, then unmatched
-    rawPreviews.sort((a, b) => b.matchScore - a.matchScore);
+    // Sort by upcoming birthday from today forward (soonest first)
+    rawPreviews.sort((a, b) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const year = today.getFullYear();
+
+      const nextA = new Date(year, a.birthMonth - 1, a.birthDay);
+      if (nextA < today) nextA.setFullYear(year + 1);
+
+      const nextB = new Date(year, b.birthMonth - 1, b.birthDay);
+      if (nextB < today) nextB.setFullYear(year + 1);
+
+      return nextA.getTime() - nextB.getTime();
+    });
 
     // Fetch real WhatsApp profile picture URLs in parallel for matched contacts
     const previews = await Promise.all(
@@ -186,13 +209,24 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       waGroups = g;
     } catch {}
 
-    // Strict 1-to-1 unique match assignment
-    const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, 55);
+    // Strict 1-to-1 unique match assignment (threshold 55%)
+    const MIN_MATCH_THRESHOLD = 55;
+    const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, MIN_MATCH_THRESHOLD);
 
-    const rawPreviews: SyncedContactPreview[] = matches.map(m => {
+    // Filter ONLY events that matched a real WhatsApp contact with confidence >= threshold
+    const validMatches = matches.filter(m => m.matchedContact && m.confidence >= MIN_MATCH_THRESHOLD);
+
+    if (validMatches.length === 0) {
+      return {
+        success: false,
+        error: 'No se encontraron cumpleaños en tu calendario de iCloud que coincidan con tus contactos o chats de WhatsApp.',
+      };
+    }
+
+    const rawPreviews: SyncedContactPreview[] = validMatches.map(m => {
       const bday = m.birthday;
-      const matchedWa = m.matchedContact;
-      const cleanPhone = matchedWa ? (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '') : '';
+      const matchedWa = m.matchedContact!;
+      const cleanPhone = (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '');
 
       return {
         id: bday.id,
@@ -203,9 +237,9 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         rawSummary: bday.rawSummary || bday.name,
         source: 'apple_calendar',
         matchedPhone: cleanPhone,
-        matchedName: matchedWa?.name || '',
-        matchedPushName: matchedWa?.pushName,
-        profilePictureUrl: matchedWa?.profilePictureUrl || null,
+        matchedName: matchedWa.name || bday.name,
+        matchedPushName: matchedWa.pushName,
+        profilePictureUrl: matchedWa.profilePictureUrl || null,
         matchScore: m.confidence,
         isAutoMatched: m.isAutoMatched,
 
@@ -227,7 +261,20 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       };
     });
 
-    rawPreviews.sort((a, b) => b.matchScore - a.matchScore);
+    // Sort by upcoming birthday from today forward (soonest first)
+    rawPreviews.sort((a, b) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const year = today.getFullYear();
+
+      const nextA = new Date(year, a.birthMonth - 1, a.birthDay);
+      if (nextA < today) nextA.setFullYear(year + 1);
+
+      const nextB = new Date(year, b.birthMonth - 1, b.birthDay);
+      if (nextB < today) nextB.setFullYear(year + 1);
+
+      return nextA.getTime() - nextB.getTime();
+    });
 
     // Fetch real WhatsApp profile pictures in parallel
     const previews = await Promise.all(

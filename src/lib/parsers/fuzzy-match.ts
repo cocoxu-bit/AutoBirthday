@@ -45,6 +45,9 @@ export function levenshteinDistance(a: string, b: string): number {
 /**
  * Calculates similarity percentage between 0 and 100.
  */
+/**
+ * Calculates similarity percentage between 0 and 100 with intelligent name heuristics.
+ */
 export function calculateSimilarity(str1: string, str2: string): number {
   const norm1 = normalizeString(str1);
   const norm2 = normalizeString(str2);
@@ -52,23 +55,42 @@ export function calculateSimilarity(str1: string, str2: string): number {
   if (!norm1 || !norm2) return 0;
   if (norm1 === norm2) return 100;
 
-  // Check if one contains the other (e.g. "Lucas" in "Lucas Jimenez")
-  if (norm1.includes(norm2) || norm2.includes(norm1)) {
-    const minLen = Math.min(norm1.length, norm2.length);
-    const maxLen = Math.max(norm1.length, norm2.length);
-    return Math.round((minLen / maxLen) * 90);
-  }
-
-  // Check word overlap (e.g. "Lucas Gana" vs "Lucas")
   const words1 = norm1.split(/\s+/).filter(Boolean);
   const words2 = norm2.split(/\s+/).filter(Boolean);
+
+  // Exact word set match (order might differ, e.g. "Jimenez Lucas" vs "Lucas Jimenez")
   const matchingWords = words1.filter(w => words2.includes(w));
+  const totalUniqueWords = new Set([...words1, ...words2]).size;
+
   if (matchingWords.length > 0) {
-    const score = (matchingWords.length / Math.max(words1.length, words2.length)) * 85;
-    return Math.round(score);
+    const minWords = Math.min(words1.length, words2.length);
+    const maxWords = Math.max(words1.length, words2.length);
+
+    // If all words of the shorter name are present in the longer name (e.g. "Lucas" in "Lucas Jimenez", "Alicia" in "Alicia Martinez")
+    if (matchingWords.length === minWords) {
+      const coverageRatio = minWords / maxWords;
+      return Math.round(75 + coverageRatio * 20); // 85% to 95%
+    }
+
+    // Some words match (e.g. "Lucas Gana" vs "Lucas Jimenez")
+    const overlapRatio = matchingWords.length / totalUniqueWords;
+    return Math.round(50 + overlapRatio * 40); // 60% to 90%
   }
 
-  // Levenshtein similarity
+  // Check if the first name (word) has high typo similarity (e.g. "Alejandro" vs "Alejandra")
+  if (words1.length > 0 && words2.length > 0) {
+    const first1 = words1[0];
+    const first2 = words2[0];
+    const maxFirstLen = Math.max(first1.length, first2.length);
+    const firstDist = levenshteinDistance(first1, first2);
+    const firstSim = (maxFirstLen - firstDist) / maxFirstLen;
+
+    if (firstSim >= 0.8 && maxFirstLen >= 4) {
+      return Math.round(firstSim * 70); // 56% to 70%
+    }
+  }
+
+  // Full string Levenshtein similarity fallback
   const maxLen = Math.max(norm1.length, norm2.length);
   const dist = levenshteinDistance(norm1, norm2);
   const ratio = (maxLen - dist) / maxLen;
