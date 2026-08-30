@@ -61,6 +61,11 @@ export async function getConnectionStatus() {
       }
     }, { merge: true });
 
+    // Trigger background pre-warming of contacts, names, and profile photos right upon connection
+    if (currentStatus === 'connected') {
+      import('@/lib/whatsapp/sync-cache').then(m => m.prewarmWhatsAppContactsCache(userId)).catch(() => {});
+    }
+
     // Send onboarding welcome message from system assistant if first time connected
     if (currentStatus === 'connected' && phoneNumber) {
       const { sendWelcomeMessageIfNotSent } = await import('@/lib/notifications/assistant');

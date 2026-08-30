@@ -46,7 +46,7 @@ export interface SyncedContactPreview {
   templateId?: string;
   customMessage?: string;
   aiTone: AiTone;
-  aiNotes: string;
+  aiNotes?: string;
   autoSend: boolean;
   sendTimeStart: string;
   sendTimeEnd: string;
@@ -487,7 +487,7 @@ export interface WhatsAppSyncItem {
   templateId?: string;
   customMessage?: string;
   aiTone: AiTone;
-  aiNotes: string;
+  aiNotes?: string;
   autoSend: boolean;
   sendTimeStart: string;
   sendTimeEnd: string;
@@ -513,12 +513,12 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
     }
 
     const { getContacts } = await import('@/lib/firebase/firestore');
+    const { getCachedWhatsAppContacts, prewarmWhatsAppContactsCache } = await import('@/lib/whatsapp/sync-cache');
 
-    // Fetch in parallel: direct chats, all groups with participants, message history (5 pages), and existing Firestore contacts
-    const [rawChats, rawGroups, rawMessages, existingContacts] = await Promise.all([
-      evolutionApi.fetchChats(instanceName, true).catch(() => []),
+    // Check if we have pre-warmed cached contacts in Firestore
+    const [cachedContacts, rawGroups, existingContacts] = await Promise.all([
+      getCachedWhatsAppContacts(userId).catch(() => []),
       evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
-      evolutionApi.fetchMessagesBatch(instanceName, 5).catch(() => []),
       getContacts(userId).catch(() => []),
     ]);
 
@@ -526,6 +526,74 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
     const existingPhones = new Set(
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
+
+    // Build groups list for dropdown
+    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
+      id: g.id || g.jid,
+      subject: g.subject || g.name || 'Grupo de WhatsApp',
+      pictureUrl: g.pictureUrl || null,
+      size: g.size || (g.participants ? g.participants.length : 0),
+    }));
+
+    // If we have cached contacts, return them immediately (0ms instant load with HD photos!)
+    if (cachedContacts.length > 0) {
+      const candidates = cachedContacts.filter(c => !existingPhones.has(c.phone));
+      
+      // Trigger background cache refresh if needed
+      prewarmWhatsAppContactsCache(userId).catch(() => {});
+
+      if (candidates.length === 0) {
+        return {
+          success: false,
+          error: '¡Todos tus contactos de WhatsApp ya están guardados en tu agenda!',
+        };
+      }
+
+      // Sort: Named contacts first, then by activity
+      candidates.sort((a, b) => {
+        if (a.hasRealName && !b.hasRealName) return -1;
+        if (!a.hasRealName && b.hasRealName) return 1;
+        return b.lastActivity - a.lastActivity;
+      });
+
+      const items: WhatsAppSyncItem[] = candidates.map((c, index) => ({
+        id: `wa-sync-${c.phone}-${index}`,
+        name: c.name,
+        phone: c.phone,
+        pushName: c.pushName,
+        profilePictureUrl: c.profilePictureUrl || null,
+        birthDay: 0,
+        birthMonth: 0,
+        birthYear: null,
+        targetType: 'individual',
+        groupId: undefined,
+        groupName: undefined,
+        mentionInGroup: true,
+        mode: 'manual',
+        templateId: undefined,
+        customMessage: undefined,
+        aiTone: 'casual',
+        aiNotes: undefined,
+        autoSend: false,
+        sendTimeStart: '09:00',
+        sendTimeEnd: '11:00',
+      }));
+
+      return {
+        success: true,
+        items,
+        availableGroups: groupsList,
+      };
+    }
+
+    // Fallback: Live fetch if cache is being initialized for the very first time
+    const [rawChats, rawMessages] = await Promise.all([
+      evolutionApi.fetchChats(instanceName, true).catch(() => []),
+      evolutionApi.fetchMessagesBatch(instanceName, 5).catch(() => []),
+    ]);
+
+    // Trigger background cache prewarming
+    prewarmWhatsAppContactsCache(userId).catch(() => {});
 
     const isInvalidName = (name?: string | null): boolean => {
       if (!name) return true;
@@ -598,17 +666,8 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
     }
 
     // B. Extract and add group participants
-    const groupsList: WhatsAppGroup[] = [];
     for (const g of (rawGroups || [])) {
-      const gId = g.id || g.jid;
       const gSubject = g.subject || g.name || 'Grupo de WhatsApp';
-      
-      groupsList.push({
-        id: gId,
-        subject: gSubject,
-        pictureUrl: g.pictureUrl || null,
-        size: g.size || (g.participants ? g.participants.length : 0),
-      });
 
       for (const p of (g.participants || [])) {
         const rawPhone = p.phoneNumber || p.id || '';

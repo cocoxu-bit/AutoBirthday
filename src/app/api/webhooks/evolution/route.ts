@@ -37,8 +37,10 @@ export async function POST(req: Request) {
           }
         }, { merge: true });
 
-        // If instance connected for the first time, send onboarding welcome message
+        // If instance connected, prewarm contacts cache and send onboarding welcome message
         if (state === 'open') {
+          import('@/lib/whatsapp/sync-cache').then(m => m.prewarmWhatsAppContactsCache(userId)).catch(() => {});
+
           const userPhone = userDoc.data()?.whatsappInstance?.phoneNumber;
           if (userPhone) {
             const { sendWelcomeMessageIfNotSent } = await import('@/lib/notifications/assistant');
