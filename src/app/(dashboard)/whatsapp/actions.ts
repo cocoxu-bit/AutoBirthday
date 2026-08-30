@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -64,6 +65,9 @@ export async function getConnectionStatus() {
     // Trigger background pre-warming of contacts, names, and profile photos right upon connection
     if (currentStatus === 'connected') {
       import('@/lib/whatsapp/sync-cache').then(m => m.prewarmWhatsAppContactsCache(userId)).catch(() => {});
+      revalidatePath('/dashboard');
+      revalidatePath('/whatsapp');
+      revalidatePath('/contacts');
     }
 
     // Send onboarding welcome message from system assistant if first time connected

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { executeSendWishes } from '@/lib/scheduler/send-wishes';
@@ -48,6 +49,11 @@ export async function POST(req: Request) {
         // If instance connected, prewarm contacts cache and send onboarding welcome message
         if (state === 'open') {
           import('@/lib/whatsapp/sync-cache').then(m => m.prewarmWhatsAppContactsCache(userId)).catch(() => {});
+          try {
+            revalidatePath('/dashboard');
+            revalidatePath('/whatsapp');
+            revalidatePath('/contacts');
+          } catch {}
 
           const userPhone = userData?.whatsappInstance?.phoneNumber;
           if (userPhone) {

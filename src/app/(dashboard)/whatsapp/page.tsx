@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { 
   Smartphone, 
@@ -15,7 +17,8 @@ import {
   ChevronRight,
   ShieldCheck,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  Users
 } from 'lucide-react';
 import { 
   getConnectionStatus, 
@@ -30,6 +33,7 @@ import { toast } from 'sonner';
 import { WhatsAppInstanceStatus } from '@/types';
 
 export default function WhatsAppPage() {
+  const router = useRouter();
   const [status, setStatus] = useState<WhatsAppInstanceStatus>('disconnected');
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [testPhone, setTestPhone] = useState<string>('');
@@ -48,6 +52,9 @@ export default function WhatsAppPage() {
   const fetchStatus = async () => {
     try {
       const res = await getConnectionStatus();
+      if (res.status === 'connected' && status !== 'connected') {
+        router.refresh();
+      }
       setStatus(res.status);
       if (res.phoneNumber) {
         setPhoneNumber(res.phoneNumber);
@@ -370,10 +377,28 @@ export default function WhatsAppPage() {
               </ol>
             </div>
 
-            {/* Radar en tiempo real */}
-            <div className="flex items-center justify-center gap-2 text-xs font-medium text-slate-500 py-1">
-              <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
-              <span>Detectando vinculación en tiempo real...</span>
+            {/* Radar en tiempo real PROMINENTE */}
+            <div className="bg-gradient-to-br from-violet-500/10 via-indigo-500/10 to-emerald-500/10 border-2 border-violet-400/40 rounded-3xl p-5 sm:p-6 space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <div className="relative flex items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-violet-400 opacity-60"></span>
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center font-bold shadow-md">
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  </div>
+                </div>
+                <div className="text-left">
+                  <h4 className="text-sm font-black text-slate-900">
+                    Comprobando vinculación con tu móvil...
+                  </h4>
+                  <p className="text-xs text-slate-600 font-medium">
+                    Detectaremos la conexión automáticamente al instante.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-xs rounded-2xl p-3 text-xs text-slate-600 border border-violet-100/80 text-center font-medium">
+                💡 Pega el código en WhatsApp. No cierres esta ventana.
+              </div>
             </div>
 
             <button
@@ -400,9 +425,15 @@ export default function WhatsAppPage() {
               <p>2. Pulsa en <strong>Vincular un dispositivo</strong> y apunta la cámara a este código QR.</p>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
-              <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
-              <span>Esperando escaneo con tu cámara...</span>
+            {/* Radar en tiempo real PROMINENTE para QR */}
+            <div className="bg-gradient-to-br from-violet-500/10 via-indigo-500/10 to-emerald-500/10 border-2 border-violet-400/40 rounded-3xl p-4 sm:p-5 space-y-2">
+              <div className="flex items-center justify-center gap-3">
+                <Loader2 className="w-5 h-5 animate-spin text-violet-600" />
+                <span className="text-sm font-black text-slate-900">Esperando escaneo con tu cámara...</span>
+              </div>
+              <p className="text-xs text-slate-600 font-medium">
+                En cuanto lo escanees, tu cuenta se conectará de inmediato.
+              </p>
             </div>
 
             <button
@@ -415,63 +446,73 @@ export default function WhatsAppPage() {
           </div>
         )}
 
-        {/* 4. MODO CONECTADO: TODO OK */}
+        {/* 4. MODO CONECTADO: TODO OK Y PASO SIGUIENTE CLARO */}
         {status === 'connected' && (
-          <div className="space-y-5 text-center">
+          <div className="space-y-6 text-center">
             
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle2 className="w-8 h-8" />
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner shadow-emerald-600/10">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
 
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Conexión Activa</span>
+                <span>Paso 1 Completado: WhatsApp Conectado</span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900">¡WhatsApp Vinculado con Éxito!</h3>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                ¡Tu WhatsApp está listo! 🎉
+              </h3>
               {phoneNumber && (
-                <p className="text-sm font-semibold text-emerald-700 font-mono">
+                <p className="text-xs font-bold text-emerald-700 font-mono bg-emerald-50 inline-block px-3 py-1 rounded-full border border-emerald-200/80">
                   +{phoneNumber}
                 </p>
               )}
             </div>
 
-            {/* Test de envío desde el Asistente */}
-            <form onSubmit={handleSendTest} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Recibir mensaje de prueba desde el Asistente (+34 926 31 24 36)
-              </label>
+            {/* CAJA DE SIGUIENTE PASO: ONBOARDING ACCIONABLE */}
+            <div className="bg-gradient-to-br from-violet-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-violet-500/30 text-left space-y-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-violet-500/30 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="tel"
-                  value={testPhone}
-                  onChange={(e) => setTestPhone(e.target.value)}
-                  placeholder="34612345678"
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
-                />
-                <Button
-                  type="submit"
-                  isLoading={testSending}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs px-4 py-2.5 shrink-0 shadow-sm"
-                >
-                  <Send className="w-3.5 h-3.5 mr-1.5" />
-                  <span>Probar Chat</span>
-                </Button>
+              <div className="space-y-1 relative z-10">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-300 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Siguiente Paso</span>
+                </div>
+                <h4 className="text-lg font-black text-white">
+                  Sincroniza tus Contactos de WhatsApp
+                </h4>
+                <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                  Extrae al instante los contactos y grupos de tu WhatsApp para que AutoBirthday te recuerde sus cumpleaños y prepare las felicitaciones.
+                </p>
               </div>
 
-              <p className="text-[11px] text-slate-400">
-                El Asistente te enviará un WhatsApp de confirmación a este número para que verifiques la recepción.
-              </p>
-            </form>
+              <div className="pt-2 flex flex-col sm:flex-row gap-2.5 relative z-10">
+                <Link
+                  href="/contacts?sync=whatsapp"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Sincronizar mis Contactos ➔</span>
+                </Link>
 
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              className="text-xs text-slate-400 hover:text-red-600 transition-colors"
-            >
-              Desconectar esta cuenta de WhatsApp
-            </button>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center py-3.5 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-2xl transition-colors"
+                >
+                  <span>Ir al Inicio</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                className="text-xs text-slate-400 hover:text-rose-600 transition-colors underline underline-offset-2"
+              >
+                ¿Quieres cambiar de número? Desconectar WhatsApp
+              </button>
+            </div>
 
           </div>
         )}

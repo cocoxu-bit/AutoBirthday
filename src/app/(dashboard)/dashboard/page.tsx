@@ -4,6 +4,7 @@ import { es } from "date-fns/locale";
 import { cookies } from "next/headers";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { getContacts, getWishes } from "@/lib/firebase/firestore";
+import { evolutionApi } from "@/lib/evolution-api/client";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { UpcomingBirthdays, UpcomingBirthdayItem } from "@/components/dashboard/upcoming-birthdays";
 import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-activity";
@@ -35,7 +36,22 @@ async function getDashboardData() {
 
     const userData = userDoc.data();
     const displayName = userData?.displayName || decodedClaims.name || decodedClaims.email?.split('@')[0] || 'Usuario';
-    const isWhatsAppConnected = userData?.whatsappInstance?.status === 'connected';
+    
+    let isWhatsAppConnected = userData?.whatsappInstance?.status === 'connected';
+    if (!isWhatsAppConnected) {
+      try {
+        const evo = await evolutionApi.getConnectionState(`autocumple-${userId}`);
+        if (evo.instance?.state === 'open') {
+          isWhatsAppConnected = true;
+          adminDb.collection('users').doc(userId).set({
+            whatsappInstance: {
+              status: 'connected',
+              updatedAt: new Date(),
+            }
+          }, { merge: true }).catch(() => {});
+        }
+      } catch {}
+    }
 
     // 1. Compute Stats
     const activeContacts = contacts.filter(c => c.isActive);
@@ -159,6 +175,32 @@ export default async function DashboardPage() {
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-600/30 shrink-0 self-end sm:self-center"
           >
             <span>Conectar WhatsApp ➔</span>
+          </Link>
+        </div>
+      )}
+
+      {/* Prominent Onboarding Step 2: When WhatsApp is connected but has 0 contacts */}
+      {data?.isWhatsAppConnected && (data?.stats?.activeContacts === 0) && (
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-violet-500/15 border-2 border-emerald-400/80 rounded-3xl backdrop-blur-md shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
+              🎉
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-black text-slate-900">¡WhatsApp Vinculado con Éxito!</h4>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-full">Paso 1 Listo</span>
+              </div>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                <strong>Siguiente Paso:</strong> Sincroniza tus contactos de WhatsApp para activar las felicitaciones automáticas.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/contacts?sync=whatsapp"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/25 shrink-0 self-end sm:self-center"
+          >
+            <span>Sincronizar Contactos ➔</span>
           </Link>
         </div>
       )}

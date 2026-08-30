@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact, Template } from '@/types';
@@ -33,10 +33,17 @@ interface ContactsTableProps {
 
 export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('sync') === 'whatsapp' || searchParams.get('openSync') === 'true') {
+      setIsWhatsAppSyncOpen(true);
+    }
+  }, [searchParams]);
 
   // Filter contacts by name or group name
   const filteredContacts = contacts.filter(c => 

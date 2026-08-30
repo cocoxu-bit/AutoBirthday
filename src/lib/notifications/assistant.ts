@@ -23,12 +23,12 @@ export async function sendWelcomeMessageIfNotSent(
 
     const name = displayName || userData?.displayName || 'amigo/a';
     const welcomeMsg = `👋 *¡Bienvenido a AutoBirthday, ${name}!* 🎉\n\n` +
-      `Soy tu Asistente Personal de Felicitaciones (+34 926 31 24 36).\n\n` +
-      `📱 *Paso muy importante:* Guarda este contacto en tu agenda como *AutoBirthday Asistente* para:\n` +
-      `1. Recibir por la mañana las propuestas de felicitación de tus amigos y grupos.\n` +
-      `2. Aprobarlas respondiendo simplemente *SÍ*, *EDITAR* o *NO*.\n` +
+      `Soy tu Asistente de Felicitaciones.\n\n` +
+      `📌 *Paso importante:* Guarda este contacto en tu agenda como *AutoBirthday* para:\n` +
+      `1. Recibir por la mañana los avisos de cumpleaños de tus amigos o grupos.\n` +
+      `2. Aprobar tus mensajes respondiendo fácilmente *SÍ*, *EDITAR* o *NO*.\n` +
       `3. Recibir avisos urgentes si tu sesión personal necesita reconexión.\n\n` +
-      `👉 Empieza añadiendo a tus primeros cumpleañeros aquí:\n${getAppUrl()}/contacts/new`;
+      `👉 ¡Añade tus primeros contactos para empezar!:\n${getAppUrl()}/contacts?sync=whatsapp`;
 
     await evolutionApi.sendText('autobirthday-system', userPhone, welcomeMsg);
 
