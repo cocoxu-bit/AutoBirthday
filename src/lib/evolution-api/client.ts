@@ -328,16 +328,19 @@ class EvolutionAPIClient {
         });
       }
 
-      // Sort by most recent activity
-      contacts.sort((a, b) => b.lastActivity - a.lastActivity);
+      // Sort: Contacts with real names first, then by activity
+      contacts.sort((a, b) => {
+        const aHasName = a.name && !/^[\d+\s\-()]+$/.test(a.name.trim()) && a.name !== a.phone;
+        const bHasName = b.name && !/^[\d+\s\-()]+$/.test(b.name.trim()) && b.name !== b.phone;
+        if (aHasName && !bHasName) return -1;
+        if (!aHasName && bHasName) return 1;
+        return b.lastActivity - a.lastActivity;
+      });
 
-      // Filter out contacts without a real saved name (e.g. raw phone numbers)
+      // Filter out invalid/system entries (e.g. status broadcast)
       const validContacts = contacts.filter(c => {
-        if (!c.name) return false;
-        const name = c.name.trim();
-        if (!name || name === 'Você' || name === 'You') return false;
-        if (/^[\d+\s\-()]+$/.test(name)) return false;
-        if (c.phone && name.replace(/\D/g, '') === c.phone.replace(/\D/g, '')) return false;
+        if (!c.jid || c.jid.includes('status@broadcast') || c.jid.includes('newsletter')) return false;
+        if (!c.phone || c.phone.length < 6) return false;
         return true;
       });
 

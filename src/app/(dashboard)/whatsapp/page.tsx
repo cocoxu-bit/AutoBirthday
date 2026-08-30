@@ -346,6 +346,26 @@ export default function WhatsAppPage() {
               </div>
             </div>
 
+            {/* Radar en tiempo real PROMINENTE (Directamente debajo del código, VISIBLE SIN SCROLL) */}
+            <div className="bg-gradient-to-br from-violet-500/15 via-indigo-500/10 to-emerald-500/15 border-2 border-violet-400/60 rounded-3xl p-4 sm:p-5 space-y-2.5 shadow-sm">
+              <div className="flex items-center justify-center gap-3">
+                <div className="relative flex items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-violet-400 opacity-60"></span>
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center font-bold shadow-md">
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  </div>
+                </div>
+                <div className="text-left">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900">
+                    Comprobando vinculación en vivo...
+                  </h4>
+                  <p className="text-[11px] text-slate-600 font-medium">
+                    Detectaremos la conexión al instante en cuanto pegues el código.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Pasos en WhatsApp (Ultra Claros) */}
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 text-left space-y-3">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
@@ -377,30 +397,6 @@ export default function WhatsAppPage() {
               </ol>
             </div>
 
-            {/* Radar en tiempo real PROMINENTE */}
-            <div className="bg-gradient-to-br from-violet-500/10 via-indigo-500/10 to-emerald-500/10 border-2 border-violet-400/40 rounded-3xl p-5 sm:p-6 space-y-3">
-              <div className="flex items-center justify-center gap-3">
-                <div className="relative flex items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-violet-400 opacity-60"></span>
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center font-bold shadow-md">
-                    <Loader2 className="w-5 h-5 animate-spin text-white" />
-                  </div>
-                </div>
-                <div className="text-left">
-                  <h4 className="text-sm font-black text-slate-900">
-                    Comprobando vinculación con tu móvil...
-                  </h4>
-                  <p className="text-xs text-slate-600 font-medium">
-                    Detectaremos la conexión automáticamente al instante.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-xs rounded-2xl p-3 text-xs text-slate-600 border border-violet-100/80 text-center font-medium">
-                💡 Pega el código en WhatsApp. No cierres esta ventana.
-              </div>
-            </div>
-
             <button
               type="button"
               onClick={handleResetConnection}
@@ -419,14 +415,8 @@ export default function WhatsAppPage() {
               <QRScanner qrCode={qrCode} />
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs text-slate-700 space-y-1.5">
-              <p className="font-bold text-slate-900">Instrucciones:</p>
-              <p>1. Abre WhatsApp en tu teléfono &gt; Ajustes &gt; Dispositivos vinculados.</p>
-              <p>2. Pulsa en <strong>Vincular un dispositivo</strong> y apunta la cámara a este código QR.</p>
-            </div>
-
             {/* Radar en tiempo real PROMINENTE para QR */}
-            <div className="bg-gradient-to-br from-violet-500/10 via-indigo-500/10 to-emerald-500/10 border-2 border-violet-400/40 rounded-3xl p-4 sm:p-5 space-y-2">
+            <div className="bg-gradient-to-br from-violet-500/15 via-indigo-500/10 to-emerald-500/15 border-2 border-violet-400/60 rounded-3xl p-4 sm:p-5 space-y-2 shadow-sm">
               <div className="flex items-center justify-center gap-3">
                 <Loader2 className="w-5 h-5 animate-spin text-violet-600" />
                 <span className="text-sm font-black text-slate-900">Esperando escaneo con tu cámara...</span>
@@ -434,6 +424,12 @@ export default function WhatsAppPage() {
               <p className="text-xs text-slate-600 font-medium">
                 En cuanto lo escanees, tu cuenta se conectará de inmediato.
               </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs text-slate-700 space-y-1.5">
+              <p className="font-bold text-slate-900">Instrucciones:</p>
+              <p>1. Abre WhatsApp en tu teléfono &gt; Ajustes &gt; Dispositivos vinculados.</p>
+              <p>2. Pulsa en <strong>Vincular un dispositivo</strong> y apunta la cámara a este código QR.</p>
             </div>
 
             <button
@@ -563,6 +559,36 @@ export default function WhatsAppPage() {
           </div>
         </div>
       </div>
+
+      {/* Sticky Floating Status Bar when connecting (Always visible without scrolling!) */}
+      {status === 'connecting' && (
+        <div className="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-50 animate-in slide-in-from-bottom-6 duration-300">
+          <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-violet-500/40 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </span>
+              <div className="text-left">
+                <p className="text-xs font-black text-white flex items-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                  <span>Esperando vinculación...</span>
+                </p>
+                <p className="text-[10px] text-slate-300 font-medium">
+                  {pairingCode ? 'Pega el código en tu WhatsApp' : 'Escanea el código QR con tu cámara'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={fetchStatus}
+              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-bold transition-colors"
+            >
+              Comprobar
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

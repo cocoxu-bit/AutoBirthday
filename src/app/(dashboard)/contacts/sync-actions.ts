@@ -70,37 +70,52 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
       };
     }
 
-    // Fetch user's WhatsApp contacts & groups in parallel
+    // Fetch user's WhatsApp contacts & groups in parallel with full cache + live merge
     const instanceName = `autocumple-${userId}`;
     let waContacts: WhatsAppChatContact[] = [];
     let waGroups: WhatsAppGroup[] = [];
     try {
-      const [c, g] = await Promise.all([
-        evolutionApi.fetchChats(instanceName),
+      const { getCachedWhatsAppContacts, prewarmWhatsAppContactsCache } = await import('@/lib/whatsapp/sync-cache');
+      const [c, g, cached] = await Promise.all([
+        evolutionApi.fetchChats(instanceName, true),
         evolutionApi.fetchGroups(instanceName),
+        getCachedWhatsAppContacts(userId).catch(() => []),
       ]);
-      waContacts = c;
+
+      const contactMap = new Map<string, WhatsAppChatContact>();
+      for (const item of (c || [])) {
+        const p = (item.phone || '').replace(/\D/g, '');
+        if (p) contactMap.set(p, item);
+      }
+      for (const item of (cached || [])) {
+        const p = (item.phone || '').replace(/\D/g, '');
+        if (p && !contactMap.has(p)) {
+          contactMap.set(p, {
+            jid: `${p}@s.whatsapp.net`,
+            phone: `+${p}`,
+            name: item.name,
+            pushName: item.pushName,
+            profilePictureUrl: item.profilePictureUrl || null,
+          });
+        }
+      }
+      waContacts = Array.from(contactMap.values());
       waGroups = g;
+
+      if (cached.length === 0) {
+        prewarmWhatsAppContactsCache(userId).catch(() => {});
+      }
     } catch {}
 
-    // Strict 1-to-1 unique match assignment (threshold 55%)
-    const MIN_MATCH_THRESHOLD = 55;
+    // Strict 1-to-1 unique match assignment (threshold 50%)
+    const MIN_MATCH_THRESHOLD = 50;
     const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, MIN_MATCH_THRESHOLD);
 
-    // Filter ONLY events that matched a real WhatsApp contact with confidence >= threshold
-    const validMatches = matches.filter(m => m.matchedContact && m.confidence >= MIN_MATCH_THRESHOLD);
-
-    if (validMatches.length === 0) {
-      return {
-        success: false,
-        error: 'No se encontraron cumpleaños en tu Google Calendar que coincidan con tus contactos o chats de WhatsApp.',
-      };
-    }
-
-    const rawPreviews: SyncedContactPreview[] = validMatches.map(m => {
+    const rawPreviews: SyncedContactPreview[] = matches.map(m => {
       const bday = m.birthday;
-      const matchedWa = m.matchedContact!;
-      const cleanPhone = (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '');
+      const matchedWa = m.matchedContact;
+      const cleanPhone = matchedWa ? (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '') : '';
+      const isAutoMatched = Boolean(matchedWa && m.confidence >= MIN_MATCH_THRESHOLD);
 
       return {
         id: bday.id,
@@ -111,11 +126,11 @@ export async function syncGoogleCalendarAction(accessToken: string): Promise<{
         rawSummary: bday.rawSummary || bday.name,
         source: 'google_calendar',
         matchedPhone: cleanPhone,
-        matchedName: matchedWa.name || bday.name,
-        matchedPushName: matchedWa.pushName,
-        profilePictureUrl: matchedWa.profilePictureUrl || null,
+        matchedName: matchedWa?.name || bday.name,
+        matchedPushName: matchedWa?.pushName,
+        profilePictureUrl: matchedWa?.profilePictureUrl || null,
         matchScore: m.confidence,
-        isAutoMatched: m.isAutoMatched,
+        isAutoMatched,
 
         // Target Destination Default
         targetType: 'individual',
@@ -196,37 +211,52 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
       };
     }
 
-    // Fetch user's WhatsApp contacts & groups in parallel
+    // Fetch user's WhatsApp contacts & groups in parallel with full cache + live merge
     const instanceName = `autocumple-${userId}`;
     let waContacts: WhatsAppChatContact[] = [];
     let waGroups: WhatsAppGroup[] = [];
     try {
-      const [c, g] = await Promise.all([
-        evolutionApi.fetchChats(instanceName),
+      const { getCachedWhatsAppContacts, prewarmWhatsAppContactsCache } = await import('@/lib/whatsapp/sync-cache');
+      const [c, g, cached] = await Promise.all([
+        evolutionApi.fetchChats(instanceName, true),
         evolutionApi.fetchGroups(instanceName),
+        getCachedWhatsAppContacts(userId).catch(() => []),
       ]);
-      waContacts = c;
+
+      const contactMap = new Map<string, WhatsAppChatContact>();
+      for (const item of (c || [])) {
+        const p = (item.phone || '').replace(/\D/g, '');
+        if (p) contactMap.set(p, item);
+      }
+      for (const item of (cached || [])) {
+        const p = (item.phone || '').replace(/\D/g, '');
+        if (p && !contactMap.has(p)) {
+          contactMap.set(p, {
+            jid: `${p}@s.whatsapp.net`,
+            phone: `+${p}`,
+            name: item.name,
+            pushName: item.pushName,
+            profilePictureUrl: item.profilePictureUrl || null,
+          });
+        }
+      }
+      waContacts = Array.from(contactMap.values());
       waGroups = g;
+
+      if (cached.length === 0) {
+        prewarmWhatsAppContactsCache(userId).catch(() => {});
+      }
     } catch {}
 
-    // Strict 1-to-1 unique match assignment (threshold 55%)
-    const MIN_MATCH_THRESHOLD = 55;
+    // Strict 1-to-1 unique match assignment (threshold 50%)
+    const MIN_MATCH_THRESHOLD = 50;
     const matches = matchAllBirthdaysToWhatsApp1to1(rawBirthdays, waContacts, MIN_MATCH_THRESHOLD);
 
-    // Filter ONLY events that matched a real WhatsApp contact with confidence >= threshold
-    const validMatches = matches.filter(m => m.matchedContact && m.confidence >= MIN_MATCH_THRESHOLD);
-
-    if (validMatches.length === 0) {
-      return {
-        success: false,
-        error: 'No se encontraron cumpleaños en tu calendario de iCloud que coincidan con tus contactos o chats de WhatsApp.',
-      };
-    }
-
-    const rawPreviews: SyncedContactPreview[] = validMatches.map(m => {
+    const rawPreviews: SyncedContactPreview[] = matches.map(m => {
       const bday = m.birthday;
-      const matchedWa = m.matchedContact!;
-      const cleanPhone = (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '');
+      const matchedWa = m.matchedContact;
+      const cleanPhone = matchedWa ? (matchedWa.phone || matchedWa.jid || '').replace(/\D/g, '') : '';
+      const isAutoMatched = Boolean(matchedWa && m.confidence >= MIN_MATCH_THRESHOLD);
 
       return {
         id: bday.id,
@@ -237,11 +267,11 @@ export async function syncICloudCalendarAction(calendarUrl: string): Promise<{
         rawSummary: bday.rawSummary || bday.name,
         source: 'apple_calendar',
         matchedPhone: cleanPhone,
-        matchedName: matchedWa.name || bday.name,
-        matchedPushName: matchedWa.pushName,
-        profilePictureUrl: matchedWa.profilePictureUrl || null,
+        matchedName: matchedWa?.name || bday.name,
+        matchedPushName: matchedWa?.pushName,
+        profilePictureUrl: matchedWa?.profilePictureUrl || null,
         matchScore: m.confidence,
-        isAutoMatched: m.isAutoMatched,
+        isAutoMatched,
 
         // Target Destination Default
         targetType: 'individual',
@@ -668,16 +698,58 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     const existingContacts = await getContacts(userId).catch(() => []);
     existingContacts.forEach(c => loadedSet.add((c.phone || '').replace(/\D/g, '')));
 
-    const [cached, rawGroups] = await Promise.all([
+    const [cached, liveChats, rawGroups] = await Promise.all([
       getCachedWhatsAppContacts(userId).catch(() => []),
+      evolutionApi.fetchChats(instanceName, true).catch(() => []),
       evolutionApi.fetchGroups(instanceName).catch(() => []),
     ]);
 
-    let allCached = cached;
-    if (allCached.length === 0) {
-      await prewarmWhatsAppContactsCache(userId);
-      allCached = await getCachedWhatsAppContacts(userId).catch(() => []);
+    // Combine and deduplicate
+    const contactMap = new Map<string, {
+      phone: string;
+      name: string;
+      pushName?: string;
+      profilePictureUrl?: string | null;
+      hasRealName: boolean;
+      lastActivity: number;
+    }>();
+
+    for (const c of cached) {
+      const p = (c.phone || '').replace(/\D/g, '');
+      if (p) {
+        contactMap.set(p, {
+          phone: p,
+          name: c.name,
+          pushName: c.pushName,
+          profilePictureUrl: c.profilePictureUrl,
+          hasRealName: c.hasRealName,
+          lastActivity: c.lastActivity || 0,
+        });
+      }
     }
+
+    for (const raw of (liveChats || [])) {
+      const p = (raw.phone || raw.jid || '').replace(/\D/g, '');
+      if (!p || p.length < 6) continue;
+      const existing = contactMap.get(p);
+      const isNamed = raw.name && !/^[\d+\s\-()]+$/.test(raw.name.trim()) && raw.name !== raw.phone;
+      if (!existing) {
+        contactMap.set(p, {
+          phone: p,
+          name: raw.name || `Contacto (+${p.slice(-4)})`,
+          pushName: raw.pushName,
+          profilePictureUrl: raw.profilePictureUrl || null,
+          hasRealName: Boolean(isNamed),
+          lastActivity: 0,
+        });
+      } else if (!existing.hasRealName && isNamed) {
+        existing.name = raw.name;
+        existing.hasRealName = true;
+      }
+    }
+
+    const allDiscovered = Array.from(contactMap.values());
+    const remaining = allDiscovered.filter(c => !loadedSet.has(c.phone));
 
     const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
       id: g.id || g.jid,
@@ -686,7 +758,6 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
       size: g.size || (g.participants ? g.participants.length : 0),
     }));
 
-    const remaining = allCached.filter(c => !loadedSet.has(c.phone));
     if (remaining.length === 0) {
       return { success: true, items: [], availableGroups: groupsList };
     }
