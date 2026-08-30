@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
   const isProtectedRoute = 
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
+    pathname.startsWith('/admin') ||
     pathname.startsWith('/whatsapp') ||
     pathname.startsWith('/contacts') ||
     pathname.startsWith('/templates') ||

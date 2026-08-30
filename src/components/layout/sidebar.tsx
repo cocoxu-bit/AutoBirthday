@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { onAuthChange } from "@/lib/firebase/auth";
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +15,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -28,6 +30,18 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthChange((user) => {
+      if (user?.email?.toLowerCase() === 'lucasjimeneznavarro@gmail.com') {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <aside
@@ -71,6 +85,25 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {isAdmin && (
+          <div className="pt-2">
+            <Link
+              href="/admin"
+              prefetch={true}
+              title={collapsed ? "Panel Admin" : undefined}
+              className={cn(
+                "flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative border",
+                pathname.startsWith("/admin")
+                  ? "bg-amber-100 border-amber-300 text-amber-950 font-bold shadow-xs"
+                  : "bg-amber-50/70 border-amber-200/80 text-amber-900 hover:bg-amber-100"
+              )}
+            >
+              <ShieldCheck className="w-5 h-5 shrink-0 text-amber-600" />
+              {!collapsed && <span className="ml-3 truncate text-xs font-black">👑 Panel Admin</span>}
+            </Link>
+          </div>
+        )}
       </nav>
 
       <div className="p-3 border-t border-white/20">
