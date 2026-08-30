@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Cake, Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
 import { signIn, signInWithGoogle, getIdToken } from "@/lib/firebase/auth";
 import { toast } from "sonner";
 
@@ -75,36 +75,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="glass-strong rounded-2xl shadow-2xl shadow-violet-500/10 p-8">
+    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-6 sm:p-8 space-y-6">
+      
       {/* Header */}
-      <div className="text-center mb-8">
-        <Image 
-          src="/logo.png" 
-          alt="AutoBirthday" 
-          width={88} 
-          height={88} 
-          className="w-20 h-20 sm:w-22 sm:h-22 object-contain mx-auto mb-3 drop-shadow-lg" 
-          priority 
-        />
-        <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-[#285953] to-emerald-700 bg-clip-text text-transparent">
-          AutoBirthday
-        </h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Inicia sesión para gestionar tus felicitaciones
-        </p>
+      <div className="text-center space-y-2">
+        <div className="flex justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/80 shadow-xs flex items-center justify-center p-2.5">
+            <Image 
+              src="/logo.png" 
+              alt="AutoBirthday" 
+              width={56} 
+              height={56} 
+              className="w-full h-full object-contain" 
+              priority 
+            />
+          </div>
+        </div>
+
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Iniciar Sesión
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            Entra a tu panel para gestionar tus felicitaciones
+          </p>
+        </div>
       </div>
 
-      {/* Google Sign In */}
+      {/* Google Sign In Hero Button */}
       <button
         type="button"
         onClick={handleGoogleSignIn}
         disabled={googleLoading || loading}
-        className="w-full h-12 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl border border-slate-200 shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 mb-5"
+        className="w-full h-12 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-150 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 text-xs sm:text-sm"
       >
         {googleLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+          <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
         ) : (
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -126,28 +134,25 @@ export default function LoginPage() {
         <span>Continuar con Google</span>
       </button>
 
-      <div className="relative mb-5">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white/80 px-2 text-slate-400 backdrop-blur-sm">
-            o con tu email
-          </span>
-        </div>
+      {/* Divider */}
+      <div className="relative flex items-center justify-center">
+        <div className="w-full border-t border-slate-200" />
+        <span className="absolute bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          o con tu email
+        </span>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-xs font-bold text-slate-700 mb-1"
           >
-            Email
+            Correo electrónico
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               id="email"
               type="email"
@@ -155,7 +160,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               required
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white/50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-xs sm:text-sm font-medium transition-all"
             />
           </div>
         </div>
@@ -163,12 +168,12 @@ export default function LoginPage() {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-xs font-bold text-slate-700 mb-1"
           >
             Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -177,17 +182,17 @@ export default function LoginPage() {
               placeholder="••••••••"
               required
               minLength={6}
-              className="w-full h-11 pl-10 pr-12 rounded-xl border border-slate-200 bg-white/50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
+              className="w-full h-11 pl-10 pr-11 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-xs sm:text-sm font-medium transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-0.5"
             >
               {showPassword ? (
-                <EyeOff className="w-5 h-5" />
+                <EyeOff className="w-4 h-4" />
               ) : (
-                <Eye className="w-5 h-5" />
+                <Eye className="w-4 h-4" />
               )}
             </button>
           </div>
@@ -196,29 +201,41 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-12 bg-gradient-violet text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+          className="w-full h-12 bg-gradient-to-r from-[#285953] to-emerald-600 hover:from-[#1f4742] hover:to-emerald-700 text-white font-bold text-sm rounded-xl shadow-md shadow-emerald-800/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
         >
           {loading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Iniciando sesión...
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Iniciando sesión...</span>
             </>
           ) : (
-            "Iniciar Sesión"
+            <>
+              <span>Iniciar Sesión</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
           )}
         </button>
       </form>
 
+      {/* Security badge */}
+      <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400 pt-1">
+        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <span>Conexión cifrada y segura</span>
+      </div>
+
       {/* Footer */}
-      <p className="text-center text-sm text-slate-500 mt-6">
-        ¿No tienes cuenta?{" "}
-        <Link
-          href="/register"
-          className="text-violet-600 font-medium hover:text-violet-700 transition-colors"
-        >
-          Regístrate gratis
-        </Link>
-      </p>
+      <div className="border-t border-slate-100 pt-4 text-center">
+        <p className="text-xs text-slate-500 font-medium">
+          ¿No tienes una cuenta?{" "}
+          <Link
+            href="/register"
+            className="text-emerald-700 font-bold hover:text-emerald-800 hover:underline transition-colors"
+          >
+            Regístrate gratis
+          </Link>
+        </p>
+      </div>
+
     </div>
   );
 }
