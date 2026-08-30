@@ -82,16 +82,33 @@ export async function connectInstance() {
     const instanceName = `autocumple-${userId}`;
     const webhookUrl = `${getAppUrl()}/api/webhooks/evolution`;
     
-    // Ensure instance is created in Evolution API
+    // CRITICAL: Always do a clean cycle to ensure a fresh unauthenticated socket
+    // that can generate a new QR code. An already-open session won't produce a QR.
     try {
       const instances = await evolutionApi.fetchInstances().catch(() => []);
-      const exists = instances?.some((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
+      const existing = instances?.find((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
       
-      if (!exists) {
-        await evolutionApi.createInstance(instanceName, webhookUrl);
+      if (existing) {
+        await evolutionApi.logout(instanceName).catch(() => {});
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await evolutionApi.deleteInstance(instanceName).catch(() => {});
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
+    } catch (cleanupErr: any) {
+      console.warn('Instance cleanup note:', cleanupErr?.message);
+    }
+
+    // Create fresh instance
+    try {
+      await evolutionApi.createInstance(instanceName, webhookUrl);
     } catch (createErr: any) {
-      console.warn('Instance creation note:', createErr?.message);
+      if (createErr.message?.includes('already') || createErr.message?.includes('409')) {
+        await evolutionApi.deleteInstance(instanceName).catch(() => {});
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await evolutionApi.createInstance(instanceName, webhookUrl);
+      } else {
+        throw createErr;
+      }
     }
     
     const qrResponse = await evolutionApi.getQRCode(instanceName);
@@ -121,22 +138,38 @@ export async function connectWithPairingCode(phone: string) {
       return { success: false, error: 'Por favor, introduce un número de teléfono válido con prefijo de país (ej: 34612345678)' };
     }
 
-    // Ensure clean instance in Evolution API (if not open, recreate to ensure fresh authenticated socket)
+    // CRITICAL: Always do a clean cycle (logout → delete → create) to ensure 
+    // a fresh unauthenticated socket. Evolution API / Baileys cannot issue a 
+    // pairing code on an already-authenticated ("open") session.
     try {
       const instances = await evolutionApi.fetchInstances().catch(() => []);
       const existing = instances?.find((inst: any) => inst.name === instanceName || inst.instance?.instanceName === instanceName);
       
-      if (!existing) {
+      if (existing) {
+        // Logout first (gracefully close the WA session), then delete
+        await evolutionApi.logout(instanceName).catch(() => {});
+        // Small delay to let Baileys close the socket
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await evolutionApi.deleteInstance(instanceName).catch(() => {});
+        // Small delay to let Evolution API clean up
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    } catch (cleanupErr: any) {
+      console.warn('Instance cleanup note:', cleanupErr?.message);
+    }
+
+    // Create a fresh instance
+    try {
+      await evolutionApi.createInstance(instanceName, webhookUrl);
+    } catch (createErr: any) {
+      // If creation fails because it already exists (race condition), try delete+create once more
+      if (createErr.message?.includes('already') || createErr.message?.includes('409')) {
+        await evolutionApi.deleteInstance(instanceName).catch(() => {});
+        await new Promise(resolve => setTimeout(resolve, 300));
         await evolutionApi.createInstance(instanceName, webhookUrl);
       } else {
-        const state = existing.connectionStatus || existing.instance?.status;
-        if (state !== 'open') {
-          await evolutionApi.deleteInstance(instanceName).catch(() => {});
-          await evolutionApi.createInstance(instanceName, webhookUrl);
-        }
+        throw createErr;
       }
-    } catch (createErr: any) {
-      console.warn('Instance creation note:', createErr?.message);
     }
 
     const cleanPhone = formatToWhatsappJid(phone);
