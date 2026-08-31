@@ -446,12 +446,16 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
               <div className="flex items-center justify-between text-xs font-bold text-slate-600">
                 <div className="flex items-center gap-2">
                   <span className="text-emerald-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
-                  {isBackgroundSyncing && (
+                  {isBackgroundSyncing ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full animate-pulse">
                       <Loader2 className="w-2.5 h-2.5 animate-spin text-emerald-600" />
                       <span>Detectando más ({cards.length})...</span>
                     </span>
-                  )}
+                  ) : cards.length > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-full">
+                      <span>✓ {cards.length} contactos recientes</span>
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">

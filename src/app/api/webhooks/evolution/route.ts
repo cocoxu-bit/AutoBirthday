@@ -126,6 +126,43 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      // Real-time Reactive WhatsApp Cache Update
+      if (remoteJid.endsWith('@s.whatsapp.net')) {
+        const cleanSenderPhone = remoteJid.replace(/@.*$/, '').replace(/\D/g, '');
+        const pushName = message.pushName;
+        if (cleanSenderPhone && cleanSenderPhone.length >= 6) {
+          const updatePayload: Record<string, any> = {
+            phone: cleanSenderPhone,
+            lastActivity: Date.now(),
+            source: 'chat',
+            updatedAt: new Date(),
+          };
+          if (pushName && typeof pushName === 'string' && pushName.trim().length > 0) {
+            const cleanPush = pushName.trim();
+            const lower = cleanPush.toLowerCase();
+            if (
+              lower !== 'você' && 
+              lower !== 'voce' && 
+              lower !== 'you' && 
+              lower !== 'whatsapp' && 
+              lower !== 'desconocido' &&
+              !/^\+?\d[\d\s\-()]+$/.test(cleanPush)
+            ) {
+              updatePayload.name = cleanPush;
+              updatePayload.pushName = cleanPush;
+              updatePayload.hasRealName = true;
+            }
+          }
+          adminDb
+            .collection('users')
+            .doc(targetUserId)
+            .collection('wa_contacts_cache')
+            .doc(cleanSenderPhone)
+            .set(updatePayload, { merge: true })
+            .catch(() => {});
+        }
+      }
+
       const wishesSnapshot = await adminDb.collection('wishes')
         .where('userId', '==', targetUserId)
         .where('status', '==', 'waiting_approval')

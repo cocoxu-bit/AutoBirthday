@@ -11,6 +11,7 @@ export interface CachedWhatsAppContact {
   source: 'chat' | 'group_participant';
   groupContext?: string;
   lastActivity: number;
+  syncTime?: number;
   updatedAt: Timestamp;
 }
 
@@ -27,14 +28,13 @@ const isInvalidName = (name?: string | null): boolean => {
 
 /**
  * Extract ONLY the real WhatsApp message timestamp from a chat object.
- * STRICTLY avoids VPS database timestamps (updatedAt, timestamp, etc.)
- * Only trusts: lastMessage.messageTimestamp, conversationTimestamp
+ * Priority 1: Real Baileys message timestamps
+ * Priority 2: Inferred recency from natural WhatsApp chat list position
  */
-function extractRealMessageTimestamp(chat: any): number {
+function extractRealMessageTimestamp(chat: any, naturalChatIndex: number = 999): number {
   if (!chat) return 0;
   let best = 0;
 
-  // ONLY these two fields are real WhatsApp message timestamps from Baileys
   const trustedSources = [
     chat.lastMessage?.messageTimestamp,
     chat.conversationTimestamp,
@@ -50,12 +50,17 @@ function extractRealMessageTimestamp(chat: any): number {
       num = num * 1000;
     }
 
-    // Sanity check: must be a reasonable date (after 2015, before tomorrow)
     const YEAR_2015 = 1420070400000;
     const TOMORROW = Date.now() + 86400000;
     if (num >= YEAR_2015 && num <= TOMORROW && num > best) {
       best = num;
     }
+  }
+
+  // Cascade fallback: If no explicit message timestamp in memory yet,
+  // use the natural chat position (top of WhatsApp list)
+  if (best === 0 && naturalChatIndex < 50) {
+    best = Date.now() - (naturalChatIndex * 2 * 3600 * 1000);
   }
 
   return best;
@@ -65,17 +70,17 @@ function extractRealMessageTimestamp(chat: any): number {
 const EIGHTEEN_MONTHS_MS = 18 * 30 * 24 * 60 * 60 * 1000;
 
 /**
- * Pre-warms and caches WhatsApp contacts in Firestore.
+ * Pre-warms and caches WhatsApp contacts in Firestore using ZERO-DOWNTIME CACHE SWAP.
  * 
- * KEY DESIGN DECISIONS:
- * 1. WIPE entire cache on each run to avoid stale data accumulation
- * 2. Only cache contacts with real names (no "Contacto (+XXXX)")
- * 3. Only cache contacts with recent activity (< 18 months)
- * 4. Sort purely by most recent message timestamp
- * 5. Only trust lastMessage.messageTimestamp and conversationTimestamp
+ * DESIGN PRINCIPLES:
+ * 1. ZERO-DOWNTIME SWAP: Cache is NEVER wiped upfront. Existing cache remains live while new data builds.
+ * 2. CASCADE RECENCY: Real message timestamp -> Inferred chat position -> 18-month cutoff.
+ * 3. NO ANONYMOUS CONTACTS: Strictly excludes nameless or number-only contacts.
+ * 4. ATOMIC POST-PURGE: Stale entries are pruned ONLY after new records are safely written.
  */
 export async function prewarmWhatsAppContactsCache(userId: string): Promise<void> {
   const instanceName = `autocumple-${userId}`;
+  const syncStartTime = Date.now();
 
   try {
     const evoState = await evolutionApi.getConnectionState(instanceName).catch(() => null);
@@ -85,23 +90,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
-    // STEP 0: WIPE entire old cache to prevent stale data accumulation
-    // This ensures no zombie entries with wrong timestamps persist
-    try {
-      const oldSnap = await collectionRef.get();
-      if (!oldSnap.empty) {
-        const BATCH_LIMIT = 450;
-        const docs = oldSnap.docs;
-        for (let i = 0; i < docs.length; i += BATCH_LIMIT) {
-          const chunk = docs.slice(i, i + BATCH_LIMIT);
-          const delBatch = adminDb.batch();
-          chunk.forEach(doc => delBatch.delete(doc.ref));
-          await delBatch.commit();
-        }
-      }
-    } catch {}
-
-    // STEP 1: Fetch all data from Evolution API in parallel
+    // STEP 1: Fetch all data from Evolution API in parallel (cache remains 100% live during this)
     const [rawChats, rawGroups, rawMessages] = await Promise.all([
       evolutionApi.fetchChats(instanceName, true).catch(() => []),
       evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
@@ -129,7 +118,6 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         const phone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
         if (!phone || phone.length < 6 || nameMap.has(phone)) continue;
 
-        // Try pushName, notify, name from group participant
         const pName = p.pushName || p.notify || p.name;
         if (pName && !isInvalidName(pName)) {
           nameMap.set(phone, pName.trim());
@@ -137,11 +125,13 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       }
     }
 
-    // STEP 2: Build contacts from 1-on-1 chats ONLY
+    // STEP 2: Build candidate contacts from 1-on-1 chats ONLY
     const activityCutoff = Date.now() - EIGHTEEN_MONTHS_MS;
     const contactMap = new Map<string, Omit<CachedWhatsAppContact, 'updatedAt'>>();
 
-    for (const rawC of (rawChats || [])) {
+    const chatList = rawChats || [];
+    for (let chatIdx = 0; chatIdx < chatList.length; chatIdx++) {
+      const rawC = chatList[chatIdx];
       const c = rawC as any;
       const jid = c.jid || c.remoteJid || c.id || '';
       if (!jid.endsWith('@s.whatsapp.net')) continue;
@@ -149,13 +139,13 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       const cleanPhone = jid.replace(/@.*$/, '').replace(/\D/g, '');
       if (!cleanPhone || cleanPhone.length < 6) continue;
 
-      // Extract REAL message timestamp (strict — no VPS database timestamps)
-      const time = extractRealMessageTimestamp(c);
+      // Extract REAL message timestamp with cascade fallback
+      const time = extractRealMessageTimestamp(c, chatIdx);
 
-      // SKIP contacts with no recent activity (older than 18 months or timestamp = 0)
+      // SKIP contacts with no activity in the last 18 months
       if (time === 0 || time < activityCutoff) continue;
 
-      // Resolve name from multiple sources
+      // Resolve best name across all sources
       let name: string | undefined = c.name;
       if (isInvalidName(name)) name = c.pushName;
       if (isInvalidName(name)) name = c.lastMessage?.pushName;
@@ -174,17 +164,18 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         hasRealName: true,
         source: 'chat',
         lastActivity: time,
+        syncTime: syncStartTime,
       });
     }
 
     const allCandidates = Array.from(contactMap.values());
     if (allCandidates.length === 0) return;
 
-    // Sort purely by most recent conversation
+    // Sort purely by most recent conversation timestamp descending
     allCandidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
-    // STEP 3: Fetch profile photos for top 80 contacts
-    const photosToFetch = allCandidates.slice(0, 80);
+    // STEP 3: Parallel profile photos resolution for top 60 contacts
+    const photosToFetch = allCandidates.slice(0, 60);
     const PHOTO_CHUNK = 10;
 
     for (let i = 0; i < photosToFetch.length; i += PHOTO_CHUNK) {
@@ -199,7 +190,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       }));
     }
 
-    // STEP 4: Write to Firestore in batches
+    // STEP 4: Write new cache to Firestore in batches (Atomic Swap)
     const BATCH_LIMIT = 450;
     for (let i = 0; i < allCandidates.length; i += BATCH_LIMIT) {
       const batchChunk = allCandidates.slice(i, i + BATCH_LIMIT);
@@ -209,9 +200,35 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         batch.set(docRef, {
           ...contact,
           updatedAt: Timestamp.now(),
-        });
+        }, { merge: true });
       }
       await batch.commit();
+    }
+
+    // STEP 5: Post-Sync Cleanup: Prune documents that were not updated in this sync run or older than 18 months
+    try {
+      const existingSnap = await collectionRef.get();
+      const staleDocs = existingSnap.docs.filter(doc => {
+        const data = doc.data() as CachedWhatsAppContact;
+        return (
+          !data.hasRealName ||
+          (data.name && (data.name.startsWith('Contacto (+') || data.name.startsWith('Contacto(+'))) ||
+          (data.name && /^\+?\d[\d\s\-()]+$/.test(data.name.trim())) ||
+          (data.lastActivity && data.lastActivity < activityCutoff) ||
+          (data.syncTime && data.syncTime < syncStartTime)
+        );
+      });
+
+      if (staleDocs.length > 0) {
+        for (let i = 0; i < staleDocs.length; i += BATCH_LIMIT) {
+          const chunk = staleDocs.slice(i, i + BATCH_LIMIT);
+          const delBatch = adminDb.batch();
+          chunk.forEach(d => delBatch.delete(d.ref));
+          await delBatch.commit();
+        }
+      }
+    } catch (cleanupErr: any) {
+      console.warn('[SyncCache] Post-cleanup note:', cleanupErr?.message);
     }
   } catch (err: any) {
     console.warn(`[SyncCache] Background pre-warm error for user ${userId}:`, err?.message);
@@ -220,12 +237,25 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
 /**
  * Retrieves pre-warmed WhatsApp contacts from Firestore cache.
+ * Filtered by 18-month activity cutoff and ordered by recency descending.
  */
 export async function getCachedWhatsAppContacts(userId: string): Promise<CachedWhatsAppContact[]> {
   try {
-    const snap = await adminDb.collection('users').doc(userId).collection('wa_contacts_cache').get();
+    const cutoff = Date.now() - EIGHTEEN_MONTHS_MS;
+    const snap = await adminDb
+      .collection('users')
+      .doc(userId)
+      .collection('wa_contacts_cache')
+      .get();
+
     if (snap.empty) return [];
-    return snap.docs.map(doc => doc.data() as CachedWhatsAppContact);
+
+    const list = snap.docs
+      .map(doc => doc.data() as CachedWhatsAppContact)
+      .filter(c => c.hasRealName && !isInvalidName(c.name) && (c.lastActivity || 0) > cutoff);
+
+    list.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
+    return list;
   } catch {
     return [];
   }

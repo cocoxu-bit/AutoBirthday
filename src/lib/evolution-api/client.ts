@@ -344,7 +344,9 @@ class EvolutionAPIClient {
       const contacts: Array<WhatsAppChatContact & { lastActivity: number }> = [];
       const seen = new Set<string>();
 
-      for (const chat of (chats || [])) {
+      const chatList = chats || [];
+      for (let chatIdx = 0; chatIdx < chatList.length; chatIdx++) {
+        const chat = chatList[chatIdx];
         const jid = chat.remoteJid || chat.id;
         if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
         
@@ -357,7 +359,7 @@ class EvolutionAPIClient {
         const name = resolvedName || phone;
 
         let time = 0;
-        // ONLY trust real Baileys message timestamps, NOT VPS database fields
+        // Priority 1: Real Baileys message timestamps
         const trustedTimestamps = [
           chat.lastMessage?.messageTimestamp,
           chat.conversationTimestamp,
@@ -370,6 +372,15 @@ class EvolutionAPIClient {
             if (num > 1e8 && num < 1e12) num = num * 1000;
             const YEAR_2015 = 1420070400000;
             if (num >= YEAR_2015 && num <= Date.now() + 86400000 && num > time) time = num;
+          }
+        }
+
+        // Priority 2: Cascade Fallback — if no explicit message timestamp in memory,
+        // use natural chat index position (WhatsApp returns chats in recency order top-to-bottom)
+        if (time === 0) {
+          // Top 50 chats in the WhatsApp list receive a relative recency score
+          if (chatIdx < 50) {
+            time = Date.now() - (chatIdx * 2 * 3600 * 1000); // 2 hours per position
           }
         }
 
