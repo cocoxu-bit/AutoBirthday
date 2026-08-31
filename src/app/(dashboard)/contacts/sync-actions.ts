@@ -672,7 +672,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
 
 export async function getWhatsAppChunkedContactsForSyncAction(
   alreadyLoadedPhones: string[] = [],
-  offset: number = 0,
+  _offset: number = 0,
   limit: number = 25
 ): Promise<{
   success: boolean;
@@ -689,96 +689,42 @@ export async function getWhatsAppChunkedContactsForSyncAction(
     const { getContacts } = await import('@/lib/firebase/firestore');
     const { getCachedWhatsAppContacts } = await import('@/lib/whatsapp/sync-cache');
 
+    // Build exclusion set: already loaded phones + already saved contacts
     const loadedSet = new Set(alreadyLoadedPhones.map(p => (p || '').replace(/\D/g, '')));
     const existingContacts = await getContacts(userId).catch(() => []);
     existingContacts.forEach(c => loadedSet.add((c.phone || '').replace(/\D/g, '')));
 
-    const [cached, liveChats, rawGroups] = await Promise.all([
-      getCachedWhatsAppContacts(userId).catch(() => []),
-      offset === 0 ? evolutionApi.fetchChats(instanceName, true).catch(() => []) : Promise.resolve([]),
-      offset === 0 ? evolutionApi.fetchGroups(instanceName).catch(() => []) : Promise.resolve([]),
-    ]);
+    // Read ONLY from Firestore cache — no VPS calls, instant (<30ms)
+    const cached = await getCachedWhatsAppContacts(userId).catch(() => []);
 
-    // Combine and deduplicate
-    const contactMap = new Map<string, {
-      phone: string;
-      name: string;
-      pushName?: string;
-      profilePictureUrl?: string | null;
-      hasRealName: boolean;
-      lastActivity: number;
-    }>();
-
-    for (const c of cached) {
+    // Strict filtering: only named contacts, exclude "Contacto (+..." 
+    const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
-      if (p) {
-        contactMap.set(p, {
-          phone: p,
-          name: c.name,
-          pushName: c.pushName,
-          profilePictureUrl: c.profilePictureUrl,
-          hasRealName: c.hasRealName,
-          lastActivity: c.lastActivity || 0,
-        });
-      }
-    }
-
-    for (const raw of (liveChats || [])) {
-      const p = (raw.phone || raw.jid || '').replace(/\D/g, '');
-      if (!p || p.length < 6) continue;
-      const existing = contactMap.get(p);
-      const isNamed = raw.name && !/^[\d+\s\-()]+$/.test(raw.name.trim()) && raw.name !== raw.phone;
-      const activityTime = raw.lastActivity || 0;
-
-      if (!existing) {
-        contactMap.set(p, {
-          phone: p,
-          name: raw.name || `Contacto (+${p.slice(-4)})`,
-          pushName: raw.pushName,
-          profilePictureUrl: raw.profilePictureUrl || null,
-          hasRealName: Boolean(isNamed),
-          lastActivity: activityTime,
-        });
-      } else {
-        if (!existing.hasRealName && isNamed) {
-          existing.name = raw.name;
-          existing.hasRealName = true;
-        }
-        if (activityTime > existing.lastActivity) {
-          existing.lastActivity = activityTime;
-        }
-      }
-    }
-
-    const allDiscovered = Array.from(contactMap.values());
-    const remaining = allDiscovered.filter(c => !loadedSet.has(c.phone));
-
-    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
-      id: g.id || g.jid,
-      subject: g.subject || g.name || 'Grupo de WhatsApp',
-      pictureUrl: g.pictureUrl || null,
-      size: g.size || (g.participants ? g.participants.length : 0),
-    }));
-
-    if (remaining.length === 0) {
-      return { success: true, items: [], availableGroups: groupsList, hasMore: false, totalEstimated: 0 };
-    }
-
-    // Sort real named contacts first, then by most recent WhatsApp chat activity
-    remaining.sort((a, b) => {
-      if (a.hasRealName && !b.hasRealName) return -1;
-      if (!a.hasRealName && b.hasRealName) return 1;
-      return (b.lastActivity || 0) - (a.lastActivity || 0);
+      if (!p || loadedSet.has(p)) return false;
+      if (!c.hasRealName) return false;
+      if (c.name.startsWith('Contacto (+') || c.name.startsWith('Contacto(+')) return false;
+      if (/^\+?\d[\d\s\-()]+$/.test(c.name.trim())) return false;
+      return true;
     });
 
-    const chunkSlice = remaining.slice(offset, offset + limit);
+    if (remaining.length === 0) {
+      return { success: true, items: [], availableGroups: [], hasMore: false, totalEstimated: 0 };
+    }
 
-    // Preload top 6 avatars of this chunk in parallel
+    // Sort PURELY by most recent conversation — no hasRealName priority trick
+    remaining.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
+
+    // Take next chunk (offset is ignored since we filter by alreadyLoadedPhones)
+    const chunkSlice = remaining.slice(0, limit);
+
+    // Fast parallel avatar prefetch for first 4 items only (max 500ms race)
     await Promise.all(
-      chunkSlice.slice(0, 6).map(async c => {
+      chunkSlice.slice(0, 4).map(async c => {
         if (!c.profilePictureUrl && c.phone) {
           try {
-            const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+            const picPromise = evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+            const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 500));
+            const pic = await Promise.race([picPromise, timeoutPromise]);
             if (pic) c.profilePictureUrl = pic;
           } catch {}
         }
@@ -786,7 +732,7 @@ export async function getWhatsAppChunkedContactsForSyncAction(
     );
 
     const items: WhatsAppSyncItem[] = chunkSlice.map((c, index) => ({
-      id: `wa-sync-${c.phone}-chunk-${offset + index}`,
+      id: `wa-sync-${c.phone}-chunk-${index}`,
       name: c.name,
       phone: c.phone,
       pushName: c.pushName,
@@ -811,8 +757,8 @@ export async function getWhatsAppChunkedContactsForSyncAction(
     return {
       success: true,
       items,
-      availableGroups: groupsList,
-      hasMore: remaining.length > offset + limit,
+      availableGroups: [],
+      hasMore: remaining.length > limit,
       totalEstimated: remaining.length,
     };
   } catch (error: any) {
@@ -832,84 +778,33 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
 }> {
   try {
     const userId = await getAuthenticatedUserId();
-    const instanceName = `autocumple-${userId}`;
 
     const { getContacts } = await import('@/lib/firebase/firestore');
-    const { getCachedWhatsAppContacts, prewarmWhatsAppContactsCache } = await import('@/lib/whatsapp/sync-cache');
+    const { getCachedWhatsAppContacts } = await import('@/lib/whatsapp/sync-cache');
 
     const loadedSet = new Set(alreadyLoadedPhones.map(p => (p || '').replace(/\D/g, '')));
     const existingContacts = await getContacts(userId).catch(() => []);
     existingContacts.forEach(c => loadedSet.add((c.phone || '').replace(/\D/g, '')));
 
-    const [cached, liveChats, rawGroups] = await Promise.all([
-      getCachedWhatsAppContacts(userId).catch(() => []),
-      evolutionApi.fetchChats(instanceName, true).catch(() => []),
-      evolutionApi.fetchGroups(instanceName).catch(() => []),
-    ]);
+    // Read ONLY from Firestore cache — no VPS calls
+    const cached = await getCachedWhatsAppContacts(userId).catch(() => []);
 
-    // Combine and deduplicate
-    const contactMap = new Map<string, {
-      phone: string;
-      name: string;
-      pushName?: string;
-      profilePictureUrl?: string | null;
-      hasRealName: boolean;
-      lastActivity: number;
-    }>();
-
-    for (const c of cached) {
+    // Strict filtering: only named contacts
+    const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
-      if (p) {
-        contactMap.set(p, {
-          phone: p,
-          name: c.name,
-          pushName: c.pushName,
-          profilePictureUrl: c.profilePictureUrl,
-          hasRealName: c.hasRealName,
-          lastActivity: c.lastActivity || 0,
-        });
-      }
-    }
-
-    for (const raw of (liveChats || [])) {
-      const p = (raw.phone || raw.jid || '').replace(/\D/g, '');
-      if (!p || p.length < 6) continue;
-      const existing = contactMap.get(p);
-      const isNamed = raw.name && !/^[\d+\s\-()]+$/.test(raw.name.trim()) && raw.name !== raw.phone;
-      if (!existing) {
-        contactMap.set(p, {
-          phone: p,
-          name: raw.name || `Contacto (+${p.slice(-4)})`,
-          pushName: raw.pushName,
-          profilePictureUrl: raw.profilePictureUrl || null,
-          hasRealName: Boolean(isNamed),
-          lastActivity: 0,
-        });
-      } else if (!existing.hasRealName && isNamed) {
-        existing.name = raw.name;
-        existing.hasRealName = true;
-      }
-    }
-
-    const allDiscovered = Array.from(contactMap.values());
-    const remaining = allDiscovered.filter(c => !loadedSet.has(c.phone));
-
-    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
-      id: g.id || g.jid,
-      subject: g.subject || g.name || 'Grupo de WhatsApp',
-      pictureUrl: g.pictureUrl || null,
-      size: g.size || (g.participants ? g.participants.length : 0),
-    }));
+      if (!p || loadedSet.has(p)) return false;
+      if (!c.hasRealName) return false;
+      if (c.name.startsWith('Contacto (+') || c.name.startsWith('Contacto(+')) return false;
+      if (/^\+?\d[\d\s\-()]+$/.test(c.name.trim())) return false;
+      return true;
+    });
 
     if (remaining.length === 0) {
-      return { success: true, items: [], availableGroups: groupsList };
+      return { success: true, items: [], availableGroups: [] };
     }
 
-    remaining.sort((a, b) => {
-      if (a.hasRealName && !b.hasRealName) return -1;
-      if (!a.hasRealName && b.hasRealName) return 1;
-      return (b.lastActivity || 0) - (a.lastActivity || 0);
-    });
+    // Sort purely by most recent conversation
+    remaining.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
     const items: WhatsAppSyncItem[] = remaining.map((c, index) => ({
       id: `wa-sync-${c.phone}-bg-${index}`,
@@ -937,7 +832,7 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     return {
       success: true,
       items,
-      availableGroups: groupsList,
+      availableGroups: [],
     };
   } catch (error: any) {
     console.error('getWhatsAppRemainingContactsForSyncAction error:', error);

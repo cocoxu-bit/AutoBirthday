@@ -99,7 +99,11 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         if (isInvalidName(name)) name = c.lastMessage?.pushName;
 
         const hasRealName = Boolean(name && !isInvalidName(name));
-        const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
+        
+        // SKIP nameless contacts — never write "Contacto (+XXXX)" to cache
+        if (!hasRealName) continue;
+        
+        const displayName = (name as string).trim();
         const time = extractRealChatTimestamp(c);
 
         const docRef = collectionRef.doc(cleanPhone);
@@ -108,7 +112,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
           name: displayName,
           pushName: c.pushName && !isInvalidName(c.pushName) ? c.pushName : undefined,
           profilePictureUrl: c.profilePictureUrl || null,
-          hasRealName,
+          hasRealName: true,
           source: 'chat',
           lastActivity: time,
           updatedAt: Timestamp.now(),
@@ -145,7 +149,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       }
     }
 
-    // 2. Build candidate contacts pool
+    // 2. Build candidate contacts pool — ONLY contacts with real names
     const contactMap = new Map<string, Omit<CachedWhatsAppContact, 'updatedAt'>>();
 
     // A. 1-on-1 chats
@@ -160,7 +164,11 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       if (isInvalidName(name)) name = nameMap.get(cleanPhone);
 
       const hasRealName = Boolean(name && !isInvalidName(name));
-      const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
+      
+      // SKIP nameless contacts — never write "Contacto (+XXXX)" to cache
+      if (!hasRealName) continue;
+      
+      const displayName = (name as string).trim();
       const time = extractRealChatTimestamp(c);
 
       contactMap.set(cleanPhone, {
@@ -168,15 +176,14 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         name: displayName,
         pushName: c.pushName && !isInvalidName(c.pushName) ? c.pushName : nameMap.get(cleanPhone),
         profilePictureUrl: c.profilePictureUrl || null,
-        hasRealName,
+        hasRealName: true,
         source: 'chat',
         lastActivity: time,
       });
     }
 
-    // B. Group participants
+    // B. Group participants — only add if they have a resolved name AND an existing chat
     for (const g of (rawGroups || [])) {
-      const gSubject = g.subject || g.name || 'Grupo de WhatsApp';
       for (const p of (g.participants || [])) {
         const rawPhone = p.phoneNumber || p.id || '';
         const cleanPhone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
@@ -184,36 +191,22 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
         const resolvedName = nameMap.get(cleanPhone);
         if (contactMap.has(cleanPhone)) {
+          // Upgrade existing chat entry name if needed
           const existing = contactMap.get(cleanPhone)!;
           if (!existing.hasRealName && resolvedName) {
             existing.name = resolvedName;
             existing.hasRealName = true;
           }
-        } else if (resolvedName && !isInvalidName(resolvedName)) {
-          const cleanName = resolvedName.trim();
-          contactMap.set(cleanPhone, {
-            phone: cleanPhone,
-            name: cleanName,
-            pushName: cleanName,
-            profilePictureUrl: null,
-            hasRealName: true,
-            source: 'group_participant',
-            groupContext: gSubject,
-            lastActivity: 0,
-          });
         }
+        // NOTE: Do NOT add group-only participants (no chat = no lastActivity = wrong order)
       }
     }
 
     const allCandidates = Array.from(contactMap.values());
     if (allCandidates.length === 0) return;
 
-    // Sort: Named contacts first, then by activity
-    allCandidates.sort((a, b) => {
-      if (a.hasRealName && !b.hasRealName) return -1;
-      if (!a.hasRealName && b.hasRealName) return 1;
-      return b.lastActivity - a.lastActivity;
-    });
+    // Sort PURELY by most recent conversation timestamp — no hasRealName priority
+    allCandidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
     // 3. Batch fetch real profile photos in chunks of 10
     const photosToFetch = allCandidates.slice(0, 100);
@@ -231,17 +224,20 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       }));
     }
 
-    // 4. Batch write to Firestore cache in chunks of 450
-    const batch = adminDb.batch();
-    for (const contact of allCandidates) {
-      const docRef = collectionRef.doc(contact.phone);
-      batch.set(docRef, {
-        ...contact,
-        updatedAt: Timestamp.now(),
-      }, { merge: true });
+    // 4. Batch write to Firestore cache in chunks of 450 (Firestore limit is 500)
+    const BATCH_LIMIT = 450;
+    for (let i = 0; i < allCandidates.length; i += BATCH_LIMIT) {
+      const batchChunk = allCandidates.slice(i, i + BATCH_LIMIT);
+      const batch = adminDb.batch();
+      for (const contact of batchChunk) {
+        const docRef = collectionRef.doc(contact.phone);
+        batch.set(docRef, {
+          ...contact,
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+      }
+      await batch.commit();
     }
-
-    await batch.commit();
   } catch (err: any) {
     console.warn(`[SyncCache] Background pre-warm note for user ${userId}:`, err?.message);
   }

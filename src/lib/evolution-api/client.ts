@@ -420,13 +420,8 @@ class EvolutionAPIClient {
         });
       }
 
-      contacts.sort((a, b) => {
-        const aHasName = a.name && !/^[\d+\s\-()]+$/.test(a.name.trim()) && a.name !== a.phone;
-        const bHasName = b.name && !/^[\d+\s\-()]+$/.test(b.name.trim()) && b.name !== b.phone;
-        if (aHasName && !bHasName) return -1;
-        if (!aHasName && bHasName) return 1;
-        return b.lastActivity - a.lastActivity;
-      });
+      // Sort purely by most recent conversation timestamp
+      contacts.sort((a, b) => b.lastActivity - a.lastActivity);
 
       // Filter out invalid/system entries (e.g. status broadcast)
       const validContacts = contacts.filter(c => {
