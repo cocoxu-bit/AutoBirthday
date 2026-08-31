@@ -28,7 +28,8 @@ import {
   MessageSquare,
   Calendar as CalendarIcon,
   Plus,
-  Edit3
+  Edit3,
+  ZoomIn
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -100,6 +101,9 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
   const [birthdayError, setBirthdayError] = useState(false);
   const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
+
+  // Enlarged photo modal state
+  const [enlargedPhoto, setEnlargedPhoto] = useState<{ url: string; name: string } | null>(null);
 
   // Templates state
   const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
@@ -524,20 +528,30 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                 
                 {/* 1. BIG CENTERED AVATAR / PROFILE PHOTO */}
                 <div className="flex flex-col items-center">
-                  <div className="relative">
+                  <div className="relative group">
                     {activeAvatar ? (
-                      <img 
-                        src={activeAvatar} 
-                        alt={currentCard.name} 
-                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md border-4 border-white ring-2 ring-emerald-100" 
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setEnlargedPhoto({ url: activeAvatar, name: currentCard.name })}
+                        className="relative block rounded-full focus:outline-none focus:ring-4 focus:ring-emerald-500/30 transition-transform active:scale-95 cursor-zoom-in"
+                        title="Toca para ampliar foto"
+                      >
+                        <img 
+                          src={activeAvatar} 
+                          alt={currentCard.name} 
+                          className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md border-4 border-white ring-2 ring-emerald-100 group-hover:ring-emerald-400 group-hover:brightness-95 transition-all" 
+                        />
+                        <div className="absolute inset-0 rounded-full bg-slate-950/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                          <ZoomIn className="w-6 h-6 drop-shadow-md" />
+                        </div>
+                      </button>
                     ) : (
                       <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-3xl shadow-md border-4 border-white ring-2 ring-emerald-100">
                         {currentCard.name.slice(0, 2).toUpperCase()}
                       </div>
                     )}
                     <div 
-                      className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-100" 
+                      className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-100 pointer-events-none" 
                       title="Contacto de WhatsApp"
                     >
                       <WhatsAppIcon className="w-4 h-4" size={16} />
@@ -1080,6 +1094,45 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
           updateCurrentCard({ templateId: newTpl.id });
         }}
       />
+
+      {/* ENLARGED PHOTO LIGHTBOX / MODAL */}
+      {enlargedPhoto && (
+        <div 
+          className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedPhoto(null)}
+        >
+          <div 
+            className="relative max-w-sm sm:max-w-md w-full bg-slate-900/95 border border-slate-700/60 rounded-3xl p-5 sm:p-7 text-center space-y-4 shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setEnlargedPhoto(null)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors shadow-sm"
+              title="Cerrar vista previa"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="pt-2">
+              <img 
+                src={enlargedPhoto.url} 
+                alt={enlargedPhoto.name}
+                className="w-64 h-64 sm:w-80 sm:h-80 mx-auto rounded-3xl object-cover shadow-2xl border-2 border-slate-700/80 ring-4 ring-emerald-500/20" 
+              />
+            </div>
+
+            <div className="space-y-1 pt-1">
+              <h4 className="text-xl font-black text-white tracking-tight">
+                {enlargedPhoto.name}
+              </h4>
+              <p className="text-xs text-slate-400">
+                Foto de perfil de WhatsApp en alta resolución
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

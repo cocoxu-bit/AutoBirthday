@@ -560,7 +560,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     }));
 
     if (cachedContacts.length > 0) {
-      const candidates = cachedContacts.filter(c => !existingPhones.has(c.phone));
+      const candidates = cachedContacts.filter(c => c.hasRealName && !existingPhones.has(c.phone));
       if (candidates.length === 0) {
         return {
           success: false,
@@ -568,11 +568,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
         };
       }
 
-      candidates.sort((a, b) => {
-        if (a.hasRealName && !b.hasRealName) return -1;
-        if (!a.hasRealName && b.hasRealName) return 1;
-        return (b.lastActivity || 0) - (a.lastActivity || 0);
-      });
+      candidates.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
       // Deliver initial batch of first 8 contacts (< 60ms)
       const initialCandidates = candidates.slice(0, 8);
@@ -649,11 +645,11 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       if (isInvalidName(name)) name = c.lastMessage?.pushName;
 
       const hasRealName = Boolean(name && !isInvalidName(name));
-      const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
+      if (!hasRealName) continue; // Exclude nameless contacts completely
 
       initialCandidates.push({
         phone: cleanPhone,
-        name: displayName,
+        name: (name as string).trim(),
         pushName: c.pushName,
         profilePictureUrl: c.profilePictureUrl || null,
       });

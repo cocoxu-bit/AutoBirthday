@@ -4,6 +4,36 @@ import { WhatsAppGroup, WhatsAppChatContact } from '@/types';
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'autobirthday-dev-key-2024';
 
+function extractBestContactName(obj: any): string | undefined {
+  if (!obj) return undefined;
+  const candidates = [
+    obj.name,
+    obj.pushName,
+    obj.notify,
+    obj.shortName,
+    obj.formattedName,
+    obj.verifiedName,
+    obj.vname,
+    obj.lastMessage?.pushName,
+  ];
+
+  for (const raw of candidates) {
+    if (!raw || typeof raw !== 'string') continue;
+    const clean = raw.trim();
+    if (!clean) continue;
+    const lower = clean.toLowerCase();
+    if (lower === 'você' || lower === 'voce' || lower === 'you' || lower === 'whatsapp' || lower === 'desconocido' || lower === 'unknown') {
+      continue;
+    }
+    // If it's purely digits or phone format (+34 600...), it's not a real name
+    if (/^[\d+\s\-()]+$/.test(clean)) {
+      continue;
+    }
+    return clean;
+  }
+  return undefined;
+}
+
 class EvolutionAPIClient {
   private baseUrl: string;
   private apiKey: string;
@@ -224,7 +254,7 @@ class EvolutionAPIClient {
     }
 
     try {
-      const [chats, contactsPost, messagesRes] = await Promise.all([
+      const [chats, contactsPost, messagesRes, groupsRes] = await Promise.all([
         this.request<any[]>(`/chat/findChats/${instanceName}`, {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
@@ -237,49 +267,59 @@ class EvolutionAPIClient {
           method: 'POST',
           body: JSON.stringify({ where: {}, limit: 1000 }),
         }).catch(() => ({})),
+        this.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
       ]);
 
-      // Build pushName resolution map from message history (when lastMessage.pushName is 'Você')
-      const msgRecords = messagesRes?.messages?.records || (Array.isArray(messagesRes) ? messagesRes : []);
-      const messageNameMap = new Map<string, string>();
-      for (const m of msgRecords) {
-        const jid = m.key?.remoteJid;
-        const name = m.pushName;
-        if (jid && jid.endsWith('@s.whatsapp.net') && name && name !== 'Você' && name !== 'You') {
-          const phone = jid.replace(/@.*$/, '');
-          const cleanName = name.trim();
-          if (!/^[\d+\s\-()]+$/.test(cleanName) && !messageNameMap.has(phone)) {
-            messageNameMap.set(phone, cleanName);
+      const masterNameMap = new Map<string, string>();
+
+      for (const c of (contactsPost || [])) {
+        const jid = c.id || c.remoteJid || c.jid;
+        if (!jid) continue;
+        const phone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        const bestName = extractBestContactName(c);
+        if (phone && bestName) {
+          masterNameMap.set(phone, bestName);
+        }
+      }
+
+      for (const g of (groupsRes || [])) {
+        for (const p of (g.participants || [])) {
+          const rawPhone = p.phoneNumber || p.id || '';
+          const phone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
+          const bestName = extractBestContactName(p);
+          if (phone && bestName && !masterNameMap.has(phone)) {
+            masterNameMap.set(phone, bestName);
           }
         }
       }
-      
+
+      const msgRecords = messagesRes?.messages?.records || (Array.isArray(messagesRes) ? messagesRes : []);
+      for (const m of msgRecords) {
+        const jid = m.key?.remoteJid || m.key?.participant;
+        if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
+        const phone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        const bestName = extractBestContactName(m);
+        if (phone && bestName && !masterNameMap.has(phone)) {
+          masterNameMap.set(phone, bestName);
+        }
+      }
+
       const rawContactsList = [...(contactsPost || [])];
       const contacts: Array<WhatsAppChatContact & { lastActivity: number }> = [];
       const seen = new Set<string>();
 
-      // Process chats
       for (const chat of (chats || [])) {
         const jid = chat.remoteJid || chat.id;
         if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
         
-        const phone = jid.replace(/@.*$/, '');
-        if (seen.has(phone)) continue;
+        const phone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!phone || phone.length < 6 || seen.has(phone)) continue;
         seen.add(phone);
 
-        let rawName = chat.name || chat.pushName;
-        if (!rawName || rawName === 'Você' || rawName === 'You' || /^[\d+\s\-()]+$/.test(rawName.trim())) {
-          if (chat.lastMessage && !chat.lastMessage.key?.fromMe && chat.lastMessage.pushName && chat.lastMessage.pushName !== 'Você') {
-            rawName = chat.lastMessage.pushName;
-          }
-        }
-        if (!rawName || rawName === 'Você' || rawName === 'You' || /^[\d+\s\-()]+$/.test(rawName.trim())) {
-          rawName = messageNameMap.get(phone);
-        }
+        const chatName = extractBestContactName(chat);
+        const resolvedName = chatName || masterNameMap.get(phone);
+        const name = resolvedName || phone;
 
-        const name = rawName && !/^[\d+\s\-()]+$/.test(rawName.trim()) ? rawName.trim() : phone;
-        
-        // Extract real message activity timestamp (Never use database updatedAt / Date.now)
         let time = 0;
         const candidates = [
           chat.lastMessage?.messageTimestamp,
@@ -303,19 +343,21 @@ class EvolutionAPIClient {
           jid,
           phone: `+${phone}`,
           name,
-          pushName: chat.lastMessage?.pushName || chat.pushName,
+          pushName: chat.lastMessage?.pushName || chat.pushName || masterNameMap.get(phone),
           profilePictureUrl: pic,
           lastActivity: time,
         });
       }
 
-      // Process address book contacts
       for (const c of (rawContactsList || [])) {
         const jid = c.id || c.remoteJid || c.jid;
         if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
 
-        const phone = jid.replace(/@.*$/, '');
-        let name = c.pushName || c.name || c.verifiedName || messageNameMap.get(phone) || phone;
+        const phone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!phone || phone.length < 6) continue;
+
+        const resolvedName = extractBestContactName(c) || masterNameMap.get(phone);
+        const name = resolvedName || phone;
         const pic = c.profilePictureUrl || c.profilePicUrl || c.avatar || null;
 
         if (seen.has(phone)) {
@@ -336,13 +378,12 @@ class EvolutionAPIClient {
           jid,
           phone: `+${phone}`,
           name,
-          pushName: c.pushName,
+          pushName: c.pushName || masterNameMap.get(phone),
           profilePictureUrl: pic,
           lastActivity: 0,
         });
       }
 
-      // Sort: Contacts with real names first, then by activity
       contacts.sort((a, b) => {
         const aHasName = a.name && !/^[\d+\s\-()]+$/.test(a.name.trim()) && a.name !== a.phone;
         const bHasName = b.name && !/^[\d+\s\-()]+$/.test(b.name.trim()) && b.name !== b.phone;
