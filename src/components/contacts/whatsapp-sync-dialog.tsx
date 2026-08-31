@@ -578,7 +578,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   </div>
 
                   {/* Editable Contact Name Input */}
-                  <div className="mt-3.5 relative w-full max-w-sm mx-auto space-y-1">
+                  <div className="mt-3.5 relative w-full max-w-sm mx-auto">
                     <div className="relative group">
                       <input
                         ref={nameInputRef}
@@ -588,7 +588,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                           setNameError(false);
                           updateCurrentCard({ name: e.target.value });
                         }}
-                        placeholder="Escribe su nombre (ej. Enrique Tatay)"
+                        placeholder="Escribe su nombre"
                         className={`w-full text-center text-lg sm:text-xl font-black text-slate-900 tracking-tight transition-all rounded-2xl py-2 px-4 focus:outline-none ${
                           !currentCard.name?.trim()
                             ? 'bg-amber-50/90 border-2 border-dashed border-amber-400 focus:border-emerald-500 focus:bg-white placeholder:text-amber-700/60 shadow-2xs'
@@ -598,16 +598,6 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       />
                       <Edit3 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors pointer-events-none" />
                     </div>
-                    {!currentCard.name?.trim() ? (
-                      <div className="space-y-0.5 pt-0.5">
-                        <p className="text-[11px] font-bold text-amber-700 animate-pulse">
-                          ✍️ Escribe el nombre de este contacto para guardarlo
-                        </p>
-                        <span className="text-[11px] font-bold text-slate-400 block font-mono">
-                          {currentCard.phone.startsWith('34') ? `+34 ${currentCard.phone.slice(2)}` : `+${currentCard.phone}`}
-                        </span>
-                      </div>
-                    ) : null}
                   </div>
                 </div>
 
