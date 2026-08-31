@@ -173,9 +173,10 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/whatsapp"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-600/30 shrink-0 self-end sm:self-center"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-600/30 shrink-0 self-end sm:self-center whitespace-nowrap"
           >
-            <span>Conectar WhatsApp ➔</span>
+            <span>Conectar WhatsApp</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
       )}
@@ -199,9 +200,10 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/contacts?sync=whatsapp"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/25 shrink-0 self-end sm:self-center"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/25 shrink-0 self-end sm:self-center whitespace-nowrap"
           >
-            <span>Sincronizar Cumpleaños ➔</span>
+            <span>Sincronizar Cumpleaños</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
       )}

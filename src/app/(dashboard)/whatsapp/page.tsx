@@ -19,7 +19,8 @@ import {
   AlertCircle,
   HelpCircle,
   Users,
-  Cake
+  Cake,
+  ArrowRight
 } from 'lucide-react';
 import { 
   getConnectionStatus, 
@@ -483,18 +484,19 @@ export default function WhatsAppPage() {
                 </p>
               </div>
 
-              <div className="pt-2 flex flex-col sm:flex-row gap-2.5 relative z-10">
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 relative z-10">
                 <Link
                   href="/contacts?sync=whatsapp"
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
                 >
-                  <Cake className="w-4 h-4" />
-                  <span>Sincronizar mis Cumpleaños ➔</span>
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span>Sincronizar Cumpleaños</span>
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </Link>
 
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center py-3.5 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-2xl transition-colors"
+                  className="inline-flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-2xl transition-colors shrink-0 whitespace-nowrap"
                 >
                   <span>Ir al Inicio</span>
                 </Link>
