@@ -555,10 +555,13 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
       const cutoff = Date.now() - EIGHTEEN_MONTHS;
 
-      const candidates = cachedContacts.filter(c => 
-        !existingPhones.has(c.phone) &&
-        (c.lastActivity || 0) > cutoff
-      );
+      const candidates = cachedContacts.filter(c => {
+        if (existingPhones.has(c.phone)) return false;
+        if ((c.lastActivity || 0) <= cutoff) return false;
+        const hasName = Boolean(c.name && c.name.trim());
+        const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+        return hasName || hasPic;
+      });
 
       if (candidates.length === 0) {
         return {
