@@ -100,6 +100,7 @@ async function getDashboardData() {
       isGroup: item.contact.targetType === 'group',
       groupName: item.contact.groupName,
       mode: item.contact.mode,
+      profilePictureUrl: item.contact.profilePictureUrl || null,
     }));
 
     // 3. Compute Recent Activity

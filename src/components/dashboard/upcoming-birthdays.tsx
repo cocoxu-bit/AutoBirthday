@@ -12,6 +12,7 @@ export interface UpcomingBirthdayItem {
   isGroup?: boolean;
   groupName?: string;
   mode?: string;
+  profilePictureUrl?: string | null;
 }
 
 interface UpcomingBirthdaysProps {
@@ -44,11 +45,19 @@ export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
                 className="flex items-center justify-between p-3 rounded-2xl hover:bg-white/90 transition-all border border-transparent hover:border-slate-100"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs text-white shadow-sm ${
-                    bday.isGroup ? 'bg-emerald-500' : 'bg-gradient-to-br from-violet-500 to-fuchsia-500'
-                  }`}>
-                    {bday.isGroup ? <Users className="w-4 h-4" /> : bday.name.substring(0, 2).toUpperCase()}
-                  </div>
+                  {bday.profilePictureUrl ? (
+                    <img 
+                      src={bday.profilePictureUrl} 
+                      alt={bday.name}
+                      className="w-10 h-10 rounded-2xl object-cover shadow-sm ring-1 ring-slate-200/80 shrink-0" 
+                    />
+                  ) : (
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0 ${
+                      bday.isGroup ? 'bg-emerald-500' : 'bg-gradient-to-br from-violet-500 to-fuchsia-500'
+                    }`}>
+                      {bday.isGroup ? <Users className="w-4 h-4" /> : (bday.name ? bday.name.substring(0, 2).toUpperCase() : 'WA')}
+                    </div>
+                  )}
                   <div>
                     <p className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                       {bday.name}
