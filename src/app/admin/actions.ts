@@ -1,5 +1,5 @@
 'use server';
-
+import os from 'os';
 import { cookies } from 'next/headers';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
@@ -8,6 +8,60 @@ import { executeSendWishes } from '@/lib/scheduler/send-wishes';
 const ADMIN_EMAILS = [
   'lucasjimeneznavarro@gmail.com',
 ];
+
+export interface AdminSystemTelemetry {
+  timestamp: number;
+  server: {
+    nodeVersion: string;
+    platform: string;
+    arch: string;
+    uptimeSeconds: number;
+    memory: {
+      heapUsedMb: number;
+      heapTotalMb: number;
+      rssMb: number;
+      externalMb: number;
+      systemTotalRamMb: number;
+      systemFreeRamMb: number;
+      heapUsagePercent: number;
+    };
+    loadAvg: number[];
+    environment: string;
+  };
+  vps: {
+    status: 'online' | 'degraded' | 'offline';
+    latencyMs: number;
+    apiUrl: string;
+    totalInstances: number;
+    connectedInstances: number;
+    connectingInstances: number;
+    disconnectedInstances: number;
+    instancesList: Array<{
+      name: string;
+      status: string;
+      ownerPhone?: string;
+    }>;
+  };
+  aiTokens: {
+    model: string;
+    totalAiWishes: number;
+    estimatedPromptTokens: number;
+    estimatedCompletionTokens: number;
+    totalTokens: number;
+    estimatedCostUsd: number;
+    estimatedCostEur: number;
+    avgTokensPerWish: number;
+    geminiStatus: 'healthy' | 'unconfigured' | 'error';
+  };
+  firestore: {
+    status: 'healthy' | 'error';
+    totalUsersCount: number;
+    totalContactsCount: number;
+    totalWishesCount: number;
+    totalTemplatesCount: number;
+    estimatedStorageMb: number;
+  };
+}
 
 export interface AdminUserRecord {
   id: string;
@@ -544,6 +598,164 @@ export async function adminDeleteUserAction(targetUserId: string): Promise<{
     return {
       success: false,
       error: error.message || 'Error al eliminar usuario',
+    };
+  }
+}
+
+export async function getAdminSystemTelemetryAction(): Promise<{
+  success: boolean;
+  data?: AdminSystemTelemetry;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+
+    // 1. Server & Node.js Memory Telemetry
+    const memUsage = process.memoryUsage();
+    const heapUsedMb = Math.round((memUsage.heapUsed / 1024 / 1024) * 10) / 10;
+    const heapTotalMb = Math.round((memUsage.heapTotal / 1024 / 1024) * 10) / 10;
+    const rssMb = Math.round((memUsage.rss / 1024 / 1024) * 10) / 10;
+    const externalMb = Math.round((memUsage.external / 1024 / 1024) * 10) / 10;
+    const systemTotalRamMb = Math.round(os.totalmem() / 1024 / 1024);
+    const systemFreeRamMb = Math.round(os.freemem() / 1024 / 1024);
+    const heapUsagePercent = heapTotalMb > 0 ? Math.round((heapUsedMb / heapTotalMb) * 100) : 0;
+
+    // 2. VPS & Evolution API Telemetry
+    const startPing = Date.now();
+    let vpsStatus: 'online' | 'degraded' | 'offline' = 'offline';
+    let latencyMs = 0;
+    let instances: any[] = [];
+    const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+
+    try {
+      instances = await evolutionApi.fetchInstances();
+      latencyMs = Date.now() - startPing;
+      vpsStatus = latencyMs < 900 ? 'online' : 'degraded';
+    } catch {
+      latencyMs = Date.now() - startPing;
+      vpsStatus = 'offline';
+    }
+
+    let connectedCount = 0;
+    let connectingCount = 0;
+    let disconnectedCount = 0;
+    const instancesList: Array<{ name: string; status: string; ownerPhone?: string }> = [];
+
+    for (const inst of (instances || [])) {
+      const state = inst.instance?.state || inst.state || 'close';
+      const name = inst.instance?.instanceName || inst.name || 'instance';
+      const ownerPhone = inst.instance?.owner || inst.owner || undefined;
+
+      if (state === 'open') connectedCount++;
+      else if (state === 'connecting') connectingCount++;
+      else disconnectedCount++;
+
+      instancesList.push({
+        name,
+        status: state,
+        ownerPhone,
+      });
+    }
+
+    // 3. AI / Gemini Tokens Telemetry
+    const wishesSnap = await adminDb.collection('wishes').get().catch(() => ({ docs: [] } as any));
+    const allWishes = wishesSnap.docs.map((d: any) => d.data());
+    
+    // Count AI generated wishes
+    const aiWishes = allWishes.filter((w: any) => w.mode === 'ai' || (w.aiTone && w.generatedMessage));
+    const totalAiWishes = aiWishes.length;
+
+    // A standard Gemini prompt for wish generation uses ~220 input tokens & ~55 output tokens
+    const PROMPT_TOKENS_PER_WISH = 220;
+    const COMPLETION_TOKENS_PER_WISH = 55;
+    const TOTAL_TOKENS_PER_WISH = PROMPT_TOKENS_PER_WISH + COMPLETION_TOKENS_PER_WISH;
+
+    const estimatedPromptTokens = totalAiWishes * PROMPT_TOKENS_PER_WISH;
+    const estimatedCompletionTokens = totalAiWishes * COMPLETION_TOKENS_PER_WISH;
+    const totalTokens = estimatedPromptTokens + estimatedCompletionTokens;
+
+    // Gemini 2.5/3.6 Flash Pricing: $0.075 / 1M prompt tokens, $0.30 / 1M completion tokens
+    const estimatedCostUsd = (estimatedPromptTokens * 0.000000075) + (estimatedCompletionTokens * 0.00000030);
+    const estimatedCostEur = estimatedCostUsd * 0.92;
+
+    const isGeminiConfigured = Boolean(process.env.GEMINI_API_KEY);
+
+    // 4. Firestore Database Telemetry
+    const usersSnap = await adminDb.collection('users').get().catch(() => ({ size: 0, docs: [] } as any));
+    const templatesSnap = await adminDb.collection('templates').get().catch(() => ({ size: 0 } as any));
+    
+    let totalContactsCount = 0;
+    const usersDocs = usersSnap.docs || [];
+    for (const u of usersDocs.slice(0, 100)) {
+      const cSnap = await adminDb.collection('users').doc(u.id).collection('contacts').get().catch(() => ({ size: 0 }));
+      totalContactsCount += cSnap.size;
+    }
+
+    const totalUsersCount = usersSnap.size || 0;
+    const totalWishesCount = wishesSnap.docs.length || 0;
+    const totalTemplatesCount = templatesSnap.size || 0;
+
+    // Estimated storage: ~1.5 KB per contact/wish doc
+    const totalDocs = totalUsersCount + totalContactsCount + totalWishesCount + totalTemplatesCount;
+    const estimatedStorageMb = Math.round(((totalDocs * 1.8) / 1024) * 10) / 10;
+
+    return {
+      success: true,
+      data: {
+        timestamp: Date.now(),
+        server: {
+          nodeVersion: process.version,
+          platform: os.platform(),
+          arch: os.arch(),
+          uptimeSeconds: Math.round(process.uptime()),
+          memory: {
+            heapUsedMb,
+            heapTotalMb,
+            rssMb,
+            externalMb,
+            systemTotalRamMb,
+            systemFreeRamMb,
+            heapUsagePercent,
+          },
+          loadAvg: os.loadavg(),
+          environment: process.env.NODE_ENV || 'production',
+        },
+        vps: {
+          status: vpsStatus,
+          latencyMs,
+          apiUrl: evolutionUrl.replace(/^(https?:\/\/)([^@]+@)?([^\/:]+)(.*)$/, '$1$3$4'),
+          totalInstances: (instances || []).length,
+          connectedInstances: connectedCount,
+          connectingInstances: connectingCount,
+          disconnectedInstances: disconnectedCount,
+          instancesList,
+        },
+        aiTokens: {
+          model: 'Gemini 2.5 Flash / 3.6 Flash',
+          totalAiWishes,
+          estimatedPromptTokens,
+          estimatedCompletionTokens,
+          totalTokens,
+          estimatedCostUsd: Math.round(estimatedCostUsd * 100000) / 100000,
+          estimatedCostEur: Math.round(estimatedCostEur * 100000) / 100000,
+          avgTokensPerWish: TOTAL_TOKENS_PER_WISH,
+          geminiStatus: isGeminiConfigured ? 'healthy' : 'unconfigured',
+        },
+        firestore: {
+          status: 'healthy',
+          totalUsersCount,
+          totalContactsCount,
+          totalWishesCount,
+          totalTemplatesCount,
+          estimatedStorageMb,
+        },
+      },
+    };
+  } catch (error: any) {
+    console.error('getAdminSystemTelemetryAction error:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al obtener telemetría del sistema',
     };
   }
 }

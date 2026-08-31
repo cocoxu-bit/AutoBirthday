@@ -39,14 +39,23 @@ import {
   AdminAnalyticsData, 
   AdminUserRecord, 
   AdminWishRecord,
+  AdminSystemTelemetry,
   getAdminAnalyticsDataAction, 
   getAdminGlobalWishesAction,
+  getAdminSystemTelemetryAction,
   adminDeleteUserAction,
   adminTestWhatsAppInstanceAction,
   adminRestartWhatsAppInstanceAction,
   adminToggleUserStatusAction,
   adminRetryWishAction
 } from '@/app/admin/actions';
+import { 
+  Cpu, 
+  Server, 
+  HardDrive, 
+  Database, 
+  Gauge 
+} from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { toast } from 'sonner';
 
@@ -56,7 +65,11 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [data, setData] = useState<AdminAnalyticsData>(initialData);
-  const [activeTab, setActiveTab] = useState<'users' | 'wishes'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'wishes' | 'system'>('users');
+  
+  // System Telemetry state
+  const [telemetry, setTelemetry] = useState<AdminSystemTelemetry | null>(null);
+  const [loadingTelemetry, setLoadingTelemetry] = useState(false);
   
   // Users tab state
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,6 +105,8 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
 
       if (activeTab === 'wishes') {
         await loadGlobalWishes();
+      } else if (activeTab === 'system') {
+        await loadSystemTelemetry();
       }
     } catch {
       toast.error('Error de conexión');
@@ -116,10 +131,28 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
     }
   };
 
-  const handleTabChange = (tab: 'users' | 'wishes') => {
+  const loadSystemTelemetry = async () => {
+    setLoadingTelemetry(true);
+    try {
+      const res = await getAdminSystemTelemetryAction();
+      if (res.success && res.data) {
+        setTelemetry(res.data);
+      } else {
+        toast.error(res.error || 'Error al consultar telemetría del servidor');
+      }
+    } catch {
+      toast.error('Error al conectar con el servidor');
+    } finally {
+      setLoadingTelemetry(false);
+    }
+  };
+
+  const handleTabChange = (tab: 'users' | 'wishes' | 'system') => {
     setActiveTab(tab);
     if (tab === 'wishes' && wishes.length === 0) {
       loadGlobalWishes();
+    } else if (tab === 'system') {
+      loadSystemTelemetry();
     }
   };
 
@@ -307,6 +340,19 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
               {summary.totalFailedWishes} fallos
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('system')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all ${
+            activeTab === 'system'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <Cpu className="w-4 h-4 text-emerald-400" />
+          <span>Sistema, Tokens & VPS</span>
         </button>
       </div>
 
@@ -690,7 +736,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
 
           </div>
         </>
-      ) : (
+      ) : activeTab === 'wishes' ? (
         /* GLOBAL WISHES MONITOR & AUDIT LOG TAB */
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
           
@@ -838,6 +884,327 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                 </tbody>
               </table>
             </div>
+          )}
+        </div>
+      ) : (
+        /* SYSTEM, TOKENS & VPS RESOURCES TELEMETRY TAB */
+        <div className="space-y-6">
+          {loadingTelemetry ? (
+            <div className="py-24 bg-white rounded-3xl border border-slate-200/80 text-center text-slate-400 space-y-3">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto text-emerald-600" />
+              <p className="text-sm font-bold text-slate-700">Midiendo telemetría de VPS, RAM y Tokens IA en tiempo real...</p>
+              <p className="text-xs text-slate-400">Consultando métricas de Node.js, Evolution API Docker y Google Gemini</p>
+            </div>
+          ) : !telemetry ? (
+            <div className="py-16 bg-white rounded-3xl border border-slate-200/80 text-center text-slate-500">
+              <p className="font-bold">No se pudieron cargar los datos de telemetría.</p>
+              <button 
+                onClick={loadSystemTelemetry}
+                className="mt-3 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* TELEMETRY TOP SUMMARY CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                {/* 1. VPS Status & Latency */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
+                      <Radio className="w-5 h-5" />
+                    </div>
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full ${
+                      telemetry.vps.status === 'online' 
+                        ? 'bg-emerald-100 text-emerald-800' 
+                        : telemetry.vps.status === 'degraded' 
+                        ? 'bg-amber-100 text-amber-800' 
+                        : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        telemetry.vps.status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                      }`} />
+                      {telemetry.vps.status === 'online' ? 'VPS ONLINE' : telemetry.vps.status === 'degraded' ? 'LATENCIA ALTA' : 'OFFLINE'}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-slate-900">{telemetry.vps.latencyMs}</span>
+                      <span className="text-xs font-bold text-slate-400">ms ping</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium truncate mt-0.5" title={telemetry.vps.apiUrl}>
+                      {telemetry.vps.apiUrl}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. Server RAM & Memory Heap */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
+                      <Cpu className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                      {telemetry.server.memory.heapUsagePercent}% Heap
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-slate-900">{telemetry.server.memory.heapUsedMb}</span>
+                      <span className="text-xs font-bold text-slate-400">/ {telemetry.server.memory.heapTotalMb} MB Heap</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${
+                          telemetry.server.memory.heapUsagePercent > 80 ? 'bg-rose-500' : telemetry.server.memory.heapUsagePercent > 60 ? 'bg-amber-500' : 'bg-blue-500'
+                        }`}
+                        style={{ width: `${Math.min(100, telemetry.server.memory.heapUsagePercent)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Total AI Gemini Tokens */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
+                      ~${telemetry.aiTokens.estimatedCostUsd} USD
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-slate-900">{telemetry.aiTokens.totalTokens.toLocaleString()}</span>
+                      <span className="text-xs font-bold text-slate-400">tokens IA</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      {telemetry.aiTokens.totalAiWishes} felicitaciones generadas
+                    </p>
+                  </div>
+                </div>
+
+                {/* 4. WhatsApp Instances in Docker */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-100">
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">
+                      Docker VPS
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-slate-900">{telemetry.vps.connectedInstances}</span>
+                      <span className="text-xs font-bold text-slate-400">/ {telemetry.vps.totalInstances} instancias activas</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      {telemetry.vps.disconnectedInstances} desconectadas / standby
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* DETAILED MONITORING SECTIONS GRID */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* SECTION 1: GOOGLE GEMINI AI TOKENS BREAKDOWN */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                        <Bot className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">Google Gemini & Tokens IA</h3>
+                        <p className="text-xs text-slate-500 font-medium">Consumo acumulado y costes de la API generativa</p>
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      telemetry.aiTokens.geminiStatus === 'healthy' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {telemetry.aiTokens.geminiStatus === 'healthy' ? 'API Operativa' : 'Sin API Key'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Modelo Oficial</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.aiTokens.model}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Coste Estimado</span>
+                      <span className="text-sm font-extrabold text-purple-700">~${telemetry.aiTokens.estimatedCostUsd} USD (~€{telemetry.aiTokens.estimatedCostEur})</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Tokens Prompt (Input)</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.aiTokens.estimatedPromptTokens.toLocaleString()}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Tokens Completion (Output)</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.aiTokens.estimatedCompletionTokens.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-purple-50/70 border border-purple-100/80 rounded-2xl space-y-2 text-xs text-purple-900">
+                    <div className="flex items-center justify-between font-bold">
+                      <span>Promedio por felicitación personalizada:</span>
+                      <span>~{telemetry.aiTokens.avgTokensPerWish} tokens / msg</span>
+                    </div>
+                    <p className="text-[11px] text-purple-700/90 leading-relaxed">
+                      💡 La tarifa actual de Google Gemini 2.5 Flash / 3.6 Flash es de $0.075 por millón de tokens de entrada y $0.30 por millón de salida. Cada felicitación cuesta aprox. <strong>$0.00003 USD</strong> (3 céntimos cada 1.000 felicitaciones).
+                    </p>
+                  </div>
+                </div>
+
+                {/* SECTION 2: SERVER & NODE.JS MEMORY TELEMETRY */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                        <Server className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">Servidor & Memoria RAM</h3>
+                        <p className="text-xs text-slate-500 font-medium">Uso de memoria del proceso Node.js y host</p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-mono">
+                      {telemetry.server.nodeVersion}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Heap Usado</span>
+                      <span className="text-sm font-extrabold text-blue-700">{telemetry.server.memory.heapUsedMb} MB</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Heap Total</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.server.memory.heapTotalMb} MB</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Memoria RSS</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.server.memory.rssMb} MB</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">RAM Total Host</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.server.memory.systemTotalRamMb} MB</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">RAM Libre Host</span>
+                      <span className="text-sm font-extrabold text-emerald-700">{telemetry.server.memory.systemFreeRamMb} MB</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Uptime Proceso</span>
+                      <span className="text-sm font-extrabold text-slate-800">
+                        {Math.floor(telemetry.server.uptimeSeconds / 3600)}h {Math.floor((telemetry.server.uptimeSeconds % 3600) / 60)}m
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-1 font-medium border-t border-slate-100">
+                    <span>Plataforma: <strong className="text-slate-800 font-mono">{telemetry.server.platform} ({telemetry.server.arch})</strong></span>
+                    <span>Carga media (Load avg): <strong className="text-slate-800 font-mono">{telemetry.server.loadAvg.map(l => l.toFixed(2)).join(', ')}</strong></span>
+                  </div>
+                </div>
+
+                {/* SECTION 3: EVOLUTION API DOCKER INSTANCES */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+                        <Smartphone className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">Instancias en VPS (Evolution API)</h3>
+                        <p className="text-xs text-slate-500 font-medium">Contenedores Docker de Baileys activos</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200/70 px-2.5 py-0.5 rounded-full">
+                      {telemetry.vps.totalInstances} en total
+                    </span>
+                  </div>
+
+                  {telemetry.vps.instancesList.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 text-xs font-medium">
+                      No se encontraron instancias activas en la VPS.
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {telemetry.vps.instancesList.map((inst, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 text-xs transition-colors">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${
+                              inst.status === 'open' ? 'bg-emerald-500' : inst.status === 'connecting' ? 'bg-amber-500 animate-ping' : 'bg-slate-400'
+                            }`} />
+                            <span className="font-extrabold text-slate-800 font-mono">{inst.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {inst.ownerPhone && (
+                              <span className="text-slate-500 font-mono text-[11px]">+{inst.ownerPhone}</span>
+                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                              inst.status === 'open' ? 'bg-emerald-100 text-emerald-800' : inst.status === 'connecting' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
+                            }`}>
+                              {inst.status === 'open' ? 'Conectada' : inst.status === 'connecting' ? 'Conectando' : inst.status === 'qrcode' ? 'QR Code' : 'Cerrada'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* SECTION 4: FIRESTORE DATABASE & STORAGE */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+                        <Database className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">Base de Datos Firestore</h3>
+                        <p className="text-xs text-slate-500 font-medium">Documentos almacenados y cuotas de Firebase</p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                      Firebase Online
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Colección Usuarios</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.firestore.totalUsersCount} docs</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Colección Contactos</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.firestore.totalContactsCount} docs</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Colección Felicitaciones</span>
+                      <span className="text-sm font-extrabold text-slate-800">{telemetry.firestore.totalWishesCount} docs</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Espacio Estimado</span>
+                      <span className="text-sm font-extrabold text-amber-700">~{telemetry.firestore.estimatedStorageMb} MB</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-2xl text-xs text-amber-900 flex items-center justify-between">
+                    <span className="font-bold">Capacidad Gratuita Spark Firestore:</span>
+                    <span>1 GB Almacenamiento / 50k lecturas/día</span>
+                  </div>
+                </div>
+
+              </div>
+            </>
           )}
         </div>
       )}
