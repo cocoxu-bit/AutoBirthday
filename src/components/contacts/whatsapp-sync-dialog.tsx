@@ -598,14 +598,16 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       />
                       <Edit3 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors pointer-events-none" />
                     </div>
-                    {!currentCard.name?.trim() && (
-                      <p className="text-[11px] font-bold text-amber-700 animate-pulse">
-                        ✍️ Escribe el nombre de este contacto para guardarlo
-                      </p>
-                    )}
-                    <span className="text-[11px] font-bold text-slate-400 block font-mono">
-                      {currentCard.phone.startsWith('34') ? `+34 ${currentCard.phone.slice(2)}` : `+${currentCard.phone}`}
-                    </span>
+                    {!currentCard.name?.trim() ? (
+                      <div className="space-y-0.5 pt-0.5">
+                        <p className="text-[11px] font-bold text-amber-700 animate-pulse">
+                          ✍️ Escribe el nombre de este contacto para guardarlo
+                        </p>
+                        <span className="text-[11px] font-bold text-slate-400 block font-mono">
+                          {currentCard.phone.startsWith('34') ? `+34 ${currentCard.phone.slice(2)}` : `+${currentCard.phone}`}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 

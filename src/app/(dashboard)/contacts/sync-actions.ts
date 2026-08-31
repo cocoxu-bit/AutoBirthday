@@ -556,10 +556,8 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       const cutoff = Date.now() - EIGHTEEN_MONTHS;
 
       const candidates = cachedContacts.filter(c => 
-        c.hasRealName && 
-        !c.name.startsWith('Contacto (+') && 
         !existingPhones.has(c.phone) &&
-        c.lastActivity > cutoff
+        (c.lastActivity || 0) > cutoff
       );
 
       if (candidates.length === 0) {
@@ -689,13 +687,10 @@ export async function getWhatsAppChunkedContactsForSyncAction(
     const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
     const cutoff = Date.now() - EIGHTEEN_MONTHS;
 
-    // Strict filtering: only named contacts, active in last 18 months, exclude "Contacto (+..."
+    // Include all chats with activity in last 18 months
     const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
       if (!p || loadedSet.has(p)) return false;
-      if (!c.hasRealName) return false;
-      if (c.name.startsWith('Contacto (+') || c.name.startsWith('Contacto(+')) return false;
-      if (/^\+?\d[\d\s\-()]+$/.test(c.name.trim())) return false;
       if (!c.lastActivity || c.lastActivity < cutoff) return false;
       return true;
     });
@@ -771,13 +766,10 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
     const cutoff = Date.now() - EIGHTEEN_MONTHS;
 
-    // Strict filtering: only named contacts with activity in last 18 months
+    // Include all chats with activity in last 18 months
     const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
       if (!p || loadedSet.has(p)) return false;
-      if (!c.hasRealName) return false;
-      if (c.name.startsWith('Contacto (+') || c.name.startsWith('Contacto(+')) return false;
-      if (/^\+?\d[\d\s\-()]+$/.test(c.name.trim())) return false;
       if (!c.lastActivity || c.lastActivity < cutoff) return false;
       return true;
     });
