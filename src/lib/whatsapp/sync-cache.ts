@@ -24,6 +24,28 @@ const isInvalidName = (name?: string | null): boolean => {
   return false;
 };
 
+function extractRealChatTimestamp(chat: any): number {
+  if (!chat) return 0;
+  let best = 0;
+  const candidates = [
+    chat.lastMessage?.messageTimestamp,
+    chat.conversationTimestamp,
+    chat.lastMessage?.message?.messageTimestamp,
+    chat.timestamp,
+    chat.lastMessageTimestamp,
+    chat.lastActivity,
+  ];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    let num = typeof raw === 'number' ? raw : Number(raw);
+    if (!isNaN(num) && num > 0) {
+      if (num < 1e12 && num > 1e8) num = num * 1000;
+      if (num <= Date.now() + 86400000 && num > best) best = num;
+    }
+  }
+  return best;
+}
+
 /**
  * Pre-warms and caches WhatsApp contacts, pushNames, and HD profile photos
  * directly in Firestore right when the user connects their WhatsApp account.
@@ -78,9 +100,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
         const hasRealName = Boolean(name && !isInvalidName(name));
         const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
-        const time = c.lastMessage?.messageTimestamp 
-          ? c.lastMessage.messageTimestamp * 1000 
-          : (c.updatedAt ? new Date(c.updatedAt).getTime() : Date.now());
+        const time = extractRealChatTimestamp(c);
 
         const docRef = collectionRef.doc(cleanPhone);
         topBatch.set(docRef, {
@@ -141,9 +161,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
       const hasRealName = Boolean(name && !isInvalidName(name));
       const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
-      const time = c.lastMessage?.messageTimestamp 
-        ? c.lastMessage.messageTimestamp * 1000 
-        : (c.updatedAt ? new Date(c.updatedAt).getTime() : 0);
+      const time = extractRealChatTimestamp(c);
 
       contactMap.set(cleanPhone, {
         phone: cleanPhone,

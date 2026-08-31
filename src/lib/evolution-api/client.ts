@@ -279,9 +279,23 @@ class EvolutionAPIClient {
 
         const name = rawName && !/^[\d+\s\-()]+$/.test(rawName.trim()) ? rawName.trim() : phone;
         
-        const time = chat.lastMessage?.messageTimestamp 
-          ? chat.lastMessage.messageTimestamp * 1000 
-          : chat.updatedAt ? new Date(chat.updatedAt).getTime() : 0;
+        // Extract real message activity timestamp (Never use database updatedAt / Date.now)
+        let time = 0;
+        const candidates = [
+          chat.lastMessage?.messageTimestamp,
+          chat.conversationTimestamp,
+          chat.lastMessage?.message?.messageTimestamp,
+          chat.timestamp,
+          chat.lastMessageTimestamp,
+        ];
+        for (const raw of candidates) {
+          if (!raw) continue;
+          let num = typeof raw === 'number' ? raw : Number(raw);
+          if (!isNaN(num) && num > 0) {
+            if (num < 1e12 && num > 1e8) num = num * 1000;
+            if (num <= Date.now() + 86400000 && num > time) time = num;
+          }
+        }
 
         const pic = chat.profilePictureUrl || chat.profilePicUrl || chat.avatar || null;
 
