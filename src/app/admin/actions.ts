@@ -48,8 +48,6 @@ export interface AdminSystemTelemetry {
     estimatedPromptTokens: number;
     estimatedCompletionTokens: number;
     totalTokens: number;
-    estimatedCostUsd: number;
-    estimatedCostEur: number;
     avgTokensPerWish: number;
     geminiStatus: 'healthy' | 'unconfigured' | 'error';
   };
@@ -674,10 +672,6 @@ export async function getAdminSystemTelemetryAction(): Promise<{
     const estimatedCompletionTokens = totalAiWishes * COMPLETION_TOKENS_PER_WISH;
     const totalTokens = estimatedPromptTokens + estimatedCompletionTokens;
 
-    // Gemini 2.5/3.6 Flash Pricing: $0.075 / 1M prompt tokens, $0.30 / 1M completion tokens
-    const estimatedCostUsd = (estimatedPromptTokens * 0.000000075) + (estimatedCompletionTokens * 0.00000030);
-    const estimatedCostEur = estimatedCostUsd * 0.92;
-
     const isGeminiConfigured = Boolean(process.env.GEMINI_API_KEY);
 
     // 4. Firestore Database Telemetry
@@ -736,8 +730,6 @@ export async function getAdminSystemTelemetryAction(): Promise<{
           estimatedPromptTokens,
           estimatedCompletionTokens,
           totalTokens,
-          estimatedCostUsd: Math.round(estimatedCostUsd * 100000) / 100000,
-          estimatedCostEur: Math.round(estimatedCostEur * 100000) / 100000,
           avgTokensPerWish: TOTAL_TOKENS_PER_WISH,
           geminiStatus: isGeminiConfigured ? 'healthy' : 'unconfigured',
         },

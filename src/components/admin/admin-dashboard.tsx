@@ -972,8 +972,8 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                     <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
                       <Sparkles className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
-                      ~${telemetry.aiTokens.estimatedCostUsd} USD
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                      Free Tier Activo
                     </span>
                   </div>
                   <div>
@@ -1022,7 +1022,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                       </div>
                       <div>
                         <h3 className="text-base font-black text-slate-900">Google Gemini & Tokens IA</h3>
-                        <p className="text-xs text-slate-500 font-medium">Consumo acumulado y costes de la API generativa</p>
+                        <p className="text-xs text-slate-500 font-medium">Consumo acumulado y métricas del modelo generativo</p>
                       </div>
                     </div>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
@@ -1037,9 +1037,9 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                       <span className="text-[11px] font-bold text-slate-400 block uppercase">Modelo Oficial</span>
                       <span className="text-sm font-extrabold text-slate-800">{telemetry.aiTokens.model}</span>
                     </div>
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                      <span className="text-[11px] font-bold text-slate-400 block uppercase">Coste Estimado</span>
-                      <span className="text-sm font-extrabold text-purple-700">~${telemetry.aiTokens.estimatedCostUsd} USD (~€{telemetry.aiTokens.estimatedCostEur})</span>
+                    <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                      <span className="text-[11px] font-bold text-emerald-800 block uppercase">Plan de Uso</span>
+                      <span className="text-sm font-extrabold text-emerald-900">100% Gratuito (Free Tier)</span>
                     </div>
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                       <span className="text-[11px] font-bold text-slate-400 block uppercase">Tokens Prompt (Input)</span>
@@ -1057,7 +1057,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                       <span>~{telemetry.aiTokens.avgTokensPerWish} tokens / msg</span>
                     </div>
                     <p className="text-[11px] text-purple-700/90 leading-relaxed">
-                      💡 La tarifa actual de Google Gemini 2.5 Flash / 3.6 Flash es de $0.075 por millón de tokens de entrada y $0.30 por millón de salida. Cada felicitación cuesta aprox. <strong>$0.00003 USD</strong> (3 céntimos cada 1.000 felicitaciones).
+                      ✨ Toda la infraestructura opera bajo los niveles 100% gratuitos de las plataformas: <strong>Google Gemini API</strong> (1.500 peticiones/día gratuitas), <strong>Firebase Spark Plan</strong> (1 GB / 50k lecturas/día gratis) y <strong>Vercel Hobby</strong>.
                     </p>
                   </div>
                 </div>
