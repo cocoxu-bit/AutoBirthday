@@ -70,36 +70,45 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex overflow-x-auto space-x-2 bg-white/40 p-1.5 rounded-xl border border-white/20 shadow-sm hide-scrollbar">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'bg-white text-violet-700 shadow-sm' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-            }`}
-          >
-            {tab.label}
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              activeTab === tab.id ? 'bg-violet-100 text-violet-700' : 'bg-slate-200 text-slate-600'
-            }`}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
+      {/* Tabs: Responsive 2x2 grid on mobile, 4 columns on desktop - ZERO horizontal scroll */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white/70 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border border-white/60 shadow-xs">
+        {tabs.map(tab => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`w-full flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                isActive 
+                  ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 scale-[1.01]' 
+                  : 'bg-white/60 hover:bg-white text-slate-600 hover:text-slate-900 border border-slate-200/40'
+              }`}
+            >
+              <span className="truncate">{tab.label}</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black shrink-0 ${
+                isActive 
+                  ? 'bg-white/25 text-white' 
+                  : tab.count > 0 
+                  ? 'bg-violet-100 text-violet-700 font-black' 
+                  : 'bg-slate-200/70 text-slate-500'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
       <div className="space-y-4">
         {activeTab === 'pending' && (
           pendingWishes.length === 0 ? (
-            <div className="text-center py-16 bg-white/40 rounded-2xl border border-white/20">
-              <Check className="w-12 h-12 text-emerald-500 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium text-slate-900">No hay felicitaciones pendientes ✅</h3>
-              <p className="text-slate-500 mt-2">Todo está al día.</p>
+            <div className="text-center py-14 sm:py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <Check className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">No hay felicitaciones pendientes</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Todo está al día y bajo control.</p>
             </div>
           ) : (
             pendingWishes.map(wish => {
@@ -107,38 +116,38 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
               const isEditing = editingId === wish.id;
               
               return (
-                <div key={wish.id} className="bg-white/60 backdrop-blur rounded-xl border border-white/40 shadow-sm p-5">
-                  <div className="flex justify-between items-start mb-4">
+                <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-4">
+                  <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-semibold text-slate-900 text-lg">{name}</h4>
-                      <p className="text-sm text-slate-500">{phone}</p>
+                      <h4 className="font-black text-slate-900 text-base sm:text-lg">{name}</h4>
+                      {phone && <p className="text-xs text-slate-500 font-medium">{phone}</p>}
                     </div>
                   </div>
                   
-                  <div className="bg-[#dcf8c6] rounded-2xl rounded-tl-sm p-4 shadow-sm mb-4">
+                  <div className="bg-[#dcf8c6]/90 border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
                     {isEditing ? (
                       <textarea 
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full bg-white/50 border-0 rounded p-2 text-slate-800 min-h-[100px] focus:ring-1 focus:ring-emerald-500 outline-none"
+                        className="w-full bg-white border border-emerald-300 rounded-xl p-3 text-slate-800 min-h-[110px] focus:ring-2 focus:ring-emerald-500 text-sm outline-none shadow-inner"
                       />
                     ) : (
-                      <p className="text-slate-800 whitespace-pre-wrap">{wish.generatedMessage}</p>
+                      <p className="text-slate-800 whitespace-pre-wrap text-sm leading-relaxed">{wish.generatedMessage}</p>
                     )}
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-2 justify-end pt-1">
                     {isEditing ? (
                       <>
                         <button 
                           onClick={() => setEditingId(null)}
-                          className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50"
+                          className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all text-center"
                         >
                           Cancelar Edición
                         </button>
                         <button 
                           onClick={() => handleSaveEdit(wish.id)}
-                          className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 flex items-center gap-2"
+                          className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 transition-all"
                         >
                           <Save className="w-4 h-4" /> Guardar
                         </button>
@@ -147,19 +156,19 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                       <>
                         <button 
                           onClick={() => handleCancel(wish.id)}
-                          className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 flex items-center gap-2"
+                          className="w-full sm:w-auto px-4 py-2.5 border border-red-200 bg-red-50/50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100/80 flex items-center justify-center gap-1.5 transition-all"
                         >
                           <X className="w-4 h-4" /> Cancelar
                         </button>
                         <button 
                           onClick={() => startEditing(wish)}
-                          className="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2"
+                          className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs"
                         >
                           <Edit2 className="w-4 h-4" /> Editar
                         </button>
                         <button 
                           onClick={() => handleApprove(wish.id)}
-                          className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 flex items-center gap-2"
+                          className="w-full sm:w-auto px-4 py-2.5 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 flex items-center justify-center gap-1.5 shadow-md shadow-violet-500/20 transition-all"
                         >
                           <Check className="w-4 h-4" /> Aprobar y Enviar
                         </button>
