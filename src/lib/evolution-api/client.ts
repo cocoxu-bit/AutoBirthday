@@ -344,7 +344,7 @@ class EvolutionAPIClient {
         return true;
       });
 
-      const result: WhatsAppChatContact[] = validContacts.map(({ lastActivity, ...c }) => c);
+      const result: WhatsAppChatContact[] = validContacts;
       this.contactsCache.set(instanceName, {
         data: result,
         expiresAt: Date.now() + 5 * 60 * 1000,

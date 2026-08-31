@@ -569,9 +569,12 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       }
 
       candidates.sort((a, b) => {
+        if ((b.lastActivity || 0) !== (a.lastActivity || 0)) {
+          return (b.lastActivity || 0) - (a.lastActivity || 0);
+        }
         if (a.hasRealName && !b.hasRealName) return -1;
         if (!a.hasRealName && b.hasRealName) return 1;
-        return b.lastActivity - a.lastActivity;
+        return 0;
       });
 
       // Deliver initial batch of first 8 contacts (< 60ms)
@@ -776,6 +779,8 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       if (!p || p.length < 6) continue;
       const existing = contactMap.get(p);
       const isNamed = raw.name && !/^[\d+\s\-()]+$/.test(raw.name.trim()) && raw.name !== raw.phone;
+      const activityTime = raw.lastActivity || 0;
+
       if (!existing) {
         contactMap.set(p, {
           phone: p,
@@ -783,11 +788,16 @@ export async function getWhatsAppChunkedContactsForSyncAction(
           pushName: raw.pushName,
           profilePictureUrl: raw.profilePictureUrl || null,
           hasRealName: Boolean(isNamed),
-          lastActivity: 0,
+          lastActivity: activityTime,
         });
-      } else if (!existing.hasRealName && isNamed) {
-        existing.name = raw.name;
-        existing.hasRealName = true;
+      } else {
+        if (!existing.hasRealName && isNamed) {
+          existing.name = raw.name;
+          existing.hasRealName = true;
+        }
+        if (activityTime > existing.lastActivity) {
+          existing.lastActivity = activityTime;
+        }
       }
     }
 
@@ -805,10 +815,14 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       return { success: true, items: [], availableGroups: groupsList, hasMore: false, totalEstimated: 0 };
     }
 
+    // Sort strictly by most recent WhatsApp chat first
     remaining.sort((a, b) => {
+      if ((b.lastActivity || 0) !== (a.lastActivity || 0)) {
+        return (b.lastActivity || 0) - (a.lastActivity || 0);
+      }
       if (a.hasRealName && !b.hasRealName) return -1;
       if (!a.hasRealName && b.hasRealName) return 1;
-      return b.lastActivity - a.lastActivity;
+      return 0;
     });
 
     const chunkSlice = remaining.slice(offset, offset + limit);
@@ -946,9 +960,12 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     }
 
     remaining.sort((a, b) => {
+      if ((b.lastActivity || 0) !== (a.lastActivity || 0)) {
+        return (b.lastActivity || 0) - (a.lastActivity || 0);
+      }
       if (a.hasRealName && !b.hasRealName) return -1;
       if (!a.hasRealName && b.hasRealName) return 1;
-      return b.lastActivity - a.lastActivity;
+      return 0;
     });
 
     const items: WhatsAppSyncItem[] = remaining.map((c, index) => ({
