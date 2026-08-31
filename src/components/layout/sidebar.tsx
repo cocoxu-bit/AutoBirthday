@@ -21,8 +21,8 @@ import {
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  { href: "/contacts", icon: Cake, label: "Cumpleaños" },
-  { href: "/wishes", icon: Gift, label: "Felicitaciones" },
+  { href: "/contacts", icon: Users, label: "Cumpleaños" },
+  { href: "/wishes", icon: Cake, label: "Felicitaciones" },
   { href: "/templates", icon: FileText, label: "Plantillas" },
   { href: "/whatsapp", icon: Smartphone, label: "WhatsApp", isWhatsApp: true },
   { href: "/settings", icon: Settings, label: "Configuración" },

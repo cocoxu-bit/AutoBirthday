@@ -224,88 +224,83 @@ export default async function DashboardPage() {
         initialStatus={data?.isWhatsAppConnected ? 'connected' : 'disconnected'} 
       />
 
-      {/* Top Section: 2x2 Stats Grid + 3 Big Stacked Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left Column: 2x2 Stats Cards (6 cols on desktop) */}
-        <div className="lg:col-span-6 flex flex-col justify-between">
-          <StatsCards 
-            stats={data?.stats || {
-              activeContacts: 0,
-              sentTotal: 0,
-              pendingApproval: 0,
-              nextBirthdayDays: null,
-            }} 
-          />
-        </div>
+      {/* Top Stats Section: 4 Cards Full Width (2x2 on mobile, 4-col on desktop) */}
+      <StatsCards 
+        stats={data?.stats || {
+          activeContacts: 0,
+          sentTotal: 0,
+          pendingApproval: 0,
+          nextBirthdayDays: null,
+        }} 
+      />
 
-        {/* Right Column: 3 Big Stacked Actions (6 cols on desktop) */}
-        <div className="lg:col-span-6 flex flex-col gap-3 justify-between">
-          <Link
-            href="/contacts/new"
-            className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-violet-300 shadow-xs hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-violet-500/20 shrink-0 group-hover:scale-105 transition-transform">
-                <UserPlus className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors">
-                  Añadir Cumpleaños
-                </h4>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                  Añade a una persona con su fecha de cumpleaños y programa su felicitación.
-                </p>
-              </div>
+      {/* Quick Action Cards: 3 Columns on Desktop, Stacked on Mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+        <Link
+          href="/contacts/new"
+          className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-violet-300 shadow-xs hover:shadow-md transition-all duration-200"
+        >
+          <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-violet-500/20 shrink-0 group-hover:scale-105 transition-transform">
+              <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-violet-100 text-slate-400 group-hover:text-violet-700 flex items-center justify-center shrink-0 transition-colors ml-3">
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            <div>
+              <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors">
+                Añadir Cumpleaños
+              </h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
+                Añade a una persona con su fecha de cumpleaños.
+              </p>
             </div>
-          </Link>
+          </div>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 group-hover:bg-violet-100 text-slate-400 group-hover:text-violet-700 flex items-center justify-center shrink-0 transition-colors ml-2">
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
 
-          <Link
-            href="/wishes"
-            className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-pink-300 shadow-xs hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-pink-500/20 shrink-0 group-hover:scale-105 transition-transform">
-                <Gift className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-base font-black text-slate-900 group-hover:text-pink-700 transition-colors">
-                  Felicitaciones
-                </h4>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                  Revisa los mensajes programados, pendientes de aprobación y enviados.
-                </p>
-              </div>
+        <Link
+          href="/wishes"
+          className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-rose-300 shadow-xs hover:shadow-md transition-all duration-200"
+        >
+          <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0 group-hover:scale-105 transition-transform">
+              <Cake className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-pink-100 text-slate-400 group-hover:text-pink-700 flex items-center justify-center shrink-0 transition-colors ml-3">
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            <div>
+              <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-rose-700 transition-colors">
+                Felicitaciones
+              </h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
+                Revisa los mensajes programados y enviados.
+              </p>
             </div>
-          </Link>
+          </div>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 group-hover:bg-rose-100 text-slate-400 group-hover:text-rose-700 flex items-center justify-center shrink-0 transition-colors ml-2">
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
 
-          <Link
-            href="/templates"
-            className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-indigo-300 shadow-xs hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0 group-hover:scale-105 transition-transform">
-                <FileText className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-base font-black text-slate-900 group-hover:text-indigo-700 transition-colors">
-                  Plantillas de Mensajes
-                </h4>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                  Personaliza estilos con Inteligencia Artificial o diseña mensajes fijos.
-                </p>
-              </div>
+        <Link
+          href="/templates"
+          className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-indigo-300 shadow-xs hover:shadow-md transition-all duration-200"
+        >
+          <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0 group-hover:scale-105 transition-transform">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-indigo-100 text-slate-400 group-hover:text-indigo-700 flex items-center justify-center shrink-0 transition-colors ml-3">
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            <div>
+              <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-700 transition-colors">
+                Plantillas de Mensajes
+              </h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
+                Personaliza estilos con IA o mensajes fijos.
+              </p>
             </div>
-          </Link>
-        </div>
+          </div>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 group-hover:bg-indigo-100 text-slate-400 group-hover:text-indigo-700 flex items-center justify-center shrink-0 transition-colors ml-2">
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
       </div>
 
       {/* Main Grid: Upcoming Birthdays + Recent Activity */}

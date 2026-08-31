@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 import { getWishes, getContacts } from '@/lib/firebase/firestore';
 import { WishesClient } from '@/components/wishes/wishes-client';
-import { Sparkles } from 'lucide-react';
+import { Cake } from 'lucide-react';
 import { Contact } from '@/types';
 
 export const metadata = {
@@ -49,8 +49,8 @@ export default async function WishesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Felicitaciones</h1>
-          <p className="text-slate-500 mt-1 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-500" />
+          <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-medium">
+            <Cake className="w-4 h-4 text-rose-500" />
             Gestiona los mensajes generados y los envíos
           </p>
         </div>

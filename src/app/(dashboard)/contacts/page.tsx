@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 import { getContacts, getTemplates } from '@/lib/firebase/firestore';
 import { ContactsTable } from '@/components/contacts/contacts-table';
-import { Cake } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 export const metadata = {
   title: 'Cumpleaños | AutoBirthday',
@@ -37,7 +37,7 @@ export default async function ContactsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Mis Cumpleaños</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-medium">
-            <Cake className="w-4 h-4 text-rose-500" />
+            <Users className="w-4 h-4 text-violet-500" />
             {contacts.length} {contacts.length === 1 ? 'cumpleaños registrado' : 'cumpleaños registrados'} ({activeContactsCount} activos)
           </p>
         </div>

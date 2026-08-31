@@ -1,40 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut, Cake, Smartphone, CheckCircle2, AlertCircle, Loader2, Play } from "lucide-react";
+import Image from "next/image";
+import { LogOut, Play } from "lucide-react";
 import { signOutUser } from "@/lib/firebase/auth";
 import { toast } from "sonner";
 import { WhatsAppInstanceStatus } from "@/types";
 import { VideoGuideModal } from "@/components/onboarding/video-guide-modal";
 
-const routeMap: Record<string, string> = {
-  "/dashboard": "Inicio",
-  "/contacts": "Cumpleaños",
-  "/contacts/new": "Añadir Cumpleaños",
-  "/templates": "Plantillas",
-  "/templates/new": "Nueva Plantilla",
-  "/whatsapp": "WhatsApp",
-  "/wishes": "Felicitaciones",
-  "/settings": "Configuración",
-};
-
-import Image from "next/image";
-
 export function Header() {
-  const pathname = usePathname();
   const router = useRouter();
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus>('disconnected');
   const [guideOpen, setGuideOpen] = useState(false);
-
-  // Match title or sub-routes
-  let title = routeMap[pathname];
-  if (!title) {
-    if (pathname.startsWith('/contacts/')) title = 'Editar Cumpleaños';
-    else if (pathname.startsWith('/templates/')) title = 'Editar Plantilla';
-    else title = 'AutoBirthday';
-  }
 
   useEffect(() => {
     async function checkWa() {
@@ -66,9 +45,9 @@ export function Header() {
 
   return (
     <header className="h-16 flex items-center justify-between px-3 sm:px-6 bg-white/60 backdrop-blur-md border-b border-slate-200/60 shrink-0">
-      <div className="flex items-center gap-2">
-        <Image src="/logo.png" alt="AutoBirthday" width={28} height={28} className="md:hidden object-contain" />
-        <h1 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">{title}</h1>
+      <div className="flex items-center gap-2.5">
+        <Image src="/logo.png" alt="AutoBirthday" width={28} height={28} className="md:hidden object-contain rounded-xl" priority />
+        <h1 className="text-lg sm:text-xl font-black text-violet-950 tracking-tight">AutoBirthday</h1>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
