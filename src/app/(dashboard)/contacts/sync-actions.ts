@@ -569,12 +569,9 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       }
 
       candidates.sort((a, b) => {
-        if ((b.lastActivity || 0) !== (a.lastActivity || 0)) {
-          return (b.lastActivity || 0) - (a.lastActivity || 0);
-        }
         if (a.hasRealName && !b.hasRealName) return -1;
         if (!a.hasRealName && b.hasRealName) return 1;
-        return 0;
+        return (b.lastActivity || 0) - (a.lastActivity || 0);
       });
 
       // Deliver initial batch of first 8 contacts (< 60ms)
@@ -815,14 +812,11 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       return { success: true, items: [], availableGroups: groupsList, hasMore: false, totalEstimated: 0 };
     }
 
-    // Sort strictly by most recent WhatsApp chat first
+    // Sort real named contacts first, then by most recent WhatsApp chat activity
     remaining.sort((a, b) => {
-      if ((b.lastActivity || 0) !== (a.lastActivity || 0)) {
-        return (b.lastActivity || 0) - (a.lastActivity || 0);
-      }
       if (a.hasRealName && !b.hasRealName) return -1;
       if (!a.hasRealName && b.hasRealName) return 1;
-      return 0;
+      return (b.lastActivity || 0) - (a.lastActivity || 0);
     });
 
     const chunkSlice = remaining.slice(offset, offset + limit);
@@ -960,12 +954,9 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     }
 
     remaining.sort((a, b) => {
-      if ((b.lastActivity || 0) !== (a.lastActivity || 0)) {
-        return (b.lastActivity || 0) - (a.lastActivity || 0);
-      }
       if (a.hasRealName && !b.hasRealName) return -1;
       if (!a.hasRealName && b.hasRealName) return 1;
-      return 0;
+      return (b.lastActivity || 0) - (a.lastActivity || 0);
     });
 
     const items: WhatsAppSyncItem[] = remaining.map((c, index) => ({
