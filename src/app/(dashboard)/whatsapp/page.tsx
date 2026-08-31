@@ -187,76 +187,66 @@ export default function WhatsAppPage() {
   const showConnectionForm = status === 'disconnected' || (status === 'connecting' && !pairingCode && !qrCode);
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-4 sm:space-y-6">
+    <div className="w-full max-w-lg mx-auto space-y-5">
       
       {/* CARD PRINCIPAL */}
-      <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-900/5 p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
+      <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-900/5 p-5 sm:p-7 space-y-6">
         
         {/* CABECERA */}
-        <div className="text-center space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-100/80 text-violet-700 text-xs font-bold">
+        <div className="text-center space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-violet-100/80 text-violet-700 text-xs font-bold">
             <Smartphone className="w-3.5 h-3.5" />
-            <span>Vinculación de WhatsApp</span>
+            <span>WhatsApp</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {status === 'connected' ? 'WhatsApp Vinculado' : 'Conecta tu WhatsApp'}
+            {status === 'connected' ? 'WhatsApp Vinculado' : 'Conecta tu Cuenta'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
+          <p className="text-xs text-slate-500 max-w-xs mx-auto font-medium">
             {status === 'connected'
-              ? 'Tu cuenta está activa para enviar felicitaciones automáticas.'
-              : 'Elige cómo quieres vincular tu número:'}
+              ? 'Tu cuenta está lista para enviar felicitaciones automáticas.'
+              : 'Selecciona cómo prefieres conectar tu número:'}
           </p>
         </div>
 
         {/* 1. MODO DESCONECTADO: SELECTOR Y FORMULARIO */}
         {showConnectionForm && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             
-            {/* Pestañas / Selector de Modo */}
+            {/* Selector de Método */}
             <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1 text-xs font-bold">
               <button
                 type="button"
                 onClick={() => setConnectMethod('code')}
-                className={`flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-2 rounded-xl transition-all ${
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl transition-all ${
                   connectMethod === 'code'
-                    ? 'bg-white text-violet-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800'
+                    ? 'bg-white text-violet-700 shadow-sm font-black'
+                    : 'text-slate-500 hover:text-slate-800 font-semibold'
                 }`}
               >
-                <div className="flex items-center gap-1">
-                  <Smartphone className="w-4 h-4" />
-                  <span>En este móvil</span>
-                </div>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
-                  Recomendado
-                </span>
+                <Smartphone className="w-4 h-4" />
+                <span>En este móvil</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setConnectMethod('qr')}
-                className={`flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 px-2 rounded-xl transition-all ${
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl transition-all ${
                   connectMethod === 'qr'
-                    ? 'bg-white text-violet-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800'
+                    ? 'bg-white text-violet-700 shadow-sm font-black'
+                    : 'text-slate-500 hover:text-slate-800 font-semibold'
                 }`}
               >
-                <div className="flex items-center gap-1">
-                  <QrCode className="w-4 h-4" />
-                  <span>Escanear QR</span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-normal">
-                  (Para PC)
-                </span>
+                <QrCode className="w-4 h-4" />
+                <span>Código QR</span>
               </button>
             </div>
 
-            {/* FORMULARIO MÉTODO 1: CÓDIGO DE 8 DÍGITOS */}
+            {/* MÉTODO 1: CÓDIGO */}
             {connectMethod === 'code' && (
-              <form onSubmit={handleConnectPairingCode} className="space-y-4">
-                <div className="bg-violet-50/70 border border-violet-100 rounded-2xl p-4 space-y-3">
+              <form onSubmit={handleConnectPairingCode} className="space-y-3 pt-1">
+                <div className="bg-violet-50/60 border border-violet-100 rounded-2xl p-3.5 space-y-2">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Tu número de WhatsApp
+                    Número de WhatsApp
                   </label>
                   
                   <div className="relative">
@@ -266,43 +256,43 @@ export default function WhatsAppPage() {
                       value={inputPhone}
                       onChange={(e) => setInputPhone(e.target.value)}
                       placeholder="34612345678"
-                      className="w-full pl-10 pr-4 py-3 text-base bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none font-mono font-medium placeholder:font-normal placeholder:text-slate-400"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none font-mono font-bold placeholder:font-normal placeholder:text-slate-400"
                       autoComplete="tel"
                       inputMode="numeric"
                     />
                   </div>
 
-                  <p className="text-[11px] text-slate-500">
-                    💡 <strong>Importante:</strong> Incluye el prefijo de tu país (ej: <strong>34</strong> para España, <strong>52</strong> México, <strong>54</strong> Argentina, <strong>57</strong> Colombia).
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Incluye prefijo de país sin signos (ej: <strong>34</strong> para España).
                   </p>
                 </div>
 
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full min-h-[52px] bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/25 text-base flex items-center justify-center gap-2"
+                  className="w-full min-h-[48px] bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-2xl shadow-md shadow-violet-500/20 text-sm flex items-center justify-center gap-2"
                   isLoading={actionLoading}
                 >
-                  <span>Generar Código de Vinculación</span>
+                  <span>Generar Código</span>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </form>
             )}
 
-            {/* FORMULARIO MÉTODO 2: QR PARA PC */}
+            {/* MÉTODO 2: QR */}
             {connectMethod === 'qr' && (
-              <div className="space-y-4 text-center">
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-slate-600 text-xs leading-relaxed">
-                  Genera un código QR en pantalla para escanearlo con la cámara de tu móvil desde <strong>WhatsApp &gt; Dispositivos vinculados</strong>.
-                </div>
+              <div className="space-y-3 pt-1 text-center">
+                <p className="text-xs text-slate-500 font-medium px-2">
+                  Escanea el código QR desde <strong>WhatsApp &gt; Dispositivos vinculados</strong>.
+                </p>
                 <Button
                   type="button"
                   onClick={handleConnectQR}
                   size="lg"
-                  className="w-full min-h-[52px] bg-slate-900 hover:bg-black text-white font-bold rounded-2xl text-base shadow-md"
+                  className="w-full min-h-[48px] bg-slate-900 hover:bg-black text-white font-bold rounded-2xl text-sm shadow-md flex items-center justify-center gap-2"
                   isLoading={actionLoading}
                 >
-                  <QrCode className="w-5 h-5 mr-2" />
+                  <QrCode className="w-4 h-4" />
                   <span>Mostrar Código QR</span>
                 </Button>
               </div>
@@ -311,18 +301,18 @@ export default function WhatsAppPage() {
           </div>
         )}
 
-        {/* 2. MODO ESPERA: CÓDIGO DE 8 DÍGITOS GENERADO */}
+        {/* 2. MODO ESPERA: CÓDIGO GENERADO */}
         {status === 'connecting' && pairingCode && (
-          <div className="space-y-5 text-center">
+          <div className="space-y-4 text-center">
             
-            {/* Tarjeta del Código Destacado */}
-            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-6 rounded-3xl text-white shadow-xl shadow-violet-500/20 space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-violet-200">
-                Tu Código de 8 Dígitos
+            {/* Código */}
+            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-5 rounded-3xl text-white shadow-xl shadow-violet-500/20 space-y-2.5">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-violet-200">
+                Tu Código de Vinculación
               </p>
 
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl py-3 px-4 border border-white/20 inline-block">
-                <span className="font-mono text-3xl sm:text-4xl font-black tracking-wider text-white select-all">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl py-2.5 px-4 border border-white/20 inline-block">
+                <span className="font-mono text-3xl sm:text-4xl font-black tracking-widest text-white select-all">
                   {pairingCode}
                 </span>
               </div>
@@ -331,16 +321,16 @@ export default function WhatsAppPage() {
                 <button
                   type="button"
                   onClick={handleCopyCode}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-indigo-700 hover:bg-slate-50 font-bold text-xs rounded-xl shadow-md transition-all active:scale-95"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-indigo-700 hover:bg-slate-50 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span>¡Código Copiado!</span>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>¡Copiado!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                       <span>Copiar Código</span>
                     </>
                   )}
@@ -348,53 +338,29 @@ export default function WhatsAppPage() {
               </div>
             </div>
 
-            {/* Radar en tiempo real PROMINENTE (Directamente debajo del código, VISIBLE SIN SCROLL) */}
-            <div className="bg-gradient-to-br from-violet-500/15 via-indigo-500/10 to-emerald-500/15 border-2 border-violet-400/60 rounded-3xl p-4 sm:p-5 space-y-2.5 shadow-sm">
-              <div className="flex items-center justify-center gap-3">
-                <div className="relative flex items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-violet-400 opacity-60"></span>
-                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center font-bold shadow-md">
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  </div>
-                </div>
-                <div className="text-left">
-                  <h4 className="text-xs sm:text-sm font-black text-slate-900">
-                    Comprobando vinculación en vivo...
-                  </h4>
-                  <p className="text-[11px] text-slate-600 font-medium">
-                    Detectaremos la conexión al instante en cuanto pegues el código.
-                  </p>
-                </div>
-              </div>
+            {/* Radar en vivo */}
+            <div className="flex items-center justify-center gap-2.5 py-2 px-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 shrink-0" />
+              <span>Esperando que pegues el código en WhatsApp...</span>
             </div>
 
-            {/* Pasos en WhatsApp (Ultra Claros) */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 text-left space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                Cómo introducir el código en WhatsApp:
+            {/* 3 Pasos rápidos */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-2">
+              <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Cómo pegarlo en WhatsApp:
               </p>
-
-              <ol className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+              <ol className="space-y-1.5 text-xs text-slate-600 font-medium">
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold text-[11px] flex items-center justify-center mt-0.5">1</span>
-                  <span>Abre <strong>WhatsApp</strong> en este móvil.</span>
+                  <span className="w-4 h-4 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                  <span>Abre <strong>WhatsApp</strong> &gt; <strong>Ajustes</strong> &gt; <strong>Dispositivos vinculados</strong>.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold text-[11px] flex items-center justify-center mt-0.5">2</span>
-                  <span>Ve a <strong>Ajustes</strong> ⚙️ (o menú ⋮ en Android) &gt; <strong>Dispositivos vinculados</strong>.</span>
+                  <span className="w-4 h-4 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                  <span>Toca <strong>Vincular dispositivo</strong> y luego abajo en <strong>&ldquo;Vincular con el teléfono&rdquo;</strong>.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold text-[11px] flex items-center justify-center mt-0.5">3</span>
-                  <span>Pulsa en el botón verde <strong>Vincular un dispositivo</strong>.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold text-[11px] flex items-center justify-center mt-0.5">4</span>
-                  <span>Cuando se abra la cámara, toca abajo en: <strong>&ldquo;Vincular con el número de teléfono&rdquo;</strong> (en letras pequeñas al pie).</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold text-[11px] flex items-center justify-center mt-0.5">5</span>
-                  <span>Pega tu código: <strong className="font-mono text-violet-700">{pairingCode}</strong>.</span>
+                  <span className="w-4 h-4 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                  <span>Pega el código: <strong className="font-mono text-violet-700 font-bold">{pairingCode}</strong>.</span>
                 </li>
               </ol>
             </div>
@@ -402,36 +368,24 @@ export default function WhatsAppPage() {
             <button
               type="button"
               onClick={handleResetConnection}
-              className="text-xs text-slate-400 hover:text-slate-700 underline underline-offset-2 transition-colors"
+              className="text-xs text-slate-400 hover:text-slate-700 underline transition-colors"
             >
-              ¿Número incorrecto? Probar con otro número
+              Cambiar de número o volver
             </button>
 
           </div>
         )}
 
-        {/* 3. MODO ESPERA: QR SCANNER ACTIVO */}
+        {/* 3. MODO ESPERA: QR */}
         {status === 'connecting' && qrCode && (
           <div className="space-y-4 text-center">
-            <div className="max-w-[260px] mx-auto">
+            <div className="max-w-[220px] mx-auto">
               <QRScanner qrCode={qrCode} />
             </div>
 
-            {/* Radar en tiempo real PROMINENTE para QR */}
-            <div className="bg-gradient-to-br from-violet-500/15 via-indigo-500/10 to-emerald-500/15 border-2 border-violet-400/60 rounded-3xl p-4 sm:p-5 space-y-2 shadow-sm">
-              <div className="flex items-center justify-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-violet-600" />
-                <span className="text-sm font-black text-slate-900">Esperando escaneo con tu cámara...</span>
-              </div>
-              <p className="text-xs text-slate-600 font-medium">
-                En cuanto lo escanees, tu cuenta se conectará de inmediato.
-              </p>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs text-slate-700 space-y-1.5">
-              <p className="font-bold text-slate-900">Instrucciones:</p>
-              <p>1. Abre WhatsApp en tu teléfono &gt; Ajustes &gt; Dispositivos vinculados.</p>
-              <p>2. Pulsa en <strong>Vincular un dispositivo</strong> y apunta la cámara a este código QR.</p>
+            <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 shrink-0" />
+              <span>Apunta la cámara de WhatsApp a este código</span>
             </div>
 
             <button
@@ -444,72 +398,65 @@ export default function WhatsAppPage() {
           </div>
         )}
 
-        {/* 4. MODO CONECTADO: TODO OK Y PASO SIGUIENTE CLARO */}
+        {/* 4. MODO CONECTADO */}
         {status === 'connected' && (
-          <div className="space-y-6 text-center">
+          <div className="space-y-5 text-center">
             
-            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner shadow-emerald-600/10">
-              <CheckCircle2 className="w-10 h-10" />
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
 
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Paso 1 Completado: WhatsApp Conectado</span>
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                ¡Tu WhatsApp está listo! 🎉
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-slate-900">
+                ¡WhatsApp Conectado! 🎉
               </h3>
               {phoneNumber && (
-                <p className="text-xs font-bold text-emerald-700 font-mono bg-emerald-50 inline-block px-3 py-1 rounded-full border border-emerald-200/80">
+                <p className="text-xs font-bold text-emerald-700 font-mono bg-emerald-50 inline-block px-3 py-0.5 rounded-full border border-emerald-200/80">
                   +{phoneNumber}
                 </p>
               )}
             </div>
 
-            {/* CAJA DE SIGUIENTE PASO: ONBOARDING ACCIONABLE */}
-            <div className="bg-gradient-to-br from-violet-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-violet-500/30 text-left space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-violet-500/30 rounded-full blur-2xl pointer-events-none" />
-
-              <div className="space-y-1 relative z-10">
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-300 uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Siguiente Paso</span>
+            {/* Siguiente paso */}
+            <div className="bg-gradient-to-br from-violet-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-5 text-left space-y-3 relative overflow-hidden shadow-lg">
+              <div className="space-y-0.5">
+                <div className="text-[11px] font-bold text-violet-300 uppercase tracking-wider">
+                  Siguiente Paso
                 </div>
-                <h4 className="text-lg font-black text-white">
-                  Sincroniza tus Cumpleaños de WhatsApp
+                <h4 className="text-base font-black text-white">
+                  Sincroniza tus Cumpleaños
                 </h4>
-                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  Extrae al instante los contactos y grupos de tu WhatsApp para que AutoBirthday te recuerde sus cumpleaños y prepare las felicitaciones.
+                <p className="text-xs text-slate-300 font-medium">
+                  Detecta tus chats para programar felicitaciones automáticas.
                 </p>
               </div>
 
-              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 relative z-10">
+              <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <Link
                   href="/contacts?sync=whatsapp"
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-900/30 transition-all whitespace-nowrap"
                 >
                   <Users className="w-4 h-4 shrink-0" />
                   <span>Sincronizar Cumpleaños</span>
-                  <ArrowRight className="w-4 h-4 shrink-0" />
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </Link>
 
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-2xl transition-colors shrink-0 whitespace-nowrap"
+                  className="inline-flex items-center justify-center py-2.5 px-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-colors whitespace-nowrap"
                 >
-                  <span>Ir al Inicio</span>
+                  <span>Inicio</span>
                 </Link>
               </div>
             </div>
 
-            <div className="pt-2">
+            <div>
               <button
                 type="button"
                 onClick={handleDisconnect}
-                className="text-xs text-slate-400 hover:text-rose-600 transition-colors underline underline-offset-2"
+                className="text-xs text-slate-400 hover:text-rose-600 transition-colors underline"
               >
-                ¿Quieres cambiar de número? Desconectar WhatsApp
+                Desconectar número
               </button>
             </div>
 
@@ -518,80 +465,33 @@ export default function WhatsAppPage() {
 
       </div>
 
-      {/* TARJETA DE PRIVACIDAD, AISLAMIENTO Y CIFRADO */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-violet-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-white/10 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-            <ShieldCheck className="w-5 h-5" />
+      {/* TARJETA DE PRIVACIDAD LIMPIA */}
+      <div className="bg-white/70 backdrop-blur-md rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-sm sm:text-base font-bold text-slate-100">Privacidad y Seguridad Garantizada</h4>
-            <p className="text-[11px] text-slate-400">Arquitectura de máxima confidencialidad y permisos mínimos</p>
+            <h4 className="text-xs sm:text-sm font-bold text-slate-900">Privacidad y Seguridad Garantizada</h4>
+            <p className="text-[11px] text-slate-500">Cifrado de extremo a extremo y aislamiento por usuario</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          <div className="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-1.5 backdrop-blur-sm">
-            <div className="text-xs font-bold text-violet-300 flex items-center gap-1.5">
-              <span>🛡️</span>
-              <span>Contenedor Aislado</span>
-            </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              Tu sesión se ejecuta en un contenedor aislado y exclusivo para tu cuenta, sin interferencia de otros usuarios.
-            </p>
+        <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+          <div className="p-2 bg-slate-50/80 rounded-xl border border-slate-100 space-y-0.5">
+            <span className="text-sm">🛡️</span>
+            <p className="text-[10px] font-bold text-slate-700">Sesión Aislada</p>
           </div>
-
-          <div className="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-1.5 backdrop-blur-sm">
-            <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-              <span>🔒</span>
-              <span>Cero Espionaje</span>
-            </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              No almacenamos el historial de tus conversaciones ni leemos tus mensajes privados o chats personales.
-            </p>
+          <div className="p-2 bg-slate-50/80 rounded-xl border border-slate-100 space-y-0.5">
+            <span className="text-sm">🔒</span>
+            <p className="text-[10px] font-bold text-slate-700">Cero Espionaje</p>
           </div>
-
-          <div className="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-1.5 backdrop-blur-sm">
-            <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-              <span>⚡</span>
-              <span>Permisos Acotados</span>
-            </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              Solo se utilizan permisos para emitir las felicitaciones que programes y recibir las respuestas del bot de aprobación.
-            </p>
+          <div className="p-2 bg-slate-50/80 rounded-xl border border-slate-100 space-y-0.5">
+            <span className="text-sm">⚡</span>
+            <p className="text-[10px] font-bold text-slate-700">Solo Felicitaciones</p>
           </div>
         </div>
       </div>
-
-      {/* Sticky Floating Status Bar when connecting (Always visible without scrolling!) */}
-      {status === 'connecting' && (
-        <div className="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-50 animate-in slide-in-from-bottom-6 duration-300">
-          <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-violet-500/40 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-              <div className="text-left">
-                <p className="text-xs font-black text-white flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-                  <span>Esperando vinculación...</span>
-                </p>
-                <p className="text-[10px] text-slate-300 font-medium">
-                  {pairingCode ? 'Pega el código en tu WhatsApp' : 'Escanea el código QR con tu cámara'}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={fetchStatus}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-bold transition-colors"
-            >
-              Comprobar
-            </button>
-          </div>
-        </div>
-      )}
 
     </div>
   );
