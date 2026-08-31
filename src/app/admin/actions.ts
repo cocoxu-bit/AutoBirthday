@@ -616,7 +616,10 @@ export async function getAdminSystemTelemetryAction(): Promise<{
     const externalMb = Math.round((memUsage.external / 1024 / 1024) * 10) / 10;
     const systemTotalRamMb = Math.round(os.totalmem() / 1024 / 1024);
     const systemFreeRamMb = Math.round(os.freemem() / 1024 / 1024);
-    const heapUsagePercent = heapTotalMb > 0 ? Math.round((heapUsedMb / heapTotalMb) * 100) : 0;
+    
+    // Calculate realistic usage against serverless allocation (typically 1024MB on Vercel) or host RAM
+    const totalAllocatedRamMb = Math.max(1024, systemTotalRamMb || 1024);
+    const heapUsagePercent = Math.round((rssMb / totalAllocatedRamMb) * 100);
 
     // 2. VPS & Evolution API Telemetry
     const startPing = Date.now();
@@ -634,24 +637,60 @@ export async function getAdminSystemTelemetryAction(): Promise<{
       vpsStatus = 'offline';
     }
 
+    // Parallel deep live state check for each instance to guarantee 100% accurate count
+    const resolvedInstances = await Promise.all(
+      (instances || []).map(async (inst: any) => {
+        const name = inst.instance?.instanceName || inst.instanceName || inst.name || 'instance';
+        let rawState = (
+          inst.instance?.state || 
+          inst.connectionStatus || 
+          inst.state || 
+          inst.status || 
+          inst.instance?.status || 
+          ''
+        ).toLowerCase();
+
+        let ownerPhone = 
+          inst.instance?.owner || 
+          inst.owner || 
+          (inst.ownerJid ? inst.ownerJid.replace(/@.*$/, '') : undefined);
+
+        // If status is not explicitly 'open', perform a fast live socket check
+        if (rawState !== 'open' && rawState !== 'connected') {
+          try {
+            const liveCheck: any = await evolutionApi.getConnectionState(name);
+            const liveState = (liveCheck?.instance?.state || liveCheck?.state || '').toLowerCase();
+            if (liveState) rawState = liveState;
+          } catch {}
+        }
+
+        const isConnected = rawState === 'open' || rawState === 'connected';
+        const isConnecting = rawState === 'connecting';
+
+        return {
+          name,
+          status: isConnected ? 'open' : isConnecting ? 'connecting' : (rawState || 'close'),
+          isConnected,
+          isConnecting,
+          ownerPhone,
+        };
+      })
+    );
+
     let connectedCount = 0;
     let connectingCount = 0;
     let disconnectedCount = 0;
     const instancesList: Array<{ name: string; status: string; ownerPhone?: string }> = [];
 
-    for (const inst of (instances || [])) {
-      const state = inst.instance?.state || inst.state || 'close';
-      const name = inst.instance?.instanceName || inst.name || 'instance';
-      const ownerPhone = inst.instance?.owner || inst.owner || undefined;
-
-      if (state === 'open') connectedCount++;
-      else if (state === 'connecting') connectingCount++;
+    for (const inst of resolvedInstances) {
+      if (inst.isConnected) connectedCount++;
+      else if (inst.isConnecting) connectingCount++;
       else disconnectedCount++;
 
       instancesList.push({
-        name,
-        status: state,
-        ownerPhone,
+        name: inst.name,
+        status: inst.status,
+        ownerPhone: inst.ownerPhone,
       });
     }
 

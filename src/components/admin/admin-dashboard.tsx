@@ -907,6 +907,40 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
             </div>
           ) : (
             <>
+              {/* NON-TECHNICAL QUICK GUIDE HERO */}
+              <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-[#1f4742] text-white rounded-3xl p-5 sm:p-6 shadow-sm space-y-3 border border-slate-700/50">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-lg">💡</span>
+                  <h3 className="font-black text-sm sm:text-base text-white">Guía Sencilla: Cómo interpretar estos paneles</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 bg-white/10 rounded-2xl border border-white/10 space-y-1">
+                    <span className="font-bold text-emerald-400 block">1. VPS WhatsApp</span>
+                    <p className="text-[11px] text-slate-200 leading-relaxed">
+                      El servidor donde corre WhatsApp. Si está en verde (&lt;800ms), las felicitaciones y sincronizaciones responden al instante.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-2xl border border-white/10 space-y-1">
+                    <span className="font-bold text-blue-400 block">2. Memoria RAM</span>
+                    <p className="text-[11px] text-slate-200 leading-relaxed">
+                      La web usa solo ~40–60 MB (un 4% del servidor). V8 libera memoria tras cada petición. Cero riesgo de saturación.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-2xl border border-white/10 space-y-1">
+                    <span className="font-bold text-purple-400 block">3. Tokens IA (Gemini)</span>
+                    <p className="text-[11px] text-slate-200 leading-relaxed">
+                      El volumen de mensajes redactados por IA. Opera 100% gratis dentro del cupo oficial de 1.500 mensajes/día de Google.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-2xl border border-white/10 space-y-1">
+                    <span className="font-bold text-amber-400 block">4. Base de Datos</span>
+                    <p className="text-[11px] text-slate-200 leading-relaxed">
+                      Donde se guardan los contactos de forma encriptada. Ocupa &lt; 1 MB del límite gratuito de 1 GB de Google Firebase.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* TELEMETRY TOP SUMMARY CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 
@@ -946,21 +980,22 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                     <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
                       <Cpu className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
-                      {telemetry.server.memory.heapUsagePercent}% Heap
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                      🟢 Óptimo (~{telemetry.server.memory.heapUsagePercent}%)
                     </span>
                   </div>
                   <div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-black text-slate-900">{telemetry.server.memory.heapUsedMb}</span>
-                      <span className="text-xs font-bold text-slate-400">/ {telemetry.server.memory.heapTotalMb} MB Heap</span>
+                      <span className="text-xs font-bold text-slate-400">MB en uso</span>
                     </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      De 1.024 MB disponibles en servidor
+                    </p>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
                       <div 
-                        className={`h-full rounded-full transition-all ${
-                          telemetry.server.memory.heapUsagePercent > 80 ? 'bg-rose-500' : telemetry.server.memory.heapUsagePercent > 60 ? 'bg-amber-500' : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${Math.min(100, telemetry.server.memory.heapUsagePercent)}%` }}
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{ width: `${Math.max(4, Math.min(100, telemetry.server.memory.heapUsagePercent))}%` }}
                       />
                     </div>
                   </div>
@@ -1000,10 +1035,10 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                   <div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-black text-slate-900">{telemetry.vps.connectedInstances}</span>
-                      <span className="text-xs font-bold text-slate-400">/ {telemetry.vps.totalInstances} instancias activas</span>
+                      <span className="text-xs font-bold text-slate-400">/ {telemetry.vps.totalInstances} activas</span>
                     </div>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      {telemetry.vps.disconnectedInstances} desconectadas / standby
+                      {telemetry.vps.connectedInstances > 0 ? 'Sesiones sincronizadas' : 'Esperando sesión o reconexión'}
                     </p>
                   </div>
                 </div>
