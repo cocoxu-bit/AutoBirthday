@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Check, Edit2, X, RotateCcw, Clock, Send, AlertCircle, Save } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Check, Edit2, X, RotateCcw, Clock, Send, AlertCircle, Save, CheckCheck } from 'lucide-react';
 import { approveWish, editWishMessage, cancelWish, retryWish } from '@/app/(dashboard)/wishes/actions';
 import { ScheduledWish, Contact } from '@/types';
-import { formatDate } from '@/lib/utils';
 
 interface WishesClientProps {
   wishes: ScheduledWish[];
@@ -59,6 +60,17 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
   const getContactInfo = (contactId: string) => {
     const contact = contactsMap[contactId];
     return contact ? { name: contact.name, phone: contact.phone } : { name: 'Desconocido', phone: '' };
+  };
+
+  const formatWishTime = (rawDate?: any): string => {
+    if (!rawDate) return '';
+    try {
+      const d = rawDate?.toDate ? rawDate.toDate() : new Date(rawDate);
+      if (isNaN(d.getTime())) return '';
+      return format(d, "d 'de' MMMM, HH:mm", { locale: es });
+    } catch {
+      return '';
+    }
   };
 
   const tabs = [
@@ -116,7 +128,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
               const isEditing = editingId === wish.id;
               
               return (
-                <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-4">
+                <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-black text-slate-900 text-base sm:text-lg">{name}</h4>
@@ -124,7 +136,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                     </div>
                   </div>
                   
-                  <div className="bg-[#dcf8c6]/90 border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
+                  <div className="bg-[#dcf8c6] border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
                     {isEditing ? (
                       <textarea 
                         value={editContent}
@@ -132,7 +144,12 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                         className="w-full bg-white border border-emerald-300 rounded-xl p-3 text-slate-800 min-h-[110px] focus:ring-2 focus:ring-emerald-500 text-sm outline-none shadow-inner"
                       />
                     ) : (
-                      <p className="text-slate-800 whitespace-pre-wrap text-sm leading-relaxed">{wish.generatedMessage}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                        <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap flex-1">{wish.generatedMessage}</p>
+                        <span className="text-[11px] font-semibold text-emerald-800/80 shrink-0 self-end">
+                          {formatWishTime(wish.createdAt)}
+                        </span>
+                      </div>
                     )}
                   </div>
                   
@@ -183,29 +200,38 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
 
         {activeTab === 'queued' && (
           queuedWishes.length === 0 ? (
-            <div className="text-center py-16 bg-white/40 rounded-2xl border border-white/20">
+            <div className="text-center py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <Clock className="w-12 h-12 text-blue-500 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium text-slate-900">No hay envíos programados</h3>
+              <h3 className="text-base font-bold text-slate-900">No hay envíos programados</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Los cumpleaños próximos aparecerán aquí antes de su envío.</p>
             </div>
           ) : (
             queuedWishes.map(wish => {
-              const { name } = getContactInfo(wish.contactId);
+              const { name, phone } = getContactInfo(wish.contactId);
               return (
-                <div key={wish.id} className="bg-white/60 backdrop-blur rounded-xl border border-white/40 shadow-sm p-5 flex flex-col sm:flex-row gap-4 items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-slate-900">Para: {name}</h4>
-                    <p className="text-sm text-slate-500 truncate max-w-md">{wish.generatedMessage}</p>
-                    <div className="text-xs text-blue-600 mt-1 flex items-center gap-1 font-medium">
-                      <Clock className="w-3 h-3" />
-                      Programado para: {wish.scheduledFor ? (wish.scheduledFor as any).toDate ? formatDate((wish.scheduledFor as any).toDate()) : new Date(wish.scheduledFor as any).toLocaleString() : ''}
+                <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-black text-slate-900 text-base sm:text-lg">Para: {name}</h4>
+                      {phone && <p className="text-xs text-slate-500 font-medium">{phone}</p>}
+                    </div>
+                    <button 
+                      onClick={() => handleCancel(wish.id)}
+                      className="px-3.5 py-1.5 border border-red-200 bg-red-50/60 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-all shrink-0"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+
+                  <div className="bg-[#dcf8c6] border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                      <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap flex-1">{wish.generatedMessage}</p>
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-800/80 shrink-0 self-end">
+                        <Clock className="w-3 h-3 text-emerald-700" />
+                        <span>Programado: {formatWishTime(wish.scheduledFor)}</span>
+                      </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleCancel(wish.id)}
-                    className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 shrink-0"
-                  >
-                    Cancelar
-                  </button>
                 </div>
               );
             })
@@ -214,24 +240,28 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
 
         {activeTab === 'sent' && (
           sentWishes.length === 0 ? (
-            <div className="text-center py-16 bg-white/40 rounded-2xl border border-white/20">
+            <div className="text-center py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <Send className="w-12 h-12 text-violet-500 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium text-slate-900">Aún no has enviado ninguna felicitación</h3>
+              <h3 className="text-base font-bold text-slate-900">Aún no has enviado ninguna felicitación</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Los mensajes automáticos enviados con éxito quedarán registrados aquí.</p>
             </div>
           ) : (
             sentWishes.map(wish => {
               const { name } = getContactInfo(wish.contactId);
               return (
-                <div key={wish.id} className="bg-white/60 backdrop-blur rounded-xl border border-white/40 shadow-sm p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-slate-900">Enviado a {name}</h4>
-                    <div className="text-xs text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full font-medium">
-                      <Check className="w-3 h-3" />
-                      {wish.sentAt ? (wish.sentAt as any).toDate ? formatDate((wish.sentAt as any).toDate()) : new Date(wish.sentAt as any).toLocaleString() : ''}
-                    </div>
+                <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-black text-slate-900 text-base sm:text-lg">Enviado a {name}</h4>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-700">
-                    {wish.generatedMessage}
+
+                  <div className="bg-[#dcf8c6] border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                      <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap flex-1">{wish.generatedMessage}</p>
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-800/80 shrink-0 self-end">
+                        <span>{formatWishTime(wish.sentAt)}</span>
+                        <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -241,30 +271,36 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
 
         {activeTab === 'failed' && (
           failedWishes.length === 0 ? (
-            <div className="text-center py-16 bg-white/40 rounded-2xl border border-white/20">
+            <div className="text-center py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <span className="text-4xl mb-4 block">🎉</span>
-              <h3 className="text-lg font-medium text-slate-900">¡Genial! No hay errores</h3>
+              <h3 className="text-base font-bold text-slate-900">¡Genial! No hay errores</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Todos los envíos se han realizado correctamente.</p>
             </div>
           ) : (
             failedWishes.map(wish => {
               const { name } = getContactInfo(wish.contactId);
               return (
-                <div key={wish.id} className="bg-red-50/50 rounded-xl border border-red-100 shadow-sm p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-slate-900">Error al enviar a {name}</h4>
+                <div key={wish.id} className="bg-red-50/60 backdrop-blur-md rounded-3xl border border-red-200/80 shadow-xs p-4 sm:p-5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-black text-slate-900 text-base sm:text-lg">Error al enviar a {name}</h4>
                     <button 
                       onClick={() => handleRetry(wish.id)}
-                      className="text-xs px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-medium flex items-center gap-1 transition-colors"
+                      className="px-3.5 py-1.5 bg-red-600 text-white hover:bg-red-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
                     >
                       <RotateCcw className="w-3 h-3" /> Reintentar
                     </button>
                   </div>
-                  <div className="text-xs text-red-600 mb-3 flex items-start gap-1.5 bg-white/50 p-2 rounded border border-red-100">
+                  <div className="text-xs text-red-700 flex items-start gap-1.5 bg-white/70 p-2.5 rounded-xl border border-red-200">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>{wish.errorLog || 'Error desconocido'}</span>
                   </div>
-                  <div className="bg-white/60 rounded-lg p-3 text-sm text-slate-700">
-                    {wish.generatedMessage}
+                  <div className="bg-[#dcf8c6] border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                      <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap flex-1">{wish.generatedMessage}</p>
+                      <span className="text-[11px] font-semibold text-emerald-800/80 shrink-0 self-end">
+                        {formatWishTime(wish.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
