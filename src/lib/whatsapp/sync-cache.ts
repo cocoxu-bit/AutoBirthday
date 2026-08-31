@@ -45,14 +45,29 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
     // -------------------------------------------------------------
-    // STAGE 1: IMMEDIATE FAST PRE-WARM (Top 10 chats in < 500ms)
+    // STAGE 1: IMMEDIATE FAST PRE-WARM (Top 10 chats in < 500ms with HD Photos)
     // -------------------------------------------------------------
     const fastChats = await evolutionApi.fetchChats(instanceName, false).catch(() => []);
     if (fastChats && fastChats.length > 0) {
+      const topItems = fastChats.slice(0, 10);
+      
+      // Parallel avatar resolution for top chats
+      await Promise.all(
+        topItems.map(async (rawC: any) => {
+          const cleanPhone = (rawC.phone || rawC.jid || rawC.remoteJid || '').replace(/\D/g, '');
+          if (cleanPhone && !rawC.profilePictureUrl) {
+            try {
+              const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, cleanPhone);
+              if (pic) rawC.profilePictureUrl = pic;
+            } catch {}
+          }
+        })
+      );
+
       const topBatch = adminDb.batch();
       let topCount = 0;
 
-      for (const rawC of fastChats) {
+      for (const rawC of topItems) {
         const c = rawC as any;
         const cleanPhone = (c.phone || c.jid || c.remoteJid || '').replace(/\D/g, '');
         if (!cleanPhone || cleanPhone.length < 6) continue;
@@ -80,7 +95,6 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         }, { merge: true });
 
         topCount++;
-        if (topCount >= 15) break;
       }
 
       if (topCount > 0) {

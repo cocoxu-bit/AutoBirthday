@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
   getWhatsAppInitialBatchForSyncAction,
+  getWhatsAppChunkedContactsForSyncAction,
   getWhatsAppRemainingContactsForSyncAction,
   saveSingleSyncedContactAction,
   getWhatsAppProfilePicAction,
@@ -181,33 +182,60 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       setStep('deck');
       setLoading(false);
 
-      // Phase 2: Asynchronous Real Background Loader for remaining contacts
+      // Phase 2: Asynchronous Stepped Progressive Loader in Waves (8 -> 33 -> 58 -> 83 -> ...)
       if (initialResult.hasMore) {
         setIsBackgroundSyncing(true);
-        const loadedPhones = initialResult.items.map(i => i.phone);
+        const loadRemainingInWaves = async (initialPhones: string[]) => {
+          let currentLoaded = [...initialPhones];
+          let offset = 0;
+          const CHUNK_SIZE = 25;
+          let hasMore = true;
 
-        getWhatsAppRemainingContactsForSyncAction(loadedPhones)
-          .then(remResult => {
-            if (remResult.success && remResult.items && remResult.items.length > 0) {
-              setCards(prev => {
-                const existingPhoneSet = new Set(prev.map(p => p.phone));
-                const newItems = remResult.items!.filter(item => !existingPhoneSet.has(item.phone));
-                if (newItems.length > 0) {
-                  return [...prev, ...newItems];
-                }
-                return prev;
+          while (hasMore) {
+            try {
+              const res = await getWhatsAppChunkedContactsForSyncAction(currentLoaded, offset, CHUNK_SIZE);
+              if (!res.success || !res.items || res.items.length === 0) {
+                hasMore = false;
+                break;
+              }
+
+              const newItems = res.items;
+
+              // Seed photo cache with newly fetched avatars
+              const newCache: Record<string, string | null> = {};
+              newItems.forEach(i => {
+                if (i.phone && i.profilePictureUrl) newCache[i.phone] = i.profilePictureUrl;
               });
+              setPhotoCache(prev => ({ ...prev, ...newCache }));
+
+              // Progressively expand cards list in waves
+              setCards(prev => {
+                const existingSet = new Set(prev.map(c => c.phone));
+                const toAdd = newItems.filter(item => !existingSet.has(item.phone));
+                return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+              });
+
+              if (res.availableGroups && res.availableGroups.length > 0) {
+                setAvailableGroups(res.availableGroups);
+              }
+
+              currentLoaded = [...currentLoaded, ...newItems.map(i => i.phone)];
+              offset += newItems.length;
+              hasMore = Boolean(res.hasMore);
+
+              // Smooth pacing: wait 200ms between chunks so UI renders seamlessly
+              if (hasMore) {
+                await new Promise(r => setTimeout(r, 200));
+              }
+            } catch (e) {
+              console.warn('Stepped wave loader note:', e);
+              hasMore = false;
             }
-            if (remResult.availableGroups && remResult.availableGroups.length > 0) {
-              setAvailableGroups(remResult.availableGroups);
-            }
-          })
-          .catch(err => {
-            console.warn('Background sync note:', err);
-          })
-          .finally(() => {
-            setIsBackgroundSyncing(false);
-          });
+          }
+          setIsBackgroundSyncing(false);
+        };
+
+        loadRemainingInWaves(initialResult.items.map(i => i.phone));
       }
     } catch (err: any) {
       console.error('WhatsApp sync error:', err);
@@ -417,7 +445,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   {isBackgroundSyncing && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full animate-pulse">
                       <Loader2 className="w-2.5 h-2.5 animate-spin text-emerald-600" />
-                      <span>Cargando más...</span>
+                      <span>Detectando más ({cards.length})...</span>
                     </span>
                   )}
                 </div>

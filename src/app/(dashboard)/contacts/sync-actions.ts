@@ -528,6 +528,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
   items?: WhatsAppSyncItem[];
   availableGroups?: WhatsAppGroup[];
   hasMore?: boolean;
+  totalEstimated?: number;
   error?: string;
 }> {
   try {
@@ -541,14 +542,22 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     prewarmWhatsAppContactsCache(userId).catch(() => {});
 
     // Fast parallel local Firestore fetch (< 40ms)
-    const [cachedContacts, existingContacts] = await Promise.all([
+    const [cachedContacts, existingContacts, rawGroups] = await Promise.all([
       getCachedWhatsAppContacts(userId).catch(() => []),
       getContacts(userId).catch(() => []),
+      evolutionApi.fetchGroups(instanceName).catch(() => []),
     ]);
 
     const existingPhones = new Set(
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
+
+    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
+      id: g.id || g.jid,
+      subject: g.subject || g.name || 'Grupo de WhatsApp',
+      pictureUrl: g.pictureUrl || null,
+      size: g.size || (g.participants ? g.participants.length : 0),
+    }));
 
     if (cachedContacts.length > 0) {
       const candidates = cachedContacts.filter(c => !existingPhones.has(c.phone));
@@ -565,8 +574,21 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
         return b.lastActivity - a.lastActivity;
       });
 
-      // Deliver initial batch of first 3 contacts immediately (< 50ms)
-      const initialCandidates = candidates.slice(0, 3);
+      // Deliver initial batch of first 8 contacts (< 60ms)
+      const initialCandidates = candidates.slice(0, 8);
+
+      // Preload avatars in parallel for initial batch so they appear immediately
+      await Promise.all(
+        initialCandidates.map(async c => {
+          if (!c.profilePictureUrl && c.phone) {
+            try {
+              const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+              if (pic) c.profilePictureUrl = pic;
+            } catch {}
+          }
+        })
+      );
+
       const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
         id: `wa-sync-${c.phone}-${index}`,
         name: c.name,
@@ -593,11 +615,13 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       return {
         success: true,
         items,
-        hasMore: candidates.length > 3,
+        availableGroups: groupsList,
+        hasMore: candidates.length > 8,
+        totalEstimated: candidates.length,
       };
     }
 
-    // Fast fallback if cache not yet populated: fetch first page of chats only (< 600ms)
+    // Fast fallback if cache not yet populated: fetch first page of chats only
     const rawChats = await evolutionApi.fetchChats(instanceName, false).catch(() => []);
     const isInvalidName = (name?: string | null): boolean => {
       if (!name) return true;
@@ -634,7 +658,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
         profilePictureUrl: c.profilePictureUrl || null,
       });
 
-      if (initialCandidates.length >= 3) break;
+      if (initialCandidates.length >= 8) break;
     }
 
     if (initialCandidates.length === 0) {
@@ -643,6 +667,18 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
         error: 'No se encontraron conversaciones recientes en tu WhatsApp.',
       };
     }
+
+    // Preload avatars in parallel for fallback candidates
+    await Promise.all(
+      initialCandidates.map(async c => {
+        if (!c.profilePictureUrl && c.phone) {
+          try {
+            const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+            if (pic) c.profilePictureUrl = pic;
+          } catch {}
+        }
+      })
+    );
 
     const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
       id: `wa-sync-${c.phone}-${index}`,
@@ -670,6 +706,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     return {
       success: true,
       items,
+      availableGroups: groupsList,
       hasMore: true,
     };
   } catch (error: any) {
@@ -677,6 +714,152 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     return {
       success: false,
       error: error.message || 'Error al conectar con WhatsApp',
+    };
+  }
+}
+
+export async function getWhatsAppChunkedContactsForSyncAction(
+  alreadyLoadedPhones: string[] = [],
+  offset: number = 0,
+  limit: number = 25
+): Promise<{
+  success: boolean;
+  items?: WhatsAppSyncItem[];
+  availableGroups?: WhatsAppGroup[];
+  hasMore?: boolean;
+  totalEstimated?: number;
+  error?: string;
+}> {
+  try {
+    const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
+
+    const { getContacts } = await import('@/lib/firebase/firestore');
+    const { getCachedWhatsAppContacts } = await import('@/lib/whatsapp/sync-cache');
+
+    const loadedSet = new Set(alreadyLoadedPhones.map(p => (p || '').replace(/\D/g, '')));
+    const existingContacts = await getContacts(userId).catch(() => []);
+    existingContacts.forEach(c => loadedSet.add((c.phone || '').replace(/\D/g, '')));
+
+    const [cached, liveChats, rawGroups] = await Promise.all([
+      getCachedWhatsAppContacts(userId).catch(() => []),
+      offset === 0 ? evolutionApi.fetchChats(instanceName, true).catch(() => []) : Promise.resolve([]),
+      offset === 0 ? evolutionApi.fetchGroups(instanceName).catch(() => []) : Promise.resolve([]),
+    ]);
+
+    // Combine and deduplicate
+    const contactMap = new Map<string, {
+      phone: string;
+      name: string;
+      pushName?: string;
+      profilePictureUrl?: string | null;
+      hasRealName: boolean;
+      lastActivity: number;
+    }>();
+
+    for (const c of cached) {
+      const p = (c.phone || '').replace(/\D/g, '');
+      if (p) {
+        contactMap.set(p, {
+          phone: p,
+          name: c.name,
+          pushName: c.pushName,
+          profilePictureUrl: c.profilePictureUrl,
+          hasRealName: c.hasRealName,
+          lastActivity: c.lastActivity || 0,
+        });
+      }
+    }
+
+    for (const raw of (liveChats || [])) {
+      const p = (raw.phone || raw.jid || '').replace(/\D/g, '');
+      if (!p || p.length < 6) continue;
+      const existing = contactMap.get(p);
+      const isNamed = raw.name && !/^[\d+\s\-()]+$/.test(raw.name.trim()) && raw.name !== raw.phone;
+      if (!existing) {
+        contactMap.set(p, {
+          phone: p,
+          name: raw.name || `Contacto (+${p.slice(-4)})`,
+          pushName: raw.pushName,
+          profilePictureUrl: raw.profilePictureUrl || null,
+          hasRealName: Boolean(isNamed),
+          lastActivity: 0,
+        });
+      } else if (!existing.hasRealName && isNamed) {
+        existing.name = raw.name;
+        existing.hasRealName = true;
+      }
+    }
+
+    const allDiscovered = Array.from(contactMap.values());
+    const remaining = allDiscovered.filter(c => !loadedSet.has(c.phone));
+
+    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
+      id: g.id || g.jid,
+      subject: g.subject || g.name || 'Grupo de WhatsApp',
+      pictureUrl: g.pictureUrl || null,
+      size: g.size || (g.participants ? g.participants.length : 0),
+    }));
+
+    if (remaining.length === 0) {
+      return { success: true, items: [], availableGroups: groupsList, hasMore: false, totalEstimated: 0 };
+    }
+
+    remaining.sort((a, b) => {
+      if (a.hasRealName && !b.hasRealName) return -1;
+      if (!a.hasRealName && b.hasRealName) return 1;
+      return b.lastActivity - a.lastActivity;
+    });
+
+    const chunkSlice = remaining.slice(offset, offset + limit);
+
+    // Preload top 6 avatars of this chunk in parallel
+    await Promise.all(
+      chunkSlice.slice(0, 6).map(async c => {
+        if (!c.profilePictureUrl && c.phone) {
+          try {
+            const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+            if (pic) c.profilePictureUrl = pic;
+          } catch {}
+        }
+      })
+    );
+
+    const items: WhatsAppSyncItem[] = chunkSlice.map((c, index) => ({
+      id: `wa-sync-${c.phone}-chunk-${offset + index}`,
+      name: c.name,
+      phone: c.phone,
+      pushName: c.pushName,
+      profilePictureUrl: c.profilePictureUrl || null,
+      birthDay: 0,
+      birthMonth: 0,
+      birthYear: null,
+      targetType: 'individual',
+      groupId: undefined,
+      groupName: undefined,
+      mentionInGroup: true,
+      mode: 'manual',
+      templateId: undefined,
+      customMessage: undefined,
+      aiTone: 'casual',
+      aiNotes: undefined,
+      autoSend: false,
+      sendTimeStart: '09:00',
+      sendTimeEnd: '11:00',
+    }));
+
+    return {
+      success: true,
+      items,
+      availableGroups: groupsList,
+      hasMore: remaining.length > offset + limit,
+      totalEstimated: remaining.length,
+    };
+  } catch (error: any) {
+    console.error('getWhatsAppChunkedContactsForSyncAction error:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al obtener bloque de contactos',
     };
   }
 }
