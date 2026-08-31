@@ -57,8 +57,8 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
     setDeletingId(id);
     const res = await deleteContact(id);
     setDeletingId(null);
-    if (res.success) toast.success('Contacto eliminado');
-    else toast.error('Error al eliminar contacto');
+    if (res.success) toast.success('Cumpleaños eliminado');
+    else toast.error('Error al eliminar cumpleaños');
   }
 
   const formatBirthday = (day?: number, month?: number) => {
@@ -73,19 +73,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
       {/* SEARCH AND ACTIONS */}
       <div className="flex flex-col gap-3">
         
-        {/* Search input */}
-        <div className="relative w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Buscar contacto..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-slate-200/80 rounded-2xl shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm placeholder:text-slate-400"
-          />
-        </div>
-
-        {/* Action Buttons: 3 Lines Layout */}
+        {/* Action Buttons: 3 Lines Layout on Top */}
         <div className="flex flex-col gap-2 w-full">
           
           {/* Line 1: Sincronizar WhatsApp */}
@@ -93,7 +81,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             type="button"
             onClick={() => setIsWhatsAppSyncOpen(true)}
             className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold active:scale-[0.99]"
-            title="Importar contactos y cumpleaños desde WhatsApp"
+            title="Importar y sincronizar cumpleaños desde WhatsApp"
           >
             <WhatsAppIcon className="w-4 h-4 shrink-0" size={18} />
             <span>Sincronizar WhatsApp</span>
@@ -125,14 +113,26 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             <span>Sincronizar Calendario</span>
           </button>
 
-          {/* Line 3: Añadir Contacto */}
+          {/* Line 3: Añadir Cumpleaños */}
           <Link 
             href="/contacts/new" 
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#285953] to-emerald-600 hover:from-[#1f4742] hover:to-emerald-700 text-white rounded-2xl transition-all shadow-md shadow-emerald-500/20 text-xs sm:text-sm font-bold active:scale-[0.99]"
           >
             <UserPlus className="w-4 h-4 shrink-0" />
-            <span>Añadir Contacto</span>
+            <span>Añadir Cumpleaños</span>
           </Link>
+        </div>
+
+        {/* Search input below action buttons */}
+        <div className="relative w-full">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Buscar cumpleaños..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-slate-200/80 rounded-2xl shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm placeholder:text-slate-400"
+          />
         </div>
       </div>
 
@@ -144,12 +144,12 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 mb-1">
-              {searchTerm ? 'No se encontraron contactos' : 'No tienes contactos añadidos todavía'}
+              {searchTerm ? 'No se encontraron cumpleaños' : 'No tienes cumpleaños añadidos todavía'}
             </h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto font-medium">
               {searchTerm 
                 ? 'Prueba a buscar con otro nombre.'
-                : 'Añade o sincroniza contactos para empezar a automatizar tus felicitaciones.'}
+                : 'Añade o sincroniza cumpleaños para empezar a automatizar tus felicitaciones.'}
             </p>
           </div>
           {!searchTerm && (

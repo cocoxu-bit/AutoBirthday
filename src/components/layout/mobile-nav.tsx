@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Smartphone, Gift, Settings } from "lucide-react";
+import { LayoutDashboard, Cake, Smartphone, Gift, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const mobileNavItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  { href: "/contacts", icon: Users, label: "Contactos" },
+  { href: "/contacts", icon: Cake, label: "Cumpleaños" },
   { href: "/wishes", icon: Gift, label: "Felicitaciones" },
   { href: "/whatsapp", icon: Smartphone, label: "WhatsApp" },
   { href: "/settings", icon: Settings, label: "Ajustes" },

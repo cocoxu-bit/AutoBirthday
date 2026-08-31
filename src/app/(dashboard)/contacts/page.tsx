@@ -2,10 +2,10 @@ import { cookies } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 import { getContacts, getTemplates } from '@/lib/firebase/firestore';
 import { ContactsTable } from '@/components/contacts/contacts-table';
-import { Users } from 'lucide-react';
+import { Cake } from 'lucide-react';
 
 export const metadata = {
-  title: 'Contactos | AutoBirthday',
+  title: 'Cumpleaños | AutoBirthday',
 };
 
 async function getUserId() {
@@ -35,10 +35,10 @@ export default async function ContactsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mis Contactos</h1>
-          <p className="text-slate-500 mt-1 flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            {contacts.length} {contacts.length === 1 ? 'contacto' : 'contactos'} en total ({activeContactsCount} activos)
+          <h1 className="text-2xl font-bold text-slate-900">Mis Cumpleaños</h1>
+          <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-medium">
+            <Cake className="w-4 h-4 text-rose-500" />
+            {contacts.length} {contacts.length === 1 ? 'cumpleaños registrado' : 'cumpleaños registrados'} ({activeContactsCount} activos)
           </p>
         </div>
       </div>

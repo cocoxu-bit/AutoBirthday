@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Editar Contacto | AutoBirthday',
+  title: 'Editar Cumpleaños | AutoBirthday',
 };
 
 async function getUserId() {
@@ -45,7 +45,7 @@ export default async function EditContactPage({
       <ContactForm 
         initialData={contact} 
         templates={templates} 
-        title="Editar Contacto"
+        title="Editar Cumpleaños"
         subtitle={`Modificando los datos de ${contact.name}.`}
       />
     </div>

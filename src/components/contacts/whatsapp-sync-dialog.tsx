@@ -422,14 +422,14 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                  {step === 'connect' ? 'Sincronizar por WhatsApp' : step === 'deck' ? 'Revisar Contactos' : 'Sincronización Completada'}
+                  {step === 'connect' ? 'Sincronizar por WhatsApp' : step === 'deck' ? 'Revisar Cumpleaños' : 'Sincronización Completada'}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
                   {step === 'connect' 
-                    ? 'Importa rápidamente tus contactos de chats y grupos' 
+                    ? 'Importa rápidamente los cumpleaños de tus chats y grupos' 
                     : step === 'deck' 
-                    ? `Contacto ${currentIndex + 1} de ${cards.length}`
-                    : 'Contactos añadidos a tu agenda'}
+                    ? `Cumpleaños ${currentIndex + 1} de ${cards.length}`
+                    : 'Cumpleaños añadidos a tu agenda'}
                 </p>
               </div>
             </div>
@@ -460,7 +460,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
             <div className="space-y-1.5 pt-0.5">
               <div className="flex items-center justify-between text-xs font-bold text-slate-600">
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
+                  <span className="text-emerald-900 font-black">Cumpleaños {currentIndex + 1} de {cards.length}</span>
                   {isBackgroundSyncing ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full animate-pulse">
                       <Loader2 className="w-2.5 h-2.5 animate-spin text-emerald-600" />
@@ -468,7 +468,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </span>
                   ) : cards.length > 0 ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-full">
-                      <span>✓ {cards.length} contactos recientes</span>
+                      <span>✓ {cards.length} conversaciones recientes</span>
                     </span>
                   ) : null}
                 </div>
@@ -508,7 +508,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
               <div className="space-y-2 max-w-sm mx-auto">
                 <h3 className="text-xl font-black text-slate-900">
-                  Importar Contactos de WhatsApp
+                  Importar Cumpleaños de WhatsApp
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
                   Recorreremos tus contactos y chats de WhatsApp para que puedas indicar su fecha de cumpleaños y programar sus felicitaciones.

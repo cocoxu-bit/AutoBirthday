@@ -16,9 +16,9 @@ interface StatsCardsProps {
 export function StatsCards({ stats }: StatsCardsProps) {
   const items = [
     {
-      label: "Contactos Activos",
+      label: "Cumpleaños Activos",
       value: stats.activeContacts.toString(),
-      trend: stats.activeContacts > 0 ? "Listos para felicitar" : "Añade contactos",
+      trend: stats.activeContacts > 0 ? "Listos para felicitar" : "Añade cumpleaños",
       icon: Users,
       color: "text-violet-600",
       bgColor: "bg-violet-100",

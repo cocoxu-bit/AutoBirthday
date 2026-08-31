@@ -12,6 +12,7 @@ import {
   FileText,
   Smartphone,
   Gift,
+  Cake,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -19,8 +20,8 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/contacts", icon: Users, label: "Contactos" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
+  { href: "/contacts", icon: Cake, label: "Cumpleaños" },
   { href: "/wishes", icon: Gift, label: "Felicitaciones" },
   { href: "/templates", icon: FileText, label: "Plantillas" },
   { href: "/whatsapp", icon: Smartphone, label: "WhatsApp", isWhatsApp: true },

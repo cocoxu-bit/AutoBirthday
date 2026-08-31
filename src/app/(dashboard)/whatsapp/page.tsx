@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   AlertCircle,
   HelpCircle,
-  Users
+  Users,
+  Cake
 } from 'lucide-react';
 import { 
   getConnectionStatus, 
@@ -475,7 +476,7 @@ export default function WhatsAppPage() {
                   <span>Siguiente Paso</span>
                 </div>
                 <h4 className="text-lg font-black text-white">
-                  Sincroniza tus Contactos de WhatsApp
+                  Sincroniza tus Cumpleaños de WhatsApp
                 </h4>
                 <p className="text-xs text-slate-300 leading-relaxed font-medium">
                   Extrae al instante los contactos y grupos de tu WhatsApp para que AutoBirthday te recuerde sus cumpleaños y prepare las felicitaciones.
@@ -487,8 +488,8 @@ export default function WhatsAppPage() {
                   href="/contacts?sync=whatsapp"
                   className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <Users className="w-4 h-4" />
-                  <span>Sincronizar mis Contactos ➔</span>
+                  <Cake className="w-4 h-4" />
+                  <span>Sincronizar mis Cumpleaños ➔</span>
                 </Link>
 
                 <Link

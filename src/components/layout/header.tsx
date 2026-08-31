@@ -10,9 +10,9 @@ import { WhatsAppInstanceStatus } from "@/types";
 import { VideoGuideModal } from "@/components/onboarding/video-guide-modal";
 
 const routeMap: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/contacts": "Contactos",
-  "/contacts/new": "Nuevo Contacto",
+  "/dashboard": "Inicio",
+  "/contacts": "Cumpleaños",
+  "/contacts/new": "Añadir Cumpleaños",
   "/templates": "Plantillas",
   "/templates/new": "Nueva Plantilla",
   "/whatsapp": "WhatsApp",
@@ -31,7 +31,7 @@ export function Header() {
   // Match title or sub-routes
   let title = routeMap[pathname];
   if (!title) {
-    if (pathname.startsWith('/contacts/')) title = 'Editar Contacto';
+    if (pathname.startsWith('/contacts/')) title = 'Editar Cumpleaños';
     else if (pathname.startsWith('/templates/')) title = 'Editar Plantilla';
     else title = 'AutoBirthday';
   }

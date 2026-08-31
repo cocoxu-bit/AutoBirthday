@@ -68,7 +68,7 @@ interface ContactFormProps {
   subtitle?: string;
 }
 
-export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', subtitle = 'Añade los datos de la persona a felicitar.' }: ContactFormProps) {
+export function ContactForm({ initialData, templates, title = 'Añadir Cumpleaños', subtitle = 'Añade los datos de la persona a felicitar.' }: ContactFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitWarningModal, setShowExitWarningModal] = useState(false);
@@ -262,10 +262,10 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
       }
 
       if (result.success) {
-        toast.success(initialData?.id ? 'Contacto actualizado' : 'Contacto creado con éxito 🎉');
+        toast.success(initialData?.id ? 'Cumpleaños actualizado' : 'Cumpleaños creado con éxito 🎉');
         router.push('/contacts');
       } else {
-        toast.error(result.error || 'Error al guardar el contacto');
+        toast.error(result.error || 'Error al guardar el cumpleaños');
       }
     } catch (error: any) {
       toast.error(error.message || 'Error inesperado');
@@ -841,7 +841,7 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
                 <span>Guardando...</span>
               </>
             ) : (
-              <span>Guardar Contacto 🎉</span>
+              <span>Guardar Cumpleaños 🎉</span>
             )}
           </button>
         </div>
@@ -861,7 +861,7 @@ export function ContactForm({ initialData, templates, title = 'Nuevo Contacto', 
                 ¿Salir sin guardar?
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Tienes datos sin guardar en este contacto. Si sales ahora se perderán los cambios introducidos.
+                Tienes datos sin guardar en este cumpleaños. Si sales ahora se perderán los cambios introducidos.
               </p>
             </div>
 

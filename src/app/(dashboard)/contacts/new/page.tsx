@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Nuevo Contacto | AutoBirthday',
+  title: 'Añadir Cumpleaños | AutoBirthday',
 };
 
 async function getUserId() {
@@ -32,7 +32,7 @@ export default async function NewContactPage() {
     <div className="max-w-xl mx-auto">
       <ContactForm 
         templates={templates} 
-        title="Nuevo Contacto"
+        title="Añadir Cumpleaños"
         subtitle="Añade los datos de la persona a felicitar."
       />
     </div>
