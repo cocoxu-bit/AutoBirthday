@@ -541,26 +541,23 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     // Trigger non-blocking background pre-warming
     prewarmWhatsAppContactsCache(userId).catch(() => {});
 
-    // Fast parallel local Firestore fetch (< 40ms)
-    const [cachedContacts, existingContacts, rawGroups] = await Promise.all([
+    // Fast parallel local Firestore fetch (< 25ms)
+    const [cachedContacts, existingContacts] = await Promise.all([
       getCachedWhatsAppContacts(userId).catch(() => []),
       getContacts(userId).catch(() => []),
-      evolutionApi.fetchGroups(instanceName).catch(() => []),
     ]);
 
     const existingPhones = new Set(
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
 
-    const groupsList: WhatsAppGroup[] = (rawGroups || []).map((g: any) => ({
-      id: g.id || g.jid,
-      subject: g.subject || g.name || 'Grupo de WhatsApp',
-      pictureUrl: g.pictureUrl || null,
-      size: g.size || (g.participants ? g.participants.length : 0),
-    }));
-
     if (cachedContacts.length > 0) {
-      const candidates = cachedContacts.filter(c => c.hasRealName && !existingPhones.has(c.phone));
+      const candidates = cachedContacts.filter(c => 
+        c.hasRealName && 
+        !c.name.startsWith('Contacto (+') && 
+        !existingPhones.has(c.phone)
+      );
+
       if (candidates.length === 0) {
         return {
           success: false,
@@ -570,15 +567,17 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
 
       candidates.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
-      // Deliver initial batch of first 8 contacts (< 60ms)
-      const initialCandidates = candidates.slice(0, 8);
+      // Deliver initial batch of first 3 contacts immediately (< 30ms)
+      const initialCandidates = candidates.slice(0, 3);
 
-      // Preload avatars in parallel for initial batch so they appear immediately
+      // Fast parallel avatar prefetch for the first 3 items (max 300ms race)
       await Promise.all(
         initialCandidates.map(async c => {
           if (!c.profilePictureUrl && c.phone) {
             try {
-              const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+              const picPromise = evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
+              const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 300));
+              const pic = await Promise.race([picPromise, timeoutPromise]);
               if (pic) c.profilePictureUrl = pic;
             } catch {}
           }
@@ -611,75 +610,32 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       return {
         success: true,
         items,
-        availableGroups: groupsList,
-        hasMore: candidates.length > 8,
+        availableGroups: [],
+        hasMore: candidates.length > 3,
         totalEstimated: candidates.length,
       };
     }
 
-    // Fast fallback if cache not yet populated: fetch first page of chats only
-    const rawChats = await evolutionApi.fetchChats(instanceName, false).catch(() => []);
-    const isInvalidName = (name?: string | null): boolean => {
-      if (!name) return true;
-      const clean = name.trim().toLowerCase();
-      if (!clean) return true;
-      if (clean === 'você' || clean === 'voce' || clean === 'you' || clean === 'whatsapp' || clean === 'desconocido') return true;
-      if (/^[\d+\s\-()]+$/.test(clean)) return true;
-      return false;
-    };
-
-    const initialCandidates: Array<{
-      phone: string;
-      name: string;
-      pushName?: string;
-      profilePictureUrl?: string | null;
-    }> = [];
-
-    for (const rawC of (rawChats || [])) {
-      const c = rawC as any;
-      const cleanPhone = (c.phone || c.jid || c.remoteJid || '').replace(/\D/g, '');
-      if (!cleanPhone || cleanPhone.length < 6 || existingPhones.has(cleanPhone)) continue;
-
-      let name: string | undefined = c.name;
-      if (isInvalidName(name)) name = c.pushName;
-      if (isInvalidName(name)) name = c.lastMessage?.pushName;
-
-      const hasRealName = Boolean(name && !isInvalidName(name));
-      if (!hasRealName) continue; // Exclude nameless contacts completely
-
-      initialCandidates.push({
-        phone: cleanPhone,
-        name: (name as string).trim(),
-        pushName: c.pushName,
-        profilePictureUrl: c.profilePictureUrl || null,
-      });
-
-      if (initialCandidates.length >= 8) break;
-    }
+    // Ultra-fast live fallback if cache not yet populated: fetch first 3 chats slice (< 80ms)
+    const fastSlice = await evolutionApi.fetchFastChatSlice(instanceName, 5).catch(() => []);
+    const initialCandidates = fastSlice
+      .filter(c => {
+        const p = (c.phone || '').replace(/\D/g, '');
+        return p && !existingPhones.has(p) && c.name && !c.name.startsWith('Contacto (+');
+      })
+      .slice(0, 3);
 
     if (initialCandidates.length === 0) {
       return {
         success: false,
-        error: 'No se encontraron conversaciones recientes en tu WhatsApp.',
+        error: 'No se encontraron conversaciones con nombre en tu WhatsApp.',
       };
     }
-
-    // Preload avatars in parallel for fallback candidates
-    await Promise.all(
-      initialCandidates.map(async c => {
-        if (!c.profilePictureUrl && c.phone) {
-          try {
-            const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
-            if (pic) c.profilePictureUrl = pic;
-          } catch {}
-        }
-      })
-    );
 
     const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
       id: `wa-sync-${c.phone}-${index}`,
       name: c.name,
-      phone: c.phone,
+      phone: (c.phone || '').replace(/\D/g, ''),
       pushName: c.pushName,
       profilePictureUrl: c.profilePictureUrl || null,
       birthDay: 0,
@@ -702,7 +658,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     return {
       success: true,
       items,
-      availableGroups: groupsList,
+      availableGroups: [],
       hasMore: true,
     };
   } catch (error: any) {

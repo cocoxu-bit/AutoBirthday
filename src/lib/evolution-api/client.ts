@@ -247,6 +247,42 @@ class EvolutionAPIClient {
     }
   }
 
+  async fetchFastChatSlice(instanceName: string, limit = 5): Promise<WhatsAppChatContact[]> {
+    try {
+      const chats = await this.request<any[]>(`/chat/findChats/${instanceName}`, {
+        method: 'POST',
+        body: JSON.stringify({ where: {} }),
+      }).catch(() => []);
+
+      const contacts: WhatsAppChatContact[] = [];
+      const seen = new Set<string>();
+
+      for (const chat of (chats || [])) {
+        const jid = chat.remoteJid || chat.id;
+        if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
+        const phone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!phone || phone.length < 6 || seen.has(phone)) continue;
+
+        const bestName = extractBestContactName(chat);
+        if (!bestName) continue;
+
+        seen.add(phone);
+        contacts.push({
+          jid,
+          phone: `+${phone}`,
+          name: bestName,
+          pushName: chat.pushName || bestName,
+          profilePictureUrl: chat.profilePictureUrl || chat.profilePicUrl || null,
+        });
+
+        if (contacts.length >= limit) break;
+      }
+      return contacts;
+    } catch {
+      return [];
+    }
+  }
+
   async fetchChats(instanceName: string, forceRefresh = false): Promise<WhatsAppChatContact[]> {
     const cached = this.contactsCache.get(instanceName);
     if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
