@@ -552,10 +552,14 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     );
 
     if (cachedContacts.length > 0) {
+      const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
+      const cutoff = Date.now() - EIGHTEEN_MONTHS;
+
       const candidates = cachedContacts.filter(c => 
         c.hasRealName && 
         !c.name.startsWith('Contacto (+') && 
-        !existingPhones.has(c.phone)
+        !existingPhones.has(c.phone) &&
+        c.lastActivity > cutoff
       );
 
       if (candidates.length === 0) {
@@ -567,22 +571,8 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
 
       candidates.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
-      // Deliver initial batch of first 3 contacts immediately (< 30ms)
+      // Deliver initial batch of first 3 contacts — NO avatar prefetch, truly instant
       const initialCandidates = candidates.slice(0, 3);
-
-      // Fast parallel avatar prefetch for the first 3 items (max 300ms race)
-      await Promise.all(
-        initialCandidates.map(async c => {
-          if (!c.profilePictureUrl && c.phone) {
-            try {
-              const picPromise = evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
-              const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 300));
-              const pic = await Promise.race([picPromise, timeoutPromise]);
-              if (pic) c.profilePictureUrl = pic;
-            } catch {}
-          }
-        })
-      );
 
       const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
         id: `wa-sync-${c.phone}-${index}`,
@@ -684,7 +674,6 @@ export async function getWhatsAppChunkedContactsForSyncAction(
 }> {
   try {
     const userId = await getAuthenticatedUserId();
-    const instanceName = `autocumple-${userId}`;
 
     const { getContacts } = await import('@/lib/firebase/firestore');
     const { getCachedWhatsAppContacts } = await import('@/lib/whatsapp/sync-cache');
@@ -697,13 +686,17 @@ export async function getWhatsAppChunkedContactsForSyncAction(
     // Read ONLY from Firestore cache — no VPS calls, instant (<30ms)
     const cached = await getCachedWhatsAppContacts(userId).catch(() => []);
 
-    // Strict filtering: only named contacts, exclude "Contacto (+..." 
+    const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - EIGHTEEN_MONTHS;
+
+    // Strict filtering: only named contacts, active in last 18 months, exclude "Contacto (+..."
     const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
       if (!p || loadedSet.has(p)) return false;
       if (!c.hasRealName) return false;
       if (c.name.startsWith('Contacto (+') || c.name.startsWith('Contacto(+')) return false;
       if (/^\+?\d[\d\s\-()]+$/.test(c.name.trim())) return false;
+      if (!c.lastActivity || c.lastActivity < cutoff) return false;
       return true;
     });
 
@@ -711,25 +704,11 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       return { success: true, items: [], availableGroups: [], hasMore: false, totalEstimated: 0 };
     }
 
-    // Sort PURELY by most recent conversation — no hasRealName priority trick
+    // Sort PURELY by most recent conversation timestamp descending
     remaining.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
     // Take next chunk (offset is ignored since we filter by alreadyLoadedPhones)
     const chunkSlice = remaining.slice(0, limit);
-
-    // Fast parallel avatar prefetch for first 4 items only (max 500ms race)
-    await Promise.all(
-      chunkSlice.slice(0, 4).map(async c => {
-        if (!c.profilePictureUrl && c.phone) {
-          try {
-            const picPromise = evolutionApi.fetchProfilePictureUrl(instanceName, c.phone);
-            const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 500));
-            const pic = await Promise.race([picPromise, timeoutPromise]);
-            if (pic) c.profilePictureUrl = pic;
-          } catch {}
-        }
-      })
-    );
 
     const items: WhatsAppSyncItem[] = chunkSlice.map((c, index) => ({
       id: `wa-sync-${c.phone}-chunk-${index}`,
@@ -789,13 +768,17 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     // Read ONLY from Firestore cache — no VPS calls
     const cached = await getCachedWhatsAppContacts(userId).catch(() => []);
 
-    // Strict filtering: only named contacts
+    const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - EIGHTEEN_MONTHS;
+
+    // Strict filtering: only named contacts with activity in last 18 months
     const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
       if (!p || loadedSet.has(p)) return false;
       if (!c.hasRealName) return false;
       if (c.name.startsWith('Contacto (+') || c.name.startsWith('Contacto(+')) return false;
       if (/^\+?\d[\d\s\-()]+$/.test(c.name.trim())) return false;
+      if (!c.lastActivity || c.lastActivity < cutoff) return false;
       return true;
     });
 

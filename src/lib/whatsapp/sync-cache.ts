@@ -19,41 +19,60 @@ const isInvalidName = (name?: string | null): boolean => {
   const clean = name.trim().toLowerCase();
   if (!clean) return true;
   if (clean === 'você' || clean === 'voce' || clean === 'you') return true;
-  if (clean === 'whatsapp' || clean === 'desconocido') return true;
+  if (clean === 'whatsapp' || clean === 'desconocido' || clean === 'unknown') return true;
   if (/^[\d+\s\-()]+$/.test(clean)) return true;
+  if (clean.startsWith('contacto (+') || clean.startsWith('contacto(+')) return true;
   return false;
 };
 
-function extractRealChatTimestamp(chat: any): number {
+/**
+ * Extract ONLY the real WhatsApp message timestamp from a chat object.
+ * STRICTLY avoids VPS database timestamps (updatedAt, timestamp, etc.)
+ * Only trusts: lastMessage.messageTimestamp, conversationTimestamp
+ */
+function extractRealMessageTimestamp(chat: any): number {
   if (!chat) return 0;
   let best = 0;
-  const candidates = [
+
+  // ONLY these two fields are real WhatsApp message timestamps from Baileys
+  const trustedSources = [
     chat.lastMessage?.messageTimestamp,
     chat.conversationTimestamp,
-    chat.lastMessage?.message?.messageTimestamp,
-    chat.timestamp,
-    chat.lastMessageTimestamp,
-    chat.lastActivity,
   ];
-  for (const raw of candidates) {
+
+  for (const raw of trustedSources) {
     if (!raw) continue;
     let num = typeof raw === 'number' ? raw : Number(raw);
-    if (!isNaN(num) && num > 0) {
-      if (num < 1e12 && num > 1e8) num = num * 1000;
-      if (num <= Date.now() + 86400000 && num > best) best = num;
+    if (isNaN(num) || num <= 0) continue;
+
+    // Baileys sends timestamps in Unix SECONDS — convert to milliseconds
+    if (num > 1e8 && num < 1e12) {
+      num = num * 1000;
+    }
+
+    // Sanity check: must be a reasonable date (after 2015, before tomorrow)
+    const YEAR_2015 = 1420070400000;
+    const TOMORROW = Date.now() + 86400000;
+    if (num >= YEAR_2015 && num <= TOMORROW && num > best) {
+      best = num;
     }
   }
+
   return best;
 }
 
+// 18 months cutoff in milliseconds
+const EIGHTEEN_MONTHS_MS = 18 * 30 * 24 * 60 * 60 * 1000;
+
 /**
- * Pre-warms and caches WhatsApp contacts, pushNames, and HD profile photos
- * directly in Firestore right when the user connects their WhatsApp account.
- */
-/**
- * Pre-warms and caches WhatsApp contacts in two intelligent stages:
- * Stage 1: Ultra-fast top 10 chats written to Firestore in <500ms.
- * Stage 2: Comprehensive background sync with group participants and HD photos.
+ * Pre-warms and caches WhatsApp contacts in Firestore.
+ * 
+ * KEY DESIGN DECISIONS:
+ * 1. WIPE entire cache on each run to avoid stale data accumulation
+ * 2. Only cache contacts with real names (no "Contacto (+XXXX)")
+ * 3. Only cache contacts with recent activity (< 18 months)
+ * 4. Sort purely by most recent message timestamp
+ * 5. Only trust lastMessage.messageTimestamp and conversationTimestamp
  */
 export async function prewarmWhatsAppContactsCache(userId: string): Promise<void> {
   const instanceName = `autocumple-${userId}`;
@@ -66,94 +85,30 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
-    // CLEANUP: Delete stale "Contacto (+..." entries from previous runs
+    // STEP 0: WIPE entire old cache to prevent stale data accumulation
+    // This ensures no zombie entries with wrong timestamps persist
     try {
-      const staleSnap = await collectionRef.get();
-      if (!staleSnap.empty) {
-        const staleDocs = staleSnap.docs.filter(doc => {
-          const data = doc.data();
-          return !data.hasRealName || 
-                 (data.name && (data.name.startsWith('Contacto (+') || data.name.startsWith('Contacto(+'))) ||
-                 (data.name && /^\+?\d[\d\s\-()]+$/.test(data.name.trim()));
-        });
-        if (staleDocs.length > 0) {
-          const cleanBatch = adminDb.batch();
-          staleDocs.forEach(doc => cleanBatch.delete(doc.ref));
-          await cleanBatch.commit();
+      const oldSnap = await collectionRef.get();
+      if (!oldSnap.empty) {
+        const BATCH_LIMIT = 450;
+        const docs = oldSnap.docs;
+        for (let i = 0; i < docs.length; i += BATCH_LIMIT) {
+          const chunk = docs.slice(i, i + BATCH_LIMIT);
+          const delBatch = adminDb.batch();
+          chunk.forEach(doc => delBatch.delete(doc.ref));
+          await delBatch.commit();
         }
       }
     } catch {}
 
-    // -------------------------------------------------------------
-    // STAGE 1: IMMEDIATE FAST PRE-WARM (Top 10 chats in < 500ms with HD Photos)
-    // -------------------------------------------------------------
-    const fastChats = await evolutionApi.fetchChats(instanceName, false).catch(() => []);
-    if (fastChats && fastChats.length > 0) {
-      const topItems = fastChats.slice(0, 10);
-      
-      // Parallel avatar resolution for top chats
-      await Promise.all(
-        topItems.map(async (rawC: any) => {
-          const cleanPhone = (rawC.phone || rawC.jid || rawC.remoteJid || '').replace(/\D/g, '');
-          if (cleanPhone && !rawC.profilePictureUrl) {
-            try {
-              const pic = await evolutionApi.fetchProfilePictureUrl(instanceName, cleanPhone);
-              if (pic) rawC.profilePictureUrl = pic;
-            } catch {}
-          }
-        })
-      );
-
-      const topBatch = adminDb.batch();
-      let topCount = 0;
-
-      for (const rawC of topItems) {
-        const c = rawC as any;
-        const cleanPhone = (c.phone || c.jid || c.remoteJid || '').replace(/\D/g, '');
-        if (!cleanPhone || cleanPhone.length < 6) continue;
-
-        let name: string | undefined = c.name;
-        if (isInvalidName(name)) name = c.pushName;
-        if (isInvalidName(name)) name = c.lastMessage?.pushName;
-
-        const hasRealName = Boolean(name && !isInvalidName(name));
-        
-        // SKIP nameless contacts — never write "Contacto (+XXXX)" to cache
-        if (!hasRealName) continue;
-        
-        const displayName = (name as string).trim();
-        const time = extractRealChatTimestamp(c);
-
-        const docRef = collectionRef.doc(cleanPhone);
-        topBatch.set(docRef, {
-          phone: cleanPhone,
-          name: displayName,
-          pushName: c.pushName && !isInvalidName(c.pushName) ? c.pushName : undefined,
-          profilePictureUrl: c.profilePictureUrl || null,
-          hasRealName: true,
-          source: 'chat',
-          lastActivity: time,
-          updatedAt: Timestamp.now(),
-        }, { merge: true });
-
-        topCount++;
-      }
-
-      if (topCount > 0) {
-        await topBatch.commit();
-      }
-    }
-
-    // -------------------------------------------------------------
-    // STAGE 2: DEEP BACKGROUND DISCOVERY (Messages, Groups, HD Photos)
-    // -------------------------------------------------------------
+    // STEP 1: Fetch all data from Evolution API in parallel
     const [rawChats, rawGroups, rawMessages] = await Promise.all([
       evolutionApi.fetchChats(instanceName, true).catch(() => []),
       evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
       evolutionApi.fetchMessagesBatch(instanceName, 5).catch(() => []),
     ]);
 
-    // 1. Build pushName resolution map from message history
+    // Build name resolution map from message history
     const nameMap = new Map<string, string>();
     for (const m of (rawMessages || [])) {
       const sender = m.key?.participant || (!m.key?.fromMe ? m.key?.remoteJid : '') || '';
@@ -167,27 +122,49 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       }
     }
 
-    // 2. Build candidate contacts pool — ONLY contacts with real names
+    // Enrich nameMap from group participant metadata
+    for (const g of (rawGroups || [])) {
+      for (const p of (g.participants || [])) {
+        const rawPhone = p.phoneNumber || p.id || '';
+        const phone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!phone || phone.length < 6 || nameMap.has(phone)) continue;
+
+        // Try pushName, notify, name from group participant
+        const pName = p.pushName || p.notify || p.name;
+        if (pName && !isInvalidName(pName)) {
+          nameMap.set(phone, pName.trim());
+        }
+      }
+    }
+
+    // STEP 2: Build contacts from 1-on-1 chats ONLY
+    const activityCutoff = Date.now() - EIGHTEEN_MONTHS_MS;
     const contactMap = new Map<string, Omit<CachedWhatsAppContact, 'updatedAt'>>();
 
-    // A. 1-on-1 chats
     for (const rawC of (rawChats || [])) {
       const c = rawC as any;
-      const cleanPhone = (c.phone || c.jid || c.remoteJid || '').replace(/\D/g, '');
+      const jid = c.jid || c.remoteJid || c.id || '';
+      if (!jid.endsWith('@s.whatsapp.net')) continue;
+
+      const cleanPhone = jid.replace(/@.*$/, '').replace(/\D/g, '');
       if (!cleanPhone || cleanPhone.length < 6) continue;
 
+      // Extract REAL message timestamp (strict — no VPS database timestamps)
+      const time = extractRealMessageTimestamp(c);
+
+      // SKIP contacts with no recent activity (older than 18 months or timestamp = 0)
+      if (time === 0 || time < activityCutoff) continue;
+
+      // Resolve name from multiple sources
       let name: string | undefined = c.name;
       if (isInvalidName(name)) name = c.pushName;
       if (isInvalidName(name)) name = c.lastMessage?.pushName;
       if (isInvalidName(name)) name = nameMap.get(cleanPhone);
 
-      const hasRealName = Boolean(name && !isInvalidName(name));
-      
-      // SKIP nameless contacts — never write "Contacto (+XXXX)" to cache
-      if (!hasRealName) continue;
-      
+      // SKIP nameless contacts entirely
+      if (isInvalidName(name)) continue;
+
       const displayName = (name as string).trim();
-      const time = extractRealChatTimestamp(c);
 
       contactMap.set(cleanPhone, {
         phone: cleanPhone,
@@ -200,38 +177,18 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       });
     }
 
-    // B. Group participants — only add if they have a resolved name AND an existing chat
-    for (const g of (rawGroups || [])) {
-      for (const p of (g.participants || [])) {
-        const rawPhone = p.phoneNumber || p.id || '';
-        const cleanPhone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
-        if (!cleanPhone || cleanPhone.length < 6) continue;
-
-        const resolvedName = nameMap.get(cleanPhone);
-        if (contactMap.has(cleanPhone)) {
-          // Upgrade existing chat entry name if needed
-          const existing = contactMap.get(cleanPhone)!;
-          if (!existing.hasRealName && resolvedName) {
-            existing.name = resolvedName;
-            existing.hasRealName = true;
-          }
-        }
-        // NOTE: Do NOT add group-only participants (no chat = no lastActivity = wrong order)
-      }
-    }
-
     const allCandidates = Array.from(contactMap.values());
     if (allCandidates.length === 0) return;
 
-    // Sort PURELY by most recent conversation timestamp — no hasRealName priority
+    // Sort purely by most recent conversation
     allCandidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
-    // 3. Batch fetch real profile photos in chunks of 10
-    const photosToFetch = allCandidates.slice(0, 100);
-    const CHUNK_SIZE = 10;
-    
-    for (let i = 0; i < photosToFetch.length; i += CHUNK_SIZE) {
-      const chunk = photosToFetch.slice(i, i + CHUNK_SIZE);
+    // STEP 3: Fetch profile photos for top 80 contacts
+    const photosToFetch = allCandidates.slice(0, 80);
+    const PHOTO_CHUNK = 10;
+
+    for (let i = 0; i < photosToFetch.length; i += PHOTO_CHUNK) {
+      const chunk = photosToFetch.slice(i, i + PHOTO_CHUNK);
       await Promise.all(chunk.map(async c => {
         if (!c.profilePictureUrl) {
           try {
@@ -242,7 +199,7 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       }));
     }
 
-    // 4. Batch write to Firestore cache in chunks of 450 (Firestore limit is 500)
+    // STEP 4: Write to Firestore in batches
     const BATCH_LIMIT = 450;
     for (let i = 0; i < allCandidates.length; i += BATCH_LIMIT) {
       const batchChunk = allCandidates.slice(i, i + BATCH_LIMIT);
@@ -252,12 +209,12 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
         batch.set(docRef, {
           ...contact,
           updatedAt: Timestamp.now(),
-        }, { merge: true });
+        });
       }
       await batch.commit();
     }
   } catch (err: any) {
-    console.warn(`[SyncCache] Background pre-warm note for user ${userId}:`, err?.message);
+    console.warn(`[SyncCache] Background pre-warm error for user ${userId}:`, err?.message);
   }
 }
 

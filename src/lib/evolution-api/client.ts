@@ -357,19 +357,19 @@ class EvolutionAPIClient {
         const name = resolvedName || phone;
 
         let time = 0;
-        const candidates = [
+        // ONLY trust real Baileys message timestamps, NOT VPS database fields
+        const trustedTimestamps = [
           chat.lastMessage?.messageTimestamp,
           chat.conversationTimestamp,
-          chat.lastMessage?.message?.messageTimestamp,
-          chat.timestamp,
-          chat.lastMessageTimestamp,
         ];
-        for (const raw of candidates) {
+        for (const raw of trustedTimestamps) {
           if (!raw) continue;
           let num = typeof raw === 'number' ? raw : Number(raw);
           if (!isNaN(num) && num > 0) {
-            if (num < 1e12 && num > 1e8) num = num * 1000;
-            if (num <= Date.now() + 86400000 && num > time) time = num;
+            // Baileys sends Unix SECONDS — convert to ms
+            if (num > 1e8 && num < 1e12) num = num * 1000;
+            const YEAR_2015 = 1420070400000;
+            if (num >= YEAR_2015 && num <= Date.now() + 86400000 && num > time) time = num;
           }
         }
 
