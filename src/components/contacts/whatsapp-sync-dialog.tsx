@@ -565,8 +565,12 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                         </div>
                       </button>
                     ) : (
-                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-3xl shadow-md border-4 border-white ring-2 ring-emerald-100">
-                        {currentCard.name ? currentCard.name.slice(0, 2).toUpperCase() : (currentCard.phone.slice(-2) || 'WA')}
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 text-white flex items-center justify-center font-black text-2xl shadow-md border-4 border-white ring-2 ring-slate-100">
+                        {currentCard.name?.trim() ? (
+                          currentCard.name.trim().slice(0, 2).toUpperCase()
+                        ) : (
+                          <User className="w-12 h-12 text-slate-300" />
+                        )}
                       </div>
                     )}
                     <div 
