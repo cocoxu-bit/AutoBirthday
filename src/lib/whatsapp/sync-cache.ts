@@ -66,6 +66,24 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
+    // CLEANUP: Delete stale "Contacto (+..." entries from previous runs
+    try {
+      const staleSnap = await collectionRef.get();
+      if (!staleSnap.empty) {
+        const staleDocs = staleSnap.docs.filter(doc => {
+          const data = doc.data();
+          return !data.hasRealName || 
+                 (data.name && (data.name.startsWith('Contacto (+') || data.name.startsWith('Contacto(+'))) ||
+                 (data.name && /^\+?\d[\d\s\-()]+$/.test(data.name.trim()));
+        });
+        if (staleDocs.length > 0) {
+          const cleanBatch = adminDb.batch();
+          staleDocs.forEach(doc => cleanBatch.delete(doc.ref));
+          await cleanBatch.commit();
+        }
+      }
+    } catch {}
+
     // -------------------------------------------------------------
     // STAGE 1: IMMEDIATE FAST PRE-WARM (Top 10 chats in < 500ms with HD Photos)
     // -------------------------------------------------------------
