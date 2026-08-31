@@ -251,7 +251,7 @@ export async function getCachedWhatsAppContacts(userId: string): Promise<CachedW
 
     const list = snap.docs
       .map(doc => doc.data() as CachedWhatsAppContact)
-      .filter(c => c.hasRealName && !isInvalidName(c.name) && (c.lastActivity || 0) > cutoff);
+      .filter(c => (c.lastActivity || 0) > cutoff);
 
     list.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
     return list;
