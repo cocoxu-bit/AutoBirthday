@@ -882,12 +882,8 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
         };
       }
 
-      // Sort: Named contacts first, then by activity
-      candidates.sort((a, b) => {
-        if (a.hasRealName && !b.hasRealName) return -1;
-        if (!a.hasRealName && b.hasRealName) return 1;
-        return b.lastActivity - a.lastActivity;
-      });
+      // Sort purely by most recent conversation timestamp descending
+      candidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
       const items: WhatsAppSyncItem[] = candidates.map((c, index) => ({
         id: `wa-sync-${c.phone}-${index}`,
@@ -983,7 +979,7 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       }
 
       const hasRealName = Boolean(name && !isInvalidName(name));
-      const displayName = hasRealName ? (name as string).trim() : `Contacto (+${cleanPhone.slice(-4)})`;
+      const displayName = hasRealName ? (name as string).trim() : '';
       const time = c.lastMessage?.messageTimestamp 
         ? c.lastMessage.messageTimestamp * 1000 
         : (c.updatedAt ? new Date(c.updatedAt).getTime() : 0);
@@ -1005,7 +1001,7 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       for (const p of (g.participants || [])) {
         const rawPhone = p.phoneNumber || p.id || '';
         const cleanPhone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
-        if (!cleanPhone || cleanPhone.length < 6 || existingPhones.has(cleanPhone)) continue;
+        if (!cleanPhone || cleanPhone.length < 5 || existingPhones.has(cleanPhone)) continue;
 
         const resolvedName = nameMap.get(cleanPhone);
 
@@ -1045,12 +1041,8 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       };
     }
 
-    // Sort: Contacts with identified real names first, then by most recent activity timestamp
-    allCandidates.sort((a, b) => {
-      if (a.hasRealName && !b.hasRealName) return -1;
-      if (!a.hasRealName && b.hasRealName) return 1;
-      return b.lastActivity - a.lastActivity;
-    });
+    // Sort purely by most recent activity timestamp
+    allCandidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
     // Prefetch real WhatsApp profile picture URLs in parallel for the first 60 contacts
     const firstBatchSize = Math.min(60, allCandidates.length);

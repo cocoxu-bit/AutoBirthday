@@ -91,6 +91,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   // Scroll Container Ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const birthdayRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Review Deck State
   const [cards, setCards] = useState<WhatsAppSyncItem[]>([]);
@@ -100,6 +101,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   const [skippedCount, setSkippedCount] = useState(0);
   const [isSavingCurrent, setIsSavingCurrent] = useState(false);
   const [birthdayError, setBirthdayError] = useState(false);
+  const [nameError, setNameError] = useState(false);
   const [isBackgroundSyncing, setIsBackgroundSyncing] = useState(false);
 
   // Enlarged photo modal state
@@ -118,6 +120,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setBirthdayError(false);
+    setNameError(false);
   }, [currentIndex, step]);
 
   // On-demand photo prefetching for current card and upcoming cards
@@ -292,6 +295,18 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   // Save current card and advance
   const handleSaveAndNext = async () => {
     if (!currentCard) return;
+
+    if (!currentCard.name || !currentCard.name.trim()) {
+      setNameError(true);
+      toast.error('Por favor, indica el nombre del contacto para guardarlo.', {
+        duration: 3000,
+      });
+      if (nameInputRef.current) {
+        nameInputRef.current.focus();
+        nameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
 
     if (!currentCard.birthDay || !currentCard.birthMonth || currentCard.birthDay <= 0 || currentCard.birthMonth <= 0) {
       setBirthdayError(true);
@@ -536,13 +551,13 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     {activeAvatar ? (
                       <button
                         type="button"
-                        onClick={() => setEnlargedPhoto({ url: activeAvatar, name: currentCard.name })}
+                        onClick={() => setEnlargedPhoto({ url: activeAvatar, name: currentCard.name || 'Foto de WhatsApp' })}
                         className="relative block rounded-full focus:outline-none focus:ring-4 focus:ring-emerald-500/30 transition-transform active:scale-95 cursor-zoom-in"
                         title="Toca para ampliar foto"
                       >
                         <img 
                           src={activeAvatar} 
-                          alt={currentCard.name} 
+                          alt={currentCard.name || 'Contacto de WhatsApp'} 
                           className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-md border-4 border-white ring-2 ring-emerald-100 group-hover:ring-emerald-400 group-hover:brightness-95 transition-all" 
                         />
                         <div className="absolute inset-0 rounded-full bg-slate-950/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
@@ -551,7 +566,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       </button>
                     ) : (
                       <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-3xl shadow-md border-4 border-white ring-2 ring-emerald-100">
-                        {currentCard.name.slice(0, 2).toUpperCase()}
+                        {currentCard.name ? currentCard.name.slice(0, 2).toUpperCase() : (currentCard.phone.slice(-2) || 'WA')}
                       </div>
                     )}
                     <div 
@@ -562,17 +577,35 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     </div>
                   </div>
 
-                  {/* Editable Contact Name Input with pencil on right */}
-                  <div className="mt-3 relative w-full max-w-xs mx-auto group">
-                    <input
-                      type="text"
-                      value={currentCard.name}
-                      onChange={e => updateCurrentCard({ name: e.target.value })}
-                      placeholder="Nombre del contacto"
-                      className="w-full text-center text-xl sm:text-2xl font-black text-slate-900 tracking-tight bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded-2xl py-1 pl-6 pr-7 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-text"
-                      title="Editar nombre"
-                    />
-                    <Edit3 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors pointer-events-none" />
+                  {/* Editable Contact Name Input */}
+                  <div className="mt-3.5 relative w-full max-w-sm mx-auto space-y-1">
+                    <div className="relative group">
+                      <input
+                        ref={nameInputRef}
+                        type="text"
+                        value={currentCard.name}
+                        onChange={e => {
+                          setNameError(false);
+                          updateCurrentCard({ name: e.target.value });
+                        }}
+                        placeholder="Escribe su nombre (ej. Enrique Tatay)"
+                        className={`w-full text-center text-lg sm:text-xl font-black text-slate-900 tracking-tight transition-all rounded-2xl py-2 px-4 focus:outline-none ${
+                          !currentCard.name?.trim()
+                            ? 'bg-amber-50/90 border-2 border-dashed border-amber-400 focus:border-emerald-500 focus:bg-white placeholder:text-amber-700/60 shadow-2xs'
+                            : 'bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
+                        } ${nameError ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-300' : ''}`}
+                        title="Nombre del contacto"
+                      />
+                      <Edit3 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors pointer-events-none" />
+                    </div>
+                    {!currentCard.name?.trim() && (
+                      <p className="text-[11px] font-bold text-amber-700 animate-pulse">
+                        ✍️ Escribe el nombre de este contacto para guardarlo
+                      </p>
+                    )}
+                    <span className="text-[11px] font-bold text-slate-400 block font-mono">
+                      {currentCard.phone.startsWith('34') ? `+34 ${currentCard.phone.slice(2)}` : `+${currentCard.phone}`}
+                    </span>
                   </div>
                 </div>
 

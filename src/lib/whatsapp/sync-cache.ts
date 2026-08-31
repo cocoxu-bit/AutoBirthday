@@ -134,10 +134,12 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       const rawC = chatList[chatIdx];
       const c = rawC as any;
       const jid = c.jid || c.remoteJid || c.id || '';
-      if (!jid.endsWith('@s.whatsapp.net')) continue;
+      
+      // Ignore group chats, broadcast channels and official WhatsApp newsletters
+      if (jid.endsWith('@g.us') || jid.endsWith('@newsletter') || jid.startsWith('0@')) continue;
 
       const cleanPhone = jid.replace(/@.*$/, '').replace(/\D/g, '');
-      if (!cleanPhone || cleanPhone.length < 6) continue;
+      if (!cleanPhone || cleanPhone.length < 5) continue;
 
       // Extract REAL message timestamp with cascade fallback
       const time = extractRealMessageTimestamp(c, chatIdx);
@@ -145,23 +147,21 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       // SKIP contacts with no activity in the last 18 months
       if (time === 0 || time < activityCutoff) continue;
 
-      // Resolve best name across all sources
+      // Resolve best name across all available sources
       let name: string | undefined = c.name;
       if (isInvalidName(name)) name = c.pushName;
       if (isInvalidName(name)) name = c.lastMessage?.pushName;
       if (isInvalidName(name)) name = nameMap.get(cleanPhone);
 
-      // SKIP nameless contacts entirely
-      if (isInvalidName(name)) continue;
-
-      const displayName = (name as string).trim();
+      const hasRealName = !isInvalidName(name);
+      const displayName = hasRealName ? (name as string).trim() : '';
 
       contactMap.set(cleanPhone, {
         phone: cleanPhone,
         name: displayName,
-        pushName: c.pushName && !isInvalidName(c.pushName) ? c.pushName : nameMap.get(cleanPhone),
+        pushName: hasRealName ? (c.pushName || displayName) : undefined,
         profilePictureUrl: c.profilePictureUrl || null,
-        hasRealName: true,
+        hasRealName,
         source: 'chat',
         lastActivity: time,
         syncTime: syncStartTime,
@@ -205,15 +205,12 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       await batch.commit();
     }
 
-    // STEP 5: Post-Sync Cleanup: Prune documents that were not updated in this sync run or older than 18 months
+    // STEP 5: Post-Sync Cleanup: Prune documents older than 18 months or from previous removed chats
     try {
       const existingSnap = await collectionRef.get();
       const staleDocs = existingSnap.docs.filter(doc => {
         const data = doc.data() as CachedWhatsAppContact;
         return (
-          !data.hasRealName ||
-          (data.name && (data.name.startsWith('Contacto (+') || data.name.startsWith('Contacto(+'))) ||
-          (data.name && /^\+?\d[\d\s\-()]+$/.test(data.name.trim())) ||
           (data.lastActivity && data.lastActivity < activityCutoff) ||
           (data.syncTime && data.syncTime < syncStartTime)
         );
@@ -222,9 +219,11 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       if (staleDocs.length > 0) {
         for (let i = 0; i < staleDocs.length; i += BATCH_LIMIT) {
           const chunk = staleDocs.slice(i, i + BATCH_LIMIT);
-          const delBatch = adminDb.batch();
-          chunk.forEach(d => delBatch.delete(d.ref));
-          await delBatch.commit();
+          const cleanupBatch = adminDb.batch();
+          for (const doc of chunk) {
+            cleanupBatch.delete(doc.ref);
+          }
+          await cleanupBatch.commit();
         }
       }
     } catch (cleanupErr: any) {
