@@ -11,7 +11,7 @@ import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-
 import { ConnectionStatusCard } from "@/components/dashboard/connection-status-card";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
-import { Smartphone, UserPlus, FileText, Sparkles, Cake, Gift } from "lucide-react";
+import { Smartphone, UserPlus, FileText, Sparkles, Cake, Gift, ArrowRight } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -206,47 +206,6 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Welcome Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/70 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-white/60 shadow-sm">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100/80 text-violet-700 text-xs font-bold mb-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Panel Inteligente</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            ¡Hola, {data?.displayName || 'Bienvenido'}! 👋
-          </h1>
-          <p className="text-slate-500 capitalize text-xs font-semibold mt-0.5">{currentDate}</p>
-        </div>
-
-        {/* Quick Action Buttons - SINGLE COMPACT LINE */}
-        <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
-          <Link
-            href="/contacts/new"
-            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-2.5 rounded-xl bg-violet-600 text-white text-[11px] sm:text-xs font-bold hover:bg-violet-700 transition-all shadow-sm shadow-violet-500/20 truncate"
-          >
-            <UserPlus className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Añadir Contacto</span>
-          </Link>
-
-          <Link
-            href="/wishes"
-            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-[11px] sm:text-xs font-bold hover:bg-slate-50 transition-all shadow-sm truncate"
-          >
-            <Gift className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-            <span className="truncate">Felicitaciones</span>
-          </Link>
-
-          <Link
-            href="/templates/new"
-            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-[11px] sm:text-xs font-bold hover:bg-slate-50 transition-all shadow-sm truncate"
-          >
-            <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-            <span className="truncate">Nueva Plantilla</span>
-          </Link>
-        </div>
-      </div>
-
       {/* Revolut / Airbnb Style Onboarding Checklist */}
       <OnboardingChecklist
         isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
@@ -265,18 +224,92 @@ export default async function DashboardPage() {
         initialStatus={data?.isWhatsAppConnected ? 'connected' : 'disconnected'} 
       />
 
-      {/* Stats Cards */}
-      <StatsCards 
-        stats={data?.stats || {
-          activeContacts: 0,
-          sentTotal: 0,
-          pendingApproval: 0,
-          nextBirthdayDays: null,
-        }} 
-      />
+      {/* Top Section: 2x2 Stats Grid + 3 Big Stacked Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Left Column: 2x2 Stats Cards (6 cols on desktop) */}
+        <div className="lg:col-span-6 flex flex-col justify-between">
+          <StatsCards 
+            stats={data?.stats || {
+              activeContacts: 0,
+              sentTotal: 0,
+              pendingApproval: 0,
+              nextBirthdayDays: null,
+            }} 
+          />
+        </div>
+
+        {/* Right Column: 3 Big Stacked Actions (6 cols on desktop) */}
+        <div className="lg:col-span-6 flex flex-col gap-3 justify-between">
+          <Link
+            href="/contacts/new"
+            className="group flex items-center justify-between p-3.5 sm:p-4 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-violet-300 shadow-xs hover:shadow-md transition-all duration-200"
+          >
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-violet-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors truncate">
+                  Añadir Contacto
+                </h4>
+                <p className="text-xs text-slate-500 font-medium truncate">
+                  Crea un nuevo contacto con su fecha de cumpleaños
+                </p>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-violet-100 text-slate-400 group-hover:text-violet-700 flex items-center justify-center shrink-0 transition-colors ml-2">
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+
+          <Link
+            href="/wishes"
+            className="group flex items-center justify-between p-3.5 sm:p-4 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-pink-300 shadow-xs hover:shadow-md transition-all duration-200"
+          >
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-pink-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                <Gift className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-pink-700 transition-colors truncate">
+                  Felicitaciones
+                </h4>
+                <p className="text-xs text-slate-500 font-medium truncate">
+                  Revisa los mensajes programados, pendientes y enviados
+                </p>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-pink-100 text-slate-400 group-hover:text-pink-700 flex items-center justify-center shrink-0 transition-colors ml-2">
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+
+          <Link
+            href="/templates"
+            className="group flex items-center justify-between p-3.5 sm:p-4 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-indigo-300 shadow-xs hover:shadow-md transition-all duration-200"
+          >
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-700 transition-colors truncate">
+                  Plantillas de Mensajes
+                </h4>
+                <p className="text-xs text-slate-500 font-medium truncate">
+                  Crea estilos automáticos con IA o mensajes fijos
+                </p>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-indigo-100 text-slate-400 group-hover:text-indigo-700 flex items-center justify-center shrink-0 transition-colors ml-2">
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+        </div>
+      </div>
 
       {/* Main Grid: Upcoming Birthdays + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <UpcomingBirthdays birthdays={data?.upcomingList || []} />
         <RecentActivity activity={data?.activityList || []} />
       </div>
