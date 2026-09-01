@@ -925,19 +925,22 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
         }
 
         const nameCandidate = c.name || c.pushName || (c.lastMessage?.fromMe ? null : c.lastMessage?.pushName);
-        if (isInvalidName(nameCandidate)) {
+        const hasValidName = !isInvalidName(nameCandidate);
+        const hasPic = Boolean(c.profilePictureUrl || c.profilePicUrl);
+
+        if (!hasValidName && !hasPic) {
           namelessOrVoceCount++;
           if (sampleExcluded.length < 25) {
-            sampleExcluded.push({ type: 'nameless', name: `+${cleanPhone}`, reason: 'Sin nombre identificable' });
+            sampleExcluded.push({ type: 'nameless', name: `+${cleanPhone}`, reason: 'Sin nombre ni foto' });
           }
           continue;
         }
 
         sampleReady.push({
-          name: (nameCandidate || '').trim(),
+          name: hasValidName ? (nameCandidate || '').trim() : `Contacto con foto (+${cleanPhone})`,
           phone: `+${cleanPhone}`,
           lastActivity: ts > 0 ? new Date(ts).toISOString() : 'Reciente',
-          hasPic: Boolean(c.profilePictureUrl || c.profilePicUrl)
+          hasPic
         });
       }
     }

@@ -559,7 +559,9 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       const candidates = cachedContacts.filter(c => {
         if (existingPhones.has(c.phone)) return false;
         if ((c.lastActivity || 0) <= cutoff) return false;
-        return Boolean(c.name && c.name.trim());
+        const hasName = Boolean(c.name && c.name.trim());
+        const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+        return hasName || hasPic;
       });
 
       if (candidates.length === 0) {

@@ -262,9 +262,9 @@ export async function getCachedWhatsAppContacts(userId: string): Promise<CachedW
       .map(doc => doc.data() as CachedWhatsAppContact)
       .filter(c => {
         if ((c.lastActivity || 0) <= cutoff) return false;
-        // Require a real name — contacts with only a photo but no name
-        // are useless in the sync deck (user can't identify them)
-        return Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
+        const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
+        const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+        return hasName || hasPic;
       });
 
     list.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
