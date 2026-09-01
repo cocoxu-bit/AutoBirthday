@@ -9,6 +9,8 @@ export interface CachedWhatsAppContact {
   profilePictureUrl?: string | null;
   hasRealName: boolean;
   source: 'chat' | 'group_participant';
+  originGroupId?: string;
+  originGroupName?: string;
   groupContext?: string;
   lastActivity: number;
   syncTime?: number;
@@ -105,16 +107,27 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
     // STEP 1: Fetch chats and groups from Evolution API in parallel
-    let rawChats = await evolutionApi.fetchChats(instanceName, true).catch(() => []);
+    let [rawChats, rawAllChats, rawGroups] = await Promise.all([
+      evolutionApi.fetchChats(instanceName, true).catch(() => []),
+      (evolutionApi as any).request(`/chat/findChats/${instanceName}`, {
+        method: 'POST',
+        body: JSON.stringify({ where: {} }),
+      }).catch(() => []),
+      evolutionApi.fetchGroups(instanceName).catch(() => []),
+    ]);
     
     // For newly connected sessions, WhatsApp Baileys streams history over 2-4 seconds.
     // If the initial fetch returned <= 1 chats, wait briefly and retry to catch the streamed history.
     if (rawChats.length <= 1) {
       await new Promise(r => setTimeout(r, 2500));
-      rawChats = await evolutionApi.fetchChats(instanceName, true).catch(() => []);
+      [rawChats, rawAllChats] = await Promise.all([
+        evolutionApi.fetchChats(instanceName, true).catch(() => []),
+        (evolutionApi as any).request(`/chat/findChats/${instanceName}`, {
+          method: 'POST',
+          body: JSON.stringify({ where: {} }),
+        }).catch(() => []),
+      ]);
     }
-
-    const rawGroups = await evolutionApi.fetchGroups(instanceName).catch(() => []);
 
     // Build name resolution map from group participant metadata
     const nameMap = new Map<string, string>();
@@ -169,14 +182,71 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       });
     }
 
+    // STEP 2B: Smart Extraction of Group Participants (Close/Medium groups <= 40 members)
+    const groupChats = (rawAllChats || []).filter((c: any) => {
+      const jid = c.jid || c.remoteJid || c.id || '';
+      return jid.endsWith('@g.us');
+    });
+
+    const topGroups = groupChats.slice(0, 15);
+    const groupDetails = await Promise.all(
+      topGroups.map(async (g: any) => {
+        const jid = g.jid || g.remoteJid || g.id;
+        return evolutionApi.findGroupInfos(instanceName, jid).catch(() => null);
+      })
+    );
+
+    for (const g of groupDetails) {
+      if (!g || g.isCommunity || g.isCommunityAnnounce) continue;
+      const participants = g.participants || [];
+      // Filter out massive announcement groups (>40 members) or empty groups
+      if (participants.length > 40 || participants.length < 2) continue;
+
+      const groupActivity = (g.subjectTime || g.creation || 0) * 1000 || (Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const groupSubject = (g.subject || 'Grupo de WhatsApp').trim();
+
+      for (const p of participants) {
+        const rawPhone = p.phoneNumber || p.id || '';
+        const cleanPhone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!cleanPhone || cleanPhone.length < 6) continue;
+
+        // If already exists from a 1-to-1 direct chat, keep 1-to-1 version (it has true conversation recency)
+        if (contactMap.has(cleanPhone)) continue;
+
+        let pName: string | undefined = p.pushName || p.notify || p.name;
+        if (isInvalidName(pName)) pName = nameMap.get(cleanPhone);
+
+        const hasRealName = !isInvalidName(pName);
+        const displayName = hasRealName ? (pName as string).trim() : '';
+
+        contactMap.set(cleanPhone, {
+          phone: cleanPhone,
+          name: displayName,
+          pushName: hasRealName ? displayName : undefined,
+          profilePictureUrl: null,
+          hasRealName,
+          source: 'group_participant',
+          originGroupId: g.id,
+          originGroupName: groupSubject,
+          groupContext: groupSubject,
+          lastActivity: groupActivity,
+          syncTime: syncStartTime,
+        });
+      }
+    }
+
     const allCandidates = Array.from(contactMap.values());
     if (allCandidates.length === 0) return;
 
-    // Sort purely by most recent conversation timestamp descending
-    allCandidates.sort((a, b) => b.lastActivity - a.lastActivity);
+    // Sort: Direct 1-to-1 chats come first (ordered by lastActivity desc), then group participants (ordered by lastActivity desc)
+    allCandidates.sort((a, b) => {
+      if (a.source === 'chat' && b.source !== 'chat') return -1;
+      if (a.source !== 'chat' && b.source === 'chat') return 1;
+      return b.lastActivity - a.lastActivity;
+    });
 
-    // STEP 3: Parallel profile photos resolution for top 60 contacts
-    const photosToFetch = allCandidates.slice(0, 60);
+    // STEP 3: Parallel profile photos resolution for top 80 contacts
+    const photosToFetch = allCandidates.slice(0, 80);
     const PHOTO_CHUNK = 10;
 
     for (let i = 0; i < photosToFetch.length; i += PHOTO_CHUNK) {

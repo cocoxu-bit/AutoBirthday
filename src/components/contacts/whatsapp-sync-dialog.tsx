@@ -616,6 +616,16 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       <Edit3 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors pointer-events-none" />
                     </div>
                   </div>
+
+                  {/* Origin Group Badge */}
+                  {currentCard.originGroupName && (
+                    <div className="mt-1.5 flex items-center justify-center">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-violet-50 text-violet-700 border border-violet-200/80 shadow-2xs">
+                        <Users className="w-3 h-3 text-violet-500" />
+                        <span>Del grupo: <strong className="font-extrabold">{currentCard.originGroupName}</strong></span>
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-slate-100" />

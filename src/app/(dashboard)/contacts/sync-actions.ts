@@ -522,6 +522,11 @@ export interface WhatsAppSyncItem {
   autoSend: boolean;
   sendTimeStart: string;
   sendTimeEnd: string;
+
+  // Origin info
+  source?: 'chat' | 'group_participant';
+  originGroupId?: string;
+  originGroupName?: string;
 }
 
 export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
@@ -621,28 +626,34 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     // Deliver initial batch of first 3 contacts — truly instant
     const initialCandidates = candidates.slice(0, 3);
 
-    const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
-      id: `wa-sync-${c.phone}-${index}`,
-      name: c.name,
-      phone: c.phone,
-      pushName: c.pushName,
-      profilePictureUrl: c.profilePictureUrl || null,
-      birthDay: 0,
-      birthMonth: 0,
-      birthYear: null,
-      targetType: 'individual',
-      groupId: undefined,
-      groupName: undefined,
-      mentionInGroup: true,
-      mode: 'manual',
-      templateId: undefined,
-      customMessage: undefined,
-      aiTone: 'casual',
-      aiNotes: undefined,
-      autoSend: false,
-      sendTimeStart: '09:00',
-      sendTimeEnd: '11:00',
-    }));
+    const items: WhatsAppSyncItem[] = initialCandidates.map((c: any, index) => {
+      const isGroupOrigin = c.source === 'group_participant' && Boolean(c.originGroupId);
+      return {
+        id: `wa-sync-${c.phone}-${index}`,
+        name: c.name,
+        phone: c.phone,
+        pushName: c.pushName,
+        profilePictureUrl: c.profilePictureUrl || null,
+        birthDay: 0,
+        birthMonth: 0,
+        birthYear: null,
+        targetType: isGroupOrigin ? 'group' : 'individual',
+        groupId: isGroupOrigin ? c.originGroupId : undefined,
+        groupName: isGroupOrigin ? c.originGroupName : undefined,
+        mentionInGroup: true,
+        mode: 'manual',
+        templateId: undefined,
+        customMessage: undefined,
+        aiTone: 'casual',
+        aiNotes: undefined,
+        autoSend: false,
+        sendTimeStart: '09:00',
+        sendTimeEnd: '11:00',
+        source: c.source || 'chat',
+        originGroupId: c.originGroupId,
+        originGroupName: c.originGroupName,
+      };
+    });
 
     return {
       success: true,
@@ -738,34 +749,44 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       return { success: true, items: [], availableGroups: [], hasMore: false, totalEstimated: 0 };
     }
 
-    // Sort PURELY by most recent conversation timestamp descending
-    remaining.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
+    // Sort: direct 1-to-1 chats first, then group participants
+    remaining.sort((a, b) => {
+      if (a.source === 'chat' && b.source !== 'chat') return -1;
+      if (a.source !== 'chat' && b.source === 'chat') return 1;
+      return (b.lastActivity || 0) - (a.lastActivity || 0);
+    });
 
     // Take next chunk (offset is ignored since we filter by alreadyLoadedPhones)
     const chunkSlice = remaining.slice(0, limit);
 
-    const items: WhatsAppSyncItem[] = chunkSlice.map((c, index) => ({
-      id: `wa-sync-${c.phone}-chunk-${index}`,
-      name: c.name,
-      phone: c.phone,
-      pushName: c.pushName,
-      profilePictureUrl: c.profilePictureUrl || null,
-      birthDay: 0,
-      birthMonth: 0,
-      birthYear: null,
-      targetType: 'individual',
-      groupId: undefined,
-      groupName: undefined,
-      mentionInGroup: true,
-      mode: 'manual',
-      templateId: undefined,
-      customMessage: undefined,
-      aiTone: 'casual',
-      aiNotes: undefined,
-      autoSend: false,
-      sendTimeStart: '09:00',
-      sendTimeEnd: '11:00',
-    }));
+    const items: WhatsAppSyncItem[] = chunkSlice.map((c: any, index) => {
+      const isGroupOrigin = c.source === 'group_participant' && Boolean(c.originGroupId);
+      return {
+        id: `wa-sync-${c.phone}-chunk-${index}`,
+        name: c.name,
+        phone: c.phone,
+        pushName: c.pushName,
+        profilePictureUrl: c.profilePictureUrl || null,
+        birthDay: 0,
+        birthMonth: 0,
+        birthYear: null,
+        targetType: isGroupOrigin ? 'group' : 'individual',
+        groupId: isGroupOrigin ? c.originGroupId : undefined,
+        groupName: isGroupOrigin ? c.originGroupName : undefined,
+        mentionInGroup: true,
+        mode: 'manual',
+        templateId: undefined,
+        customMessage: undefined,
+        aiTone: 'casual',
+        aiNotes: undefined,
+        autoSend: false,
+        sendTimeStart: '09:00',
+        sendTimeEnd: '11:00',
+        source: c.source || 'chat',
+        originGroupId: c.originGroupId,
+        originGroupName: c.originGroupName,
+      };
+    });
 
     const waGroups = await evolutionApi.fetchGroups(instanceName).catch(() => []);
 

@@ -806,6 +806,7 @@ export interface AdminWhatsAppDiagnostics {
   olderThan18MonthsCount: number;
   namelessOrVoceCount: number;
   alreadySavedCount: number;
+  groupParticipantsRescuedCount?: number;
   readyToSyncCount: number;
   savedInAgendaCount: number;
   cachedInFirestoreCount: number;
@@ -952,6 +953,23 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
       }
     }
 
+    let groupParticipantsRescuedCount = 0;
+    cachedMap.forEach((c: any) => {
+      if (c.source === 'group_participant' && !existingPhones.has(c.phone)) {
+        groupParticipantsRescuedCount++;
+        const hasValidName = !isInvalidName(c.name);
+        const hasPic = Boolean(c.profilePictureUrl);
+        if (hasValidName || hasPic) {
+          sampleReady.push({
+            name: c.name || `Contacto (+${c.phone})`,
+            phone: `+${c.phone}`,
+            lastActivity: c.originGroupName ? `De: ${c.originGroupName}` : 'Grupo',
+            hasPic,
+          });
+        }
+      }
+    });
+
     sampleReady.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
 
     return {
@@ -971,6 +989,7 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
         olderThan18MonthsCount,
         namelessOrVoceCount,
         alreadySavedCount,
+        groupParticipantsRescuedCount,
         readyToSyncCount: sampleReady.length,
         savedInAgendaCount: existingSnap.size || 0,
         cachedInFirestoreCount: cached.size || 0,

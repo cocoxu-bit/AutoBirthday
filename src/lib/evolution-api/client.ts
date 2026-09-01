@@ -287,6 +287,18 @@ class EvolutionAPIClient {
     }
   }
 
+  async findGroupInfos(instanceName: string, groupJid: string): Promise<any | null> {
+    try {
+      return await this.request<any>(
+        `/group/findGroupInfos/${instanceName}?groupJid=${encodeURIComponent(groupJid)}`,
+        { method: 'GET' },
+        3500
+      );
+    } catch {
+      return null;
+    }
+  }
+
   async fetchFastChatSlice(instanceName: string, limit = 5): Promise<WhatsAppChatContact[]> {
     try {
       const chats = await this.request<any[]>(`/chat/findChats/${instanceName}`, {
