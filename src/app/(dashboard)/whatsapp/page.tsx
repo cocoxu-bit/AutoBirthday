@@ -14,7 +14,8 @@ import {
   Check, 
   ChevronRight, 
   Users, 
-  ArrowRight 
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 import { 
   getConnectionStatus, 
@@ -25,6 +26,7 @@ import {
   sendTestMessage 
 } from './actions';
 import { QRScanner } from '@/components/whatsapp/qr-scanner';
+import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { toast } from 'sonner';
 import { WhatsAppInstanceStatus } from '@/types';
 
@@ -132,6 +134,17 @@ export default function WhatsAppPage() {
     setCopied(true);
     toast.success('¡Código copiado!');
     setTimeout(() => setCopied(false), 3000);
+  };
+
+  const handleOpenWhatsAppAndCopy = () => {
+    if (pairingCode) {
+      navigator.clipboard.writeText(pairingCode);
+      setCopied(true);
+      toast.success('¡Código copiado! Pégalo en WhatsApp > Dispositivos vinculados');
+      setTimeout(() => setCopied(false), 3000);
+    }
+    // Open WhatsApp native application
+    window.location.href = 'whatsapp://';
   };
 
   const handleDisconnect = async () => {
@@ -299,8 +312,8 @@ export default function WhatsAppPage() {
         {status === 'connecting' && pairingCode && (
           <div className="space-y-4 text-center">
             
-            {/* Código */}
-            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-5 rounded-3xl text-white shadow-xl shadow-violet-500/20 space-y-2.5">
+            {/* Código y Botón Directo */}
+            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 p-5 rounded-3xl text-white shadow-xl shadow-violet-500/20 space-y-3.5">
               <p className="text-[11px] font-bold uppercase tracking-wider text-violet-200">
                 Tu Código de Vinculación
               </p>
@@ -311,24 +324,37 @@ export default function WhatsAppPage() {
                 </span>
               </div>
 
-              <div>
+              {/* Botón Principal: Copiar y Abrir WhatsApp en 1 toque */}
+              <div className="space-y-2 pt-1">
                 <button
                   type="button"
-                  onClick={handleCopyCode}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-indigo-700 hover:bg-slate-50 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95"
+                  onClick={handleOpenWhatsAppAndCopy}
+                  className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>¡Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copiar Código</span>
-                    </>
-                  )}
+                  <WhatsAppIcon className="w-5 h-5 text-white shrink-0" size={20} />
+                  <span>Copiar Código y Abrir WhatsApp</span>
+                  <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
                 </button>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 hover:bg-white/25 text-white font-bold text-xs rounded-xl transition-all active:scale-95"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>¡Copiado al portapapeles!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Solo copiar código</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -338,23 +364,29 @@ export default function WhatsAppPage() {
               <span>Esperando que pegues el código en WhatsApp...</span>
             </div>
 
-            {/* 3 Pasos rápidos */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-2">
-              <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Cómo pegarlo en WhatsApp:
-              </p>
-              <ol className="space-y-1.5 text-xs text-slate-600 font-medium">
-                <li className="flex items-start gap-2">
-                  <span className="w-4 h-4 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <span>Abre <strong>WhatsApp</strong> &gt; <strong>Ajustes</strong> &gt; <strong>Dispositivos vinculados</strong>.</span>
+            {/* 3 Pasos rápidos para llegar a Dispositivos Vinculados */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                  Dónde pegarlo al abrir WhatsApp:
+                </p>
+                <span className="text-[10px] bg-violet-100 text-violet-800 font-bold px-2 py-0.5 rounded-full">
+                  Ruta directa
+                </span>
+              </div>
+
+              <ol className="space-y-2 text-xs text-slate-700 font-medium">
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                  <span>En WhatsApp ve a <strong>Ajustes / Configuración</strong> (abajo a la derecha en iPhone, o menú ⋮ arriba en Android).</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="w-4 h-4 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <span>Toca <strong>Vincular dispositivo</strong> y luego abajo en <strong>&ldquo;Vincular con el teléfono&rdquo;</strong>.</span>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                  <span>Toca <strong>Dispositivos vinculados</strong> ➔ <strong>Vincular dispositivo</strong>.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="w-4 h-4 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <span>Pega el código: <strong className="font-mono text-violet-700 font-bold">{pairingCode}</strong>.</span>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                  <span>Toca abajo en <strong>&ldquo;Vincular con el número de teléfono&rdquo;</strong> y pega tu código: <strong className="font-mono text-violet-700 font-bold">{pairingCode}</strong>.</span>
                 </li>
               </ol>
             </div>
