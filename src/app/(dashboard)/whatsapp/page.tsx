@@ -417,12 +417,12 @@ export default function WhatsAppPage() {
         {/* 3. MODO ESPERA: QR */}
         {status === 'connecting' && qrCode && (
           <div className="space-y-4 text-center">
-            <div className="max-w-[220px] mx-auto">
+            <div className="w-full flex items-center justify-center py-1">
               <QRScanner qrCode={qrCode} />
             </div>
 
-            <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 shrink-0" />
+            <div className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold max-w-sm mx-auto">
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
               <span>Apunta la cámara de WhatsApp a este código</span>
             </div>
 
