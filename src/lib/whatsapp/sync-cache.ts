@@ -33,6 +33,12 @@ const isInvalidName = (name?: string | null): boolean => {
  */
 function extractRealMessageTimestamp(chat: any, naturalChatIndex: number = 999): number {
   if (!chat) return 0;
+
+  // 1. If already calculated in fetchChats, preserve the exact timestamp
+  if (typeof chat.lastActivity === 'number' && chat.lastActivity > 0) {
+    return chat.lastActivity;
+  }
+
   let best = 0;
 
   const trustedSources = [
@@ -57,7 +63,15 @@ function extractRealMessageTimestamp(chat: any, naturalChatIndex: number = 999):
     }
   }
 
-  // Cascade fallback: If no explicit message timestamp in memory yet,
+  // 2. Check updatedAt timestamp if available
+  if (best === 0 && chat.updatedAt) {
+    const updatedTime = new Date(chat.updatedAt).getTime();
+    if (!isNaN(updatedTime) && updatedTime > 1420070400000 && updatedTime <= Date.now() + 86400000) {
+      best = updatedTime;
+    }
+  }
+
+  // 3. Cascade fallback: If no explicit message timestamp in memory yet,
   // use the natural chat position from WhatsApp (ordered by recency)
   if (best === 0) {
     best = Date.now() - (naturalChatIndex * 3600 * 1000);
