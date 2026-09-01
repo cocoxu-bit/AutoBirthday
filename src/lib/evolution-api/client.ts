@@ -206,9 +206,21 @@ class EvolutionAPIClient {
       for (const c of (chats || [])) {
         const jid = c.remoteJid || c.id;
         if (jid && jid.includes('@g.us')) {
-          const time = c.lastMessage?.messageTimestamp 
-            ? c.lastMessage.messageTimestamp * 1000 
-            : c.updatedAt ? new Date(c.updatedAt).getTime() : 0;
+          const rawTs = c.lastMessage?.messageTimestamp;
+          let time = 0;
+          if (rawTs) {
+            let num = typeof rawTs === 'number' ? rawTs : Number(rawTs);
+            if (!isNaN(num) && num > 0) {
+              // Baileys sends Unix SECONDS — safely convert to ms
+              if (num > 1e8 && num < 1e12) num = num * 1000;
+              const YEAR_2015 = 1420070400000;
+              if (num >= YEAR_2015 && num <= Date.now() + 86400000) time = num;
+            }
+          }
+          if (time === 0 && c.updatedAt) {
+            const updatedTime = new Date(c.updatedAt).getTime();
+            if (!isNaN(updatedTime) && updatedTime > 1420070400000) time = updatedTime;
+          }
           
           const existing = groupMap.get(jid);
           if (existing) {
@@ -363,7 +375,7 @@ class EvolutionAPIClient {
         // Priority 2: Cascade Fallback — if no explicit message timestamp in memory,
         // use natural chat index position (WhatsApp returns chats in recency order top-to-bottom)
         if (time === 0) {
-          time = Date.now() - (chatIdx * 3600 * 1000);
+          time = Date.now() - (chatIdx * 60 * 1000);
         }
 
         const pic = chat.profilePictureUrl || chat.profilePicUrl || chat.avatar || null;
@@ -409,7 +421,7 @@ class EvolutionAPIClient {
           name,
           pushName: c.pushName || masterNameMap.get(phone),
           profilePictureUrl: pic,
-          lastActivity: 0,
+          lastActivity: 1, // Minimum valid value so it passes time === 0 filters but sorts last
         });
       }
 

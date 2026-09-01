@@ -74,7 +74,7 @@ function extractRealMessageTimestamp(chat: any, naturalChatIndex: number = 999):
   // 3. Cascade fallback: If no explicit message timestamp in memory yet,
   // use the natural chat position from WhatsApp (ordered by recency)
   if (best === 0) {
-    best = Date.now() - (naturalChatIndex * 3600 * 1000);
+    best = Date.now() - (naturalChatIndex * 60 * 1000);
   }
 
   return best;
@@ -205,15 +205,24 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       await batch.commit();
     }
 
-    // STEP 5: Post-Sync Cleanup: Prune documents older than 18 months or from previous removed chats
+    // STEP 5: Post-Sync Cleanup: Prune documents that are truly stale
     try {
       const existingSnap = await collectionRef.get();
+
+      // Safety: Only purge by syncTime if current sync returned a substantial
+      // portion of the previously cached contacts. This prevents data loss
+      // when Evolution API returns partial data due to timeouts or errors.
+      const previousCacheSize = existingSnap.size;
+      const currentSyncSize = allCandidates.length;
+      const isSyncSubstantial = previousCacheSize === 0 || currentSyncSize >= previousCacheSize * 0.5;
+
       const staleDocs = existingSnap.docs.filter(doc => {
         const data = doc.data() as CachedWhatsAppContact;
-        return (
-          (data.lastActivity && data.lastActivity < activityCutoff) ||
-          (data.syncTime && data.syncTime < syncStartTime)
-        );
+        // Always prune contacts with activity older than 18 months
+        if (data.lastActivity && data.lastActivity < activityCutoff) return true;
+        // Only prune by syncTime if we got a substantial sync (>50% of previous cache)
+        if (isSyncSubstantial && data.syncTime && data.syncTime < syncStartTime) return true;
+        return false;
       });
 
       if (staleDocs.length > 0) {
@@ -253,9 +262,9 @@ export async function getCachedWhatsAppContacts(userId: string): Promise<CachedW
       .map(doc => doc.data() as CachedWhatsAppContact)
       .filter(c => {
         if ((c.lastActivity || 0) <= cutoff) return false;
-        const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
-        const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
-        return hasName || hasPic;
+        // Require a real name — contacts with only a photo but no name
+        // are useless in the sync deck (user can't identify them)
+        return Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
       });
 
     list.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
