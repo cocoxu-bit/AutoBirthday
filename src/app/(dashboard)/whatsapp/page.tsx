@@ -379,6 +379,30 @@ export default function WhatsAppPage() {
               </ol>
             </div>
 
+            {/* Banner alternativo si el código falla */}
+            <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-left space-y-2">
+              <div className="flex items-center gap-1.5 text-amber-900 font-black text-xs">
+                <QrCode className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>¿WhatsApp te dice que el código ha caducado o da error?</span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
+                WhatsApp limita los intentos de código por seguridad. Puedes vincular escaneando el <strong>Código QR</strong> directamente con la cámara de WhatsApp en 1 segundo:
+              </p>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConnectMethod('qr');
+                    handleConnectQR();
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-950 bg-white border border-amber-300/80 px-3.5 py-1.5 rounded-xl shadow-xs hover:bg-amber-100/50 transition-all active:scale-95"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Probar con Código QR</span>
+                </button>
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={handleResetConnection}
