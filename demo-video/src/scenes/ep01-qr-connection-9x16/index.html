@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #081412;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #ffffff;
+      }
+
+      .bg-scene-9x16 {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: radial-gradient(circle at 50% 20%, #1b3d39 0%, #0d2220 55%, #081412 100%);
+        overflow: hidden;
+      }
+
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+      }
+
+      .ep-container-vertical {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 120px 60px 100px 60px;
+        position: relative;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .header-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 920px;
+      }
+
+      .badge-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 28px;
+        background: rgba(40, 89, 83, 0.5);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 9999px;
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
+      }
+
+      .badge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 12px #10b981;
+      }
+
+      .badge-text {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+
+      .title-main-9x16 {
+        font-size: 58px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        margin-top: 24px;
+      }
+
+      .gradient-emerald {
+        background: linear-gradient(135deg, #ffffff 40%, #93cebe 75%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle-9x16 {
+        font-size: 26px;
+        color: #bde2d6;
+        line-height: 1.4;
+        max-width: 860px;
+        margin-top: 16px;
+      }
+
+      .qr-card-vert {
+        width: 680px;
+        background: rgba(20, 40, 37, 0.9);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 36px;
+        padding: 48px 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+        position: relative;
+        margin: 40px 0;
+      }
+
+      .qr-box-vert {
+        position: relative;
+        width: 360px;
+        height: 360px;
+        background: #ffffff;
+        border-radius: 28px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 32px 0;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        overflow: hidden;
+      }
+
+      .laser-beam-vert {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: #10b981;
+        box-shadow: 0 0 20px #10b981, 0 0 30px #34d399;
+        z-index: 5;
+      }
+
+      .status-pill-vert {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 28px;
+        border-radius: 9999px;
+        font-size: 22px;
+        font-weight: 700;
+        background: rgba(245, 158, 11, 0.2);
+        border: 1px solid rgba(245, 158, 11, 0.6);
+        color: #fef08a;
+      }
+
+      .status-pill-vert.connected {
+        background: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.8);
+        color: #ffffff;
+      }
+
+      .steps-vert {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+        max-width: 800px;
+      }
+
+      .step-item-vert {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 22px 28px;
+        background: rgba(20, 40, 37, 0.6);
+        border: 1px solid rgba(147, 206, 190, 0.25);
+        border-radius: 20px;
+        font-size: 24px;
+        text-align: left;
+        color: #ffffff;
+      }
+
+      .step-num-vert {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #10b981;
+        color: #081412;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+      }
+
+      .toast-vert {
+        position: absolute;
+        top: 48%;
+        background: #10b981;
+        color: #081412;
+        padding: 20px 36px;
+        border-radius: 20px;
+        font-size: 26px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 20px 50px rgba(16, 185, 129, 0.5);
+        z-index: 30;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      class="clip"
+      data-composition-id="ep01-vertical"
+      data-start="0"
+      data-duration="15"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="bg-scene-9x16">
+        <div class="bg-grid"></div>
+
+        <div class="ep-container-vertical">
+          <div class="header-section">
+            <div id="badgeVert" class="badge-step">
+              <span class="badge-dot"></span>
+              <span class="badge-text">Paso 1 · Conexión Rápida</span>
+            </div>
+
+            <h1 id="titleVert" class="title-main-9x16">
+              Conecta tu <span class="gradient-emerald">WhatsApp</span>
+            </h1>
+
+            <p id="subVert" class="subtitle-9x16">
+              Escanea el código QR desde tu teléfono para activar el agente automático de felicitaciones.
+            </p>
+          </div>
+
+          <div id="qrCardVert" class="qr-card-vert">
+            <div style="font-size: 26px; font-weight: 700; color: #ffffff;">Escanear Código QR</div>
+            <div style="font-size: 18px; color: #bde2d6; margin-top: 6px;">Instancia Encriptada & Segura</div>
+
+            <div class="qr-box-vert">
+              <div id="laserVert" class="laser-beam-vert"></div>
+              <svg width="280" height="280" viewBox="0 0 100 100" fill="#142825">
+                <path d="M5 5 h30 v30 h-30 z M10 10 v20 h20 v-20 z M15 15 h10 v10 h-10 z" />
+                <path d="M65 5 h30 v30 h-30 z M70 10 v20 h20 v-20 z M75 15 h10 v10 h-10 z" />
+                <path d="M5 65 h30 v30 h-30 z M10 70 v20 h20 v-20 z M15 75 h10 v10 h-10 z" />
+                <rect x="45" y="10" width="10" height="10" />
+                <rect x="45" y="30" width="10" height="20" />
+                <rect x="10" y="45" width="20" height="10" />
+                <rect x="75" y="45" width="15" height="10" />
+                <rect x="45" y="65" width="15" height="15" />
+                <rect x="70" y="70" width="20" height="20" />
+              </svg>
+            </div>
+
+            <div id="statusPillVert" class="status-pill-vert">
+              <span id="statusIconVert">⏳</span>
+              <span id="statusTextVert">Esperando escaneo...</span>
+            </div>
+          </div>
+
+          <div id="toastVert" class="toast-vert" style="opacity: 0;">
+            <span>🎉</span>
+            <span>¡WhatsApp Conectado!</span>
+          </div>
+
+          <div class="steps-vert">
+            <div id="vStep1" class="step-item-vert">
+              <div class="step-num-vert">1</div>
+              <span>Abre WhatsApp > Ajustes</span>
+            </div>
+            <div id="vStep2" class="step-item-vert">
+              <div class="step-num-vert">2</div>
+              <span>Dispositivos Vinculados</span>
+            </div>
+            <div id="vStep3" class="step-item-vert">
+              <div class="step-num-vert">3</div>
+              <span>Escanea y ¡Listo!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Entrance
+      tl.from("#badgeVert", { opacity: 0, y: -20, duration: 0.6 }, 0.2);
+      tl.from("#titleVert", { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 0.5);
+      tl.from("#subVert", { opacity: 0, y: 20, duration: 0.7 }, 0.8);
+
+      tl.from("#qrCardVert", {
+        opacity: 0,
+        scale: 0.9,
+        y: 40,
+        duration: 0.8,
+        ease: "back.out(1.4)"
+      }, 1.2);
+
+      tl.from(["#vStep1", "#vStep2", "#vStep3"], {
+        opacity: 0,
+        x: -30,
+        duration: 0.6,
+        stagger: 0.2,
+        ease: "power2.out"
+      }, 1.5);
+
+      // Laser scan using y transform
+      tl.fromTo("#laserVert", 
+        { y: 0 }, 
+        { y: 350, duration: 1.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 
+        2.2
+      );
+
+      // 7.5s - Connect
+      tl.to("#statusPillVert", {
+        scale: 1.08,
+        duration: 0.3,
+        onComplete: () => {
+          const pill = document.getElementById("statusPillVert");
+          pill.classList.add("connected");
+          document.getElementById("statusIconVert").textContent = "🟢";
+          document.getElementById("statusTextVert").textContent = "Conectado · Sesión Activa";
+        }
+      }, 7.5);
+      tl.to("#statusPillVert", { scale: 1.0, duration: 0.3 }, 7.8);
+
+      tl.fromTo("#toastVert", 
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "back.out(1.8)" },
+        8.2
+      );
+
+      tl.to("#vStep3", {
+        borderColor: "rgba(16, 185, 129, 0.8)",
+        backgroundColor: "rgba(40, 89, 83, 0.6)",
+        duration: 0.5
+      }, 8.5);
+
+      tl.to(".ep-container-vertical", {
+        opacity: 0,
+        scale: 0.98,
+        duration: 0.8,
+        ease: "power2.in"
+      }, 14.2);
+
+      window.__timelines["ep01-vertical"] = tl;
+    </script>
+  </body>
+</html>

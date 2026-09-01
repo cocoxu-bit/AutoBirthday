@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #081412;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #ffffff;
+      }
+
+      .bg-scene-9x16 {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: radial-gradient(circle at 50% 20%, #1b3d39 0%, #0d2220 55%, #081412 100%);
+        overflow: hidden;
+      }
+
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+      }
+
+      .ep-container-vert {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 100px 60px 80px 60px;
+        position: relative;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .badge-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 28px;
+        background: rgba(40, 89, 83, 0.5);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 9999px;
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
+      }
+
+      .badge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 12px #10b981;
+      }
+
+      .badge-text {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+
+      .title-main-9x16 {
+        font-size: 58px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        margin-top: 24px;
+      }
+
+      .gradient-emerald {
+        background: linear-gradient(135deg, #ffffff 40%, #93cebe 75%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle-9x16 {
+        font-size: 26px;
+        color: #bde2d6;
+        line-height: 1.4;
+        max-width: 860px;
+        margin-top: 16px;
+      }
+
+      .form-card-vert {
+        background: rgba(20, 40, 37, 0.9);
+        border: 1px solid rgba(147, 206, 190, 0.3);
+        border-radius: 30px;
+        padding: 36px 36px;
+        width: 100%;
+        max-width: 920px;
+        text-align: left;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      }
+
+      .form-row-vert {
+        margin-bottom: 20px;
+      }
+
+      .form-label-vert {
+        font-size: 18px;
+        font-weight: 600;
+        color: #bde2d6;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .form-input-vert {
+        width: 100%;
+        height: 60px;
+        background: rgba(11, 29, 27, 0.85);
+        border: 1px solid rgba(147, 206, 190, 0.25);
+        border-radius: 16px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        font-size: 22px;
+        color: #ffffff;
+      }
+
+      .list-wrapper-vert {
+        width: 100%;
+        max-width: 920px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .contact-row-vert {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(20, 40, 37, 0.9);
+        border: 1px solid rgba(147, 206, 190, 0.25);
+        border-radius: 24px;
+        padding: 22px 28px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      }
+
+      .contact-row-vert.featured {
+        border-color: rgba(16, 185, 129, 0.8);
+        background: rgba(40, 89, 83, 0.45);
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+      }
+
+      .avatar-vert {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #10b981;
+        color: #081412;
+        font-weight: 800;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        flex-shrink: 0;
+      }
+
+      .tag-vert {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 9999px;
+        font-size: 18px;
+        font-weight: 800;
+        background: rgba(16, 185, 129, 0.25);
+        border: 1px solid rgba(16, 185, 129, 0.7);
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      class="clip"
+      data-composition-id="ep02-vertical"
+      data-start="0"
+      data-duration="20"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="bg-scene-9x16">
+        <div class="bg-grid"></div>
+
+        <div class="ep-container-vert">
+          <div>
+            <div id="vBadge" class="badge-step">
+              <span class="badge-dot"></span>
+              <span class="badge-text">Paso 2 · Registro & Agenda</span>
+            </div>
+
+            <h1 id="vTitle" class="title-main-9x16">
+              Añade tus <span class="gradient-emerald">Cumpleaños</span>
+            </h1>
+
+            <p id="vSub" class="subtitle-9x16">
+              Guarda las fechas importantes y añade notas sobre gustos para que la IA cree felicitaciones inolvidables.
+            </p>
+          </div>
+
+          <div id="vForm" class="form-card-vert">
+            <div class="form-row-vert">
+              <span class="form-label-vert">Nombre</span>
+              <div class="form-input-vert"><span id="vName">Laura Gómez</span></div>
+            </div>
+            <div class="form-row-vert">
+              <span class="form-label-vert">Fecha</span>
+              <div class="form-input-vert"><span id="vDate">🎂 15 de Octubre (Amigos)</span></div>
+            </div>
+            <div class="form-row-vert" style="margin-bottom: 0;">
+              <span class="form-label-vert">Notas especiales</span>
+              <div class="form-input-vert"><span id="vNotes">Le encanta el senderismo</span></div>
+            </div>
+          </div>
+
+          <div class="list-wrapper-vert">
+            <div id="vRow1" class="contact-row-vert featured">
+              <div style="display: flex; align-items: center;">
+                <div class="avatar-vert">LG</div>
+                <div style="text-align: left;">
+                  <div style="font-size: 24px; font-weight: 700; color: #ffffff;">Laura Gómez</div>
+                  <div style="font-size: 17px; color: #bde2d6; margin-top: 4px;">15 Octubre · Amigos</div>
+                </div>
+              </div>
+              <div class="tag-vert">🎉 ¡En 3 días!</div>
+            </div>
+
+            <div id="vRow2" class="contact-row-vert">
+              <div style="display: flex; align-items: center;">
+                <div class="avatar-vert" style="background: #204b46; color: #ffffff;">CM</div>
+                <div style="text-align: left;">
+                  <div style="font-size: 24px; font-weight: 700; color: #ffffff;">Carlos Mendoza</div>
+                  <div style="font-size: 17px; color: #bde2d6; margin-top: 4px;">19 Octubre · Trabajo</div>
+                </div>
+              </div>
+              <div class="tag-vert" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.6); color: #fef08a;">
+                ⏰ En 7 días
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#vBadge", { opacity: 0, y: -20, duration: 0.6 }, 0.2);
+      tl.from("#vTitle", { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 0.5);
+      tl.from("#vSub", { opacity: 0, y: 20, duration: 0.7 }, 0.8);
+
+      tl.from("#vForm", { opacity: 0, scale: 0.95, y: 30, duration: 0.8, ease: "back.out(1.4)" }, 1.2);
+
+      tl.from(["#vName", "#vDate", "#vNotes"], {
+        opacity: 0,
+        x: -15,
+        duration: 0.5,
+        stagger: 0.4,
+        ease: "power2.out"
+      }, 1.8);
+
+      tl.from(["#vRow1", "#vRow2"], {
+        opacity: 0,
+        y: 40,
+        duration: 0.7,
+        stagger: 0.3,
+        ease: "power3.out"
+      }, 3.5);
+
+      tl.to(".ep-container-vert", {
+        opacity: 0,
+        scale: 0.98,
+        duration: 0.8,
+        ease: "power2.in"
+      }, 19.2);
+
+      window.__timelines["ep02-vertical"] = tl;
+    </script>
+  </body>
+</html>

@@ -60,7 +60,7 @@ export async function deleteAccount() {
     await adminAuth.deleteUser(userId);
     
     // 3. Delete user profile and subcollections
-    const subcollections = ['contacts', 'wishes', 'templates', 'wa_contacts_cache'];
+    const subcollections = ['contacts', 'wishes', 'templates', 'wa_contacts_cache', 'whatsapp'];
     for (const sub of subcollections) {
       try {
         const snap = await adminDb.collection('users').doc(userId).collection(sub).get();

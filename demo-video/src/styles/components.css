@@ -1,0 +1,100 @@
+/* Badge Pill */
+.badge-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  background: rgba(40, 89, 83, 0.4);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 9999px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.15);
+}
+
+.badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+.badge-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #def2eb;
+}
+
+/* Titles */
+.title-main {
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+
+.title-main-16x9 {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.title-main-9x16 {
+  font-size: 58px;
+  margin-bottom: 20px;
+}
+
+.gradient-emerald {
+  background: linear-gradient(135deg, #ffffff 40%, #93cebe 75%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle-text {
+  color: #93cebe;
+  font-weight: 400;
+}
+
+.subtitle-16x9 {
+  font-size: 26px;
+  line-height: 1.4;
+  max-width: 800px;
+}
+
+.subtitle-9x16 {
+  font-size: 26px;
+  line-height: 1.4;
+  max-width: 860px;
+}
+
+/* Glass Card */
+.glass-panel {
+  background: rgba(20, 40, 37, 0.7);
+  border: 1px solid rgba(147, 206, 190, 0.2);
+  border-radius: 24px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* Pointer Cursor */
+.virtual-cursor {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  z-index: 100;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+
+/* Ripple Click Effect */
+.click-ripple {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #10b981;
+  background: rgba(16, 185, 129, 0.3);
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  z-index: 99;
+}

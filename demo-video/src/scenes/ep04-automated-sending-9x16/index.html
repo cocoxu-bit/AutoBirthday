@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #081412;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #ffffff;
+      }
+
+      .bg-scene-9x16 {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: radial-gradient(circle at 50% 20%, #1b3d39 0%, #0d2220 55%, #081412 100%);
+        overflow: hidden;
+      }
+
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+      }
+
+      .ep-container-vert {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 100px 60px 80px 60px;
+        position: relative;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .badge-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 28px;
+        background: rgba(40, 89, 83, 0.5);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 9999px;
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
+      }
+
+      .badge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 12px #10b981;
+      }
+
+      .badge-text {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+
+      .title-main-9x16 {
+        font-size: 58px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        margin-top: 24px;
+      }
+
+      .gradient-emerald {
+        background: linear-gradient(135deg, #ffffff 40%, #93cebe 75%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle-9x16 {
+        font-size: 26px;
+        color: #bde2d6;
+        line-height: 1.4;
+        max-width: 860px;
+        margin-top: 16px;
+      }
+
+      .schedule-vert {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        max-width: 920px;
+      }
+
+      .sch-item-vert {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 20px 24px;
+        background: rgba(20, 40, 37, 0.7);
+        border: 1px solid rgba(147, 206, 190, 0.25);
+        border-radius: 24px;
+        font-size: 22px;
+        font-weight: 600;
+        color: #def2eb;
+        text-align: left;
+      }
+
+      .phone-vert {
+        width: 100%;
+        max-width: 920px;
+        background: #0b141a;
+        border: 2px solid rgba(16, 185, 129, 0.5);
+        border-radius: 36px;
+        padding: 28px;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+        text-align: left;
+      }
+
+      .v-out-bubble {
+        background: #005c4b;
+        color: #ffffff;
+        padding: 20px 24px;
+        border-radius: 20px 20px 4px 20px;
+        max-width: 85%;
+        margin-left: auto;
+        margin-bottom: 20px;
+        font-size: 22px;
+        line-height: 1.4;
+      }
+
+      .v-in-bubble {
+        background: #202c33;
+        color: #ffffff;
+        padding: 20px 24px;
+        border-radius: 20px 20px 20px 4px;
+        max-width: 85%;
+        font-size: 22px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      class="clip"
+      data-composition-id="ep04-vertical"
+      data-start="0"
+      data-duration="18"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="bg-scene-9x16">
+        <div class="bg-grid"></div>
+
+        <div class="ep-container-vert">
+          <div>
+            <div id="vBadge4" class="badge-step">
+              <span class="badge-dot"></span>
+              <span class="badge-text">Paso 4 · 100% Desatendido</span>
+            </div>
+
+            <h1 id="vTitle4" class="title-main-9x16">
+              Envío Programado
+            </h1>
+
+            <p id="vSub4" class="subtitle-9x16">
+              El bot escanea tus contactos cada mañana y envía las felicitaciones a la hora programada sin fallos.
+            </p>
+          </div>
+
+          <div class="schedule-vert">
+            <div id="vSch1" class="sch-item-vert">
+              <span style="font-size: 32px;">⏰</span>
+              <div>
+                <div style="font-weight: 700; color: #ffffff;">Disparo Diario 09:00 AM</div>
+                <div style="font-size: 16px; color: #bde2d6; font-weight: 400;">Escaneo y preparación automática</div>
+              </div>
+            </div>
+
+            <div id="vSch2" class="sch-item-vert">
+              <span style="font-size: 32px;">⚡</span>
+              <div>
+                <div style="font-weight: 700; color: #ffffff;">Envío Seguro & Fluido</div>
+                <div style="font-size: 16px; color: #bde2d6; font-weight: 400;">Sin riesgos de baneo por spam</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="vPhone" class="phone-vert">
+            <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 20px;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: #10b981; color: #081412; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">LG</div>
+              <div>
+                <div style="font-size: 20px; font-weight: 700; color: #ffffff;">Laura Gómez</div>
+                <div style="font-size: 14px; color: #34d399; font-weight: 600;">en línea</div>
+              </div>
+            </div>
+
+            <div id="vOut" class="v-out-bubble">
+              ¡Muchísimas felicidades, Laura! 🎂🎉 Que este año esté lleno de nuevas cimas y senderos inolvidables ⛰️✨
+              <div style="text-align: right; font-size: 14px; color: #bde2d6; margin-top: 6px;">
+                09:00 AM <span style="color: #7cd0f8; font-weight: 800;">✓✓</span>
+              </div>
+            </div>
+
+            <div id="vIn" class="v-in-bubble" style="opacity: 0;">
+              ¡¡Ayyyy muchísimas gracias!! ¡Qué ilusión me ha hecho! 😍🥂
+              <div style="text-align: right; font-size: 14px; color: #bde2d6; margin-top: 6px;">
+                09:02 AM
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#vBadge4", { opacity: 0, y: -20, duration: 0.6 }, 0.2);
+      tl.from("#vTitle4", { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 0.5);
+      tl.from("#vSub4", { opacity: 0, y: 20, duration: 0.7 }, 0.8);
+
+      tl.from(["#vSch1", "#vSch2"], {
+        opacity: 0,
+        x: -30,
+        duration: 0.6,
+        stagger: 0.2,
+        ease: "power2.out"
+      }, 1.2);
+
+      tl.from("#vPhone", {
+        opacity: 0,
+        y: 40,
+        scale: 0.95,
+        duration: 0.8,
+        ease: "back.out(1.4)"
+      }, 1.8);
+
+      tl.from("#vOut", {
+        opacity: 0,
+        scale: 0.9,
+        y: 20,
+        duration: 0.6,
+        ease: "back.out(1.5)"
+      }, 2.5);
+
+      // Laura replies after 4s with fromTo
+      tl.fromTo("#vIn",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "back.out(1.6)" },
+        4.2
+      );
+
+      tl.to(".ep-container-vert", {
+        opacity: 0,
+        scale: 0.98,
+        duration: 0.8,
+        ease: "power2.in"
+      }, 17.2);
+
+      window.__timelines["ep04-vertical"] = tl;
+    </script>
+  </body>
+</html>

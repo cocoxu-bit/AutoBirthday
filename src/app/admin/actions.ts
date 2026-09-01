@@ -558,7 +558,7 @@ export async function adminDeleteUserAction(targetUserId: string): Promise<{
     } catch {}
 
     // 2. Cascade delete subcollections
-    const subcollections = ['contacts', 'wishes', 'templates', 'wa_contacts_cache'];
+    const subcollections = ['contacts', 'wishes', 'templates', 'wa_contacts_cache', 'whatsapp'];
     for (const sub of subcollections) {
       try {
         const snap = await adminDb.collection('users').doc(targetUserId).collection(sub).get();

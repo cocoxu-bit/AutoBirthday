@@ -1,0 +1,29 @@
+{
+  "name": "autobirthday-onboarding-videos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Modular Onboarding Video Series for AutoBirthday using HyperFrames (16:9 & 9:16)",
+  "scripts": {
+    "dev": "hyperframes preview",
+    "lint": "hyperframes lint",
+    "check": "hyperframes check src/scenes/ep01-qr-connection-16x9 && hyperframes check src/scenes/ep01-qr-connection-9x16 && hyperframes check src/scenes/ep02-contacts-16x9 && hyperframes check src/scenes/ep02-contacts-9x16 && hyperframes check src/scenes/ep03-ai-templates-16x9 && hyperframes check src/scenes/ep03-ai-templates-9x16 && hyperframes check src/scenes/ep04-automated-sending-16x9 && hyperframes check src/scenes/ep04-automated-sending-9x16",
+    "render:ep1:16x9": "hyperframes render src/scenes/ep01-qr-connection-16x9 -o renders/ep01-qr-connection-16x9.mp4",
+    "render:ep1:9x16": "hyperframes render src/scenes/ep01-qr-connection-9x16 -o renders/ep01-qr-connection-9x16.mp4",
+    "render:ep1": "npm run render:ep1:16x9 && npm run render:ep1:9x16",
+    "render:ep2:16x9": "hyperframes render src/scenes/ep02-contacts-16x9 -o renders/ep02-contacts-16x9.mp4",
+    "render:ep2:9x16": "hyperframes render src/scenes/ep02-contacts-9x16 -o renders/ep02-contacts-9x16.mp4",
+    "render:ep2": "npm run render:ep2:16x9 && npm run render:ep2:9x16",
+    "render:ep3:16x9": "hyperframes render src/scenes/ep03-ai-templates-16x9 -o renders/ep03-ai-templates-16x9.mp4",
+    "render:ep3:9x16": "hyperframes render src/scenes/ep03-ai-templates-9x16 -o renders/ep03-ai-templates-9x16.mp4",
+    "render:ep3": "npm run render:ep3:16x9 && npm run render:ep3:9x16",
+    "render:ep4:16x9": "hyperframes render src/scenes/ep04-automated-sending-16x9 -o renders/ep04-automated-sending-16x9.mp4",
+    "render:ep4:9x16": "hyperframes render src/scenes/ep04-automated-sending-9x16 -o renders/ep04-automated-sending-9x16.mp4",
+    "render:ep4": "npm run render:ep4:16x9 && npm run render:ep4:9x16",
+    "render:all": "npm run render:ep1 && npm run render:ep2 && npm run render:ep3 && npm run render:ep4",
+    "doctor": "hyperframes doctor"
+  },
+  "dependencies": {
+    "hyperframes": "^0.8.23"
+  }
+}
