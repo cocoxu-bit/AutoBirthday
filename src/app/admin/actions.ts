@@ -1015,7 +1015,16 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
       }
     });
 
-    sampleReady.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+    sampleReady.sort((a, b) => {
+      const aTime = new Date(a.lastActivity).getTime();
+      const bTime = new Date(b.lastActivity).getTime();
+      const aValid = !isNaN(aTime);
+      const bValid = !isNaN(bTime);
+      if (aValid && !bValid) return -1;
+      if (!aValid && bValid) return 1;
+      if (aValid && bValid) return bTime - aTime;
+      return a.name.localeCompare(b.name);
+    });
 
     return {
       success: true,
