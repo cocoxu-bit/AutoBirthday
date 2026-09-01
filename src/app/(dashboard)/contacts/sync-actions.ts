@@ -735,10 +735,11 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       }
     }
 
-    // Include all chats with activity in last 18 months
+    // Include all chats with activity in last 18 months OR rescued group participants
     const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
       if (!p || loadedSet.has(p)) return false;
+      if (c.source === 'group_participant') return true;
       if (!c.lastActivity || c.lastActivity < cutoff) return false;
       const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
       const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());

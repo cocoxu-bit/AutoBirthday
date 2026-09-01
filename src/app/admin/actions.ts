@@ -986,17 +986,15 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
         const hasValidName = !isInvalidName(pName);
         const hasPic = Boolean(cachedItem?.profilePictureUrl);
 
-        if (hasValidName || hasPic) {
-          readyPhones.add(cleanPhone);
-          groupParticipantsRescuedCount++;
-          sampleReady.push({
-            name: hasValidName ? (pName as string).trim() : `Contacto con foto (+${cleanPhone})`,
-            phone: `+${cleanPhone}`,
-            lastActivity: `De: ${groupSubject}`,
-            originGroup: groupSubject,
-            hasPic,
-          });
-        }
+        readyPhones.add(cleanPhone);
+        groupParticipantsRescuedCount++;
+        sampleReady.push({
+          name: hasValidName ? (pName as string).trim() : `Contacto (+${cleanPhone})`,
+          phone: `+${cleanPhone}`,
+          lastActivity: `De: ${groupSubject}`,
+          originGroup: groupSubject,
+          hasPic,
+        });
       }
     }
 
@@ -1007,15 +1005,13 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
         groupParticipantsRescuedCount++;
         const hasValidName = !isInvalidName(c.name);
         const hasPic = Boolean(c.profilePictureUrl);
-        if (hasValidName || hasPic) {
-          sampleReady.push({
-            name: c.name || `Contacto (+${c.phone})`,
-            phone: `+${c.phone}`,
-            lastActivity: c.originGroupName ? `De: ${c.originGroupName}` : 'Grupo',
-            originGroup: c.originGroupName,
-            hasPic,
-          });
-        }
+        sampleReady.push({
+          name: hasValidName ? (c.name || '').trim() : `Contacto (+${c.phone})`,
+          phone: `+${c.phone}`,
+          lastActivity: c.originGroupName ? `De: ${c.originGroupName}` : 'Grupo',
+          originGroup: c.originGroupName,
+          hasPic,
+        });
       }
     });
 
