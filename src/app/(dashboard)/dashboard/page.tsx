@@ -11,7 +11,7 @@ import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-
 import { ConnectionStatusCard } from "@/components/dashboard/connection-status-card";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
-import { Smartphone, UserPlus, FileText, Sparkles, Cake, Gift, ArrowRight } from "lucide-react";
+import { Smartphone, UserPlus, Users, FileText, Sparkles, Cake, Gift, ArrowRight } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -239,19 +239,19 @@ export default async function DashboardPage() {
       {/* Quick Action Cards: 3 Columns on Desktop, Stacked on Mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
         <Link
-          href="/contacts/new"
+          href="/contacts"
           className="group flex items-center justify-between p-4 sm:p-5 rounded-3xl bg-white/80 hover:bg-white backdrop-blur-md border border-white/60 hover:border-violet-300 shadow-xs hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
             <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-violet-500/20 shrink-0 group-hover:scale-105 transition-transform">
-              <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors">
-                Añadir Cumpleaños
+                Mis Cumpleaños
               </h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                Añade a una persona con su fecha de cumpleaños.
+                Gestiona y agrega fechas desde WhatsApp o Calendario.
               </p>
             </div>
           </div>

@@ -378,10 +378,7 @@ class EvolutionAPIClient {
         // Priority 2: Cascade Fallback — if no explicit message timestamp in memory,
         // use natural chat index position (WhatsApp returns chats in recency order top-to-bottom)
         if (time === 0) {
-          // Top 50 chats in the WhatsApp list receive a relative recency score
-          if (chatIdx < 50) {
-            time = Date.now() - (chatIdx * 2 * 3600 * 1000); // 2 hours per position
-          }
+          time = Date.now() - (chatIdx * 3600 * 1000);
         }
 
         const pic = chat.profilePictureUrl || chat.profilePicUrl || chat.avatar || null;

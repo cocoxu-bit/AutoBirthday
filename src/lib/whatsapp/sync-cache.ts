@@ -58,9 +58,9 @@ function extractRealMessageTimestamp(chat: any, naturalChatIndex: number = 999):
   }
 
   // Cascade fallback: If no explicit message timestamp in memory yet,
-  // use the natural chat position (top of WhatsApp list)
-  if (best === 0 && naturalChatIndex < 50) {
-    best = Date.now() - (naturalChatIndex * 2 * 3600 * 1000);
+  // use the natural chat position from WhatsApp (ordered by recency)
+  if (best === 0) {
+    best = Date.now() - (naturalChatIndex * 3600 * 1000);
   }
 
   return best;
