@@ -1667,8 +1667,16 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
                     <div className="p-2.5 bg-white rounded-xl border border-emerald-200">
                       <span className="text-[10px] text-emerald-700 font-bold block">🟢 1 a 1 Listos</span>
-                      <span className="text-base font-black text-emerald-900">{diagnosticsData.readyToSyncCount}</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Personas reales (nombre/foto)</span>
+                      <span className="text-base font-black text-emerald-900">
+                        {Math.max(0, diagnosticsData.readyToSyncCount - (diagnosticsData.groupParticipantsRescuedCount || 0))}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Chats individuales (nombre/foto)</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-violet-200">
+                      <span className="text-[10px] text-violet-700 font-bold block">👥 De Grupos Familia/Amigos</span>
+                      <span className="text-base font-black text-violet-900">{diagnosticsData.groupParticipantsRescuedCount || 0}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Rescatados de grupos cercanos</span>
                     </div>
 
                     <div className="p-2.5 bg-white rounded-xl border border-teal-200">
@@ -1678,9 +1686,9 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                     </div>
 
                     <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                      <span className="text-[10px] text-slate-500 font-bold block">👥 Grupos (@g.us)</span>
+                      <span className="text-[10px] text-slate-500 font-bold block">👥 Grupos Totales (@g.us)</span>
                       <span className="text-base font-black text-slate-800">{diagnosticsData.groupsCount}</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Excluidos de sync indiv.</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Grupos activos de WhatsApp</span>
                     </div>
 
                     <div className="p-2.5 bg-white rounded-xl border border-indigo-200">
@@ -1753,7 +1761,15 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                               <span className="w-5 text-[11px] font-bold text-slate-400">{idx + 1}</span>
                               <div>
                                 <p className="font-bold text-slate-900">{item.name}</p>
-                                <p className="text-[11px] text-slate-400 font-mono">{item.phone}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[11px] text-slate-400 font-mono">{item.phone}</span>
+                                  {item.originGroup && (
+                                    <span className="text-[10px] font-bold text-violet-700 bg-violet-50 border border-violet-200/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      <Users className="w-2.5 h-2.5 text-violet-500" />
+                                      <span>De: {item.originGroup}</span>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="text-right">

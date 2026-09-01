@@ -815,6 +815,7 @@ export interface AdminWhatsAppDiagnostics {
     phone: string;
     lastActivity: string;
     hasPic: boolean;
+    originGroup?: string;
   }>;
   sampleExcluded: Array<{
     type: 'group' | 'newsletter' | 'lid' | 'old' | 'nameless' | 'already_saved';
@@ -871,7 +872,7 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
     let namelessOrVoceCount = 0;
     let alreadySavedCount = 0;
 
-    const sampleReady: Array<{ name: string; phone: string; lastActivity: string; hasPic: boolean }> = [];
+    const sampleReady: Array<{ name: string; phone: string; lastActivity: string; hasPic: boolean; originGroup?: string }> = [];
     const sampleExcluded: Array<{ type: 'group' | 'newsletter' | 'lid' | 'old' | 'nameless' | 'already_saved'; name: string; reason: string }> = [];
 
     const cachedMap = new Map<string, any>();
@@ -953,9 +954,56 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
       }
     }
 
+    // Live group participants inspection for small/medium groups
+    const groupChats = (rawChats || []).filter((c: any) => (c.remoteJid || c.id || '').endsWith('@g.us'));
+    const topGroups = groupChats.slice(0, 15);
+    const groupDetails = await Promise.all(
+      topGroups.map(async (g: any) => {
+        const jid = g.remoteJid || g.id;
+        return evolutionApi.findGroupInfos(instanceName, jid).catch(() => null);
+      })
+    );
+
+    const readyPhones = new Set(sampleReady.map(c => c.phone.replace(/\D/g, '')));
     let groupParticipantsRescuedCount = 0;
+
+    for (const g of groupDetails) {
+      if (!g || g.isCommunity || g.isCommunityAnnounce) continue;
+      const participants = g.participants || [];
+      if (participants.length > 40 || participants.length < 2) continue;
+
+      const groupSubject = (g.subject || 'Grupo de WhatsApp').trim();
+
+      for (const p of participants) {
+        const rawPhone = p.phoneNumber || p.id || '';
+        const cleanPhone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
+        if (!cleanPhone || cleanPhone.length < 6 || readyPhones.has(cleanPhone) || existingPhones.has(cleanPhone)) continue;
+
+        let pName: string | undefined = p.pushName || p.notify || p.name;
+        const cachedItem = cachedMap.get(cleanPhone);
+        if (isInvalidName(pName) && cachedItem?.name) pName = cachedItem.name;
+
+        const hasValidName = !isInvalidName(pName);
+        const hasPic = Boolean(cachedItem?.profilePictureUrl);
+
+        if (hasValidName || hasPic) {
+          readyPhones.add(cleanPhone);
+          groupParticipantsRescuedCount++;
+          sampleReady.push({
+            name: hasValidName ? (pName as string).trim() : `Contacto con foto (+${cleanPhone})`,
+            phone: `+${cleanPhone}`,
+            lastActivity: `De: ${groupSubject}`,
+            originGroup: groupSubject,
+            hasPic,
+          });
+        }
+      }
+    }
+
+    // Also include any other cached group participants not covered above
     cachedMap.forEach((c: any) => {
-      if (c.source === 'group_participant' && !existingPhones.has(c.phone)) {
+      if (c.source === 'group_participant' && !readyPhones.has(c.phone) && !existingPhones.has(c.phone)) {
+        readyPhones.add(c.phone);
         groupParticipantsRescuedCount++;
         const hasValidName = !isInvalidName(c.name);
         const hasPic = Boolean(c.profilePictureUrl);
@@ -964,6 +1012,7 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
             name: c.name || `Contacto (+${c.phone})`,
             phone: `+${c.phone}`,
             lastActivity: c.originGroupName ? `De: ${c.originGroupName}` : 'Grupo',
+            originGroup: c.originGroupName,
             hasPic,
           });
         }
