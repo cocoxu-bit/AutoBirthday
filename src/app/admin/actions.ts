@@ -980,3 +980,88 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
   }
 }
 
+export async function adminImpersonateUserAction(targetUserId: string): Promise<{
+  success: boolean;
+  customToken?: string;
+  targetUser?: { id: string; email: string; displayName: string };
+  error?: string;
+}> {
+  try {
+    const adminUid = await verifyAdminAuth();
+    if (!targetUserId) return { success: false, error: 'Usuario no especificado' };
+
+    const targetDoc = await adminDb.collection('users').doc(targetUserId).get();
+    if (!targetDoc.exists) return { success: false, error: 'El usuario no existe' };
+    const targetData = targetDoc.data();
+
+    // Create Firebase Custom Token for the target user
+    const customToken = await adminAuth.createCustomToken(targetUserId, {
+      impersonatedBy: adminUid,
+    });
+
+    const cookieStore = await cookies();
+    cookieStore.set('admin_impersonator_uid', adminUid, {
+      maxAge: 60 * 60 * 24, // 24 hours
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    cookieStore.set('admin_impersonated_info', JSON.stringify({
+      id: targetUserId,
+      email: targetData?.email || '',
+      name: targetData?.displayName || targetData?.name || 'Usuario',
+    }), {
+      maxAge: 60 * 60 * 24,
+      httpOnly: false, // Client readable for UI banner
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    return {
+      success: true,
+      customToken,
+      targetUser: {
+        id: targetUserId,
+        email: targetData?.email || '',
+        displayName: targetData?.displayName || targetData?.name || 'Usuario',
+      }
+    };
+  } catch (err: any) {
+    console.error('adminImpersonateUserAction error:', err);
+    return { success: false, error: err?.message || 'Error al iniciar sesión como usuario' };
+  }
+}
+
+export async function adminStopImpersonationAction(): Promise<{
+  success: boolean;
+  adminCustomToken?: string;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const adminUid = cookieStore.get('admin_impersonator_uid')?.value;
+    if (!adminUid) return { success: false, error: 'No hay sesión de impersonación activa' };
+
+    // Verify admin email is in ADMIN_EMAILS
+    const adminUser = await adminAuth.getUser(adminUid);
+    const email = (adminUser.email || '').toLowerCase().trim();
+    if (!ADMIN_EMAILS.includes(email)) {
+      return { success: false, error: 'No autorizado como administrador' };
+    }
+
+    const adminCustomToken = await adminAuth.createCustomToken(adminUid);
+
+    // Clear impersonation cookies
+    cookieStore.delete('admin_impersonator_uid');
+    cookieStore.delete('admin_impersonated_info');
+
+    return { success: true, adminCustomToken };
+  } catch (err: any) {
+    console.error('adminStopImpersonationAction error:', err);
+    return { success: false, error: err?.message || 'Error al restaurar sesión de administrador' };
+  }
+}
+

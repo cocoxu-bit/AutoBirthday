@@ -49,7 +49,8 @@ import {
   adminTestWhatsAppInstanceAction,
   adminRestartWhatsAppInstanceAction,
   adminToggleUserStatusAction,
-  adminRetryWishAction
+  adminRetryWishAction,
+  adminImpersonateUserAction
 } from '@/app/admin/actions';
 import { 
   Cpu, 
@@ -109,6 +110,43 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
       toast.error(e.message || 'Error de conexión');
     } finally {
       setLoadingDiagnostics(false);
+    }
+  };
+
+  // Impersonation state
+  const [impersonatingUserId, setImpersonatingUserId] = useState<string | null>(null);
+
+  const handleImpersonate = async (user: AdminUserRecord) => {
+    if (impersonatingUserId) return;
+    setImpersonatingUserId(user.id);
+    const toastId = toast.loading(`Iniciando sesión como ${user.displayName}...`);
+
+    try {
+      const res = await adminImpersonateUserAction(user.id);
+      if (!res.success || !res.customToken) {
+        toast.error(res.error || 'Error al iniciar sesión como usuario', { id: toastId });
+        setImpersonatingUserId(null);
+        return;
+      }
+
+      const { signInWithCustomToken } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase/config');
+
+      const credential = await signInWithCustomToken(auth, res.customToken);
+      const idToken = await credential.user.getIdToken(true);
+
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      toast.success(`Conectado como ${user.displayName}. Redirigiendo...`, { id: toastId });
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Impersonate error:', err);
+      toast.error('Error al cambiar de sesión.', { id: toastId });
+      setImpersonatingUserId(null);
     }
   };
 
@@ -737,6 +775,18 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                           {/* Action Detail */}
                           <td className="py-3.5 px-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                disabled={Boolean(impersonatingUserId)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleImpersonate(u);
+                                }}
+                                title={`Iniciar sesión como ${u.displayName}`}
+                                className="p-1.5 rounded-lg text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -1401,6 +1451,16 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                   <span>{restartingWhatsApp ? 'Reiniciando...' : 'Reiniciar Instancia'}</span>
                 </button>
               </div>
+
+              <button
+                type="button"
+                disabled={Boolean(impersonatingUserId)}
+                onClick={() => handleImpersonate(selectedUser)}
+                className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50"
+              >
+                <Eye className="w-4 h-4" />
+                <span>{impersonatingUserId === selectedUser.id ? 'Iniciando sesión...' : 'Iniciar Sesión como este Usuario'}</span>
+              </button>
 
               <button
                 type="button"
