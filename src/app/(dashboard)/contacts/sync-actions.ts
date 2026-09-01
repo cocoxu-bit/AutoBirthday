@@ -541,10 +541,11 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     // Trigger non-blocking background pre-warming
     prewarmWhatsAppContactsCache(userId).catch(() => {});
 
-    // Fast parallel local Firestore fetch (< 25ms)
-    const [cachedContacts, existingContacts] = await Promise.all([
+    // Fast parallel local Firestore fetch + cached groups
+    const [cachedContacts, existingContacts, waGroups] = await Promise.all([
       getCachedWhatsAppContacts(userId).catch(() => []),
       getContacts(userId).catch(() => []),
+      evolutionApi.fetchGroups(instanceName).catch(() => []),
     ]);
 
     const existingPhones = new Set(
@@ -558,9 +559,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       const candidates = cachedContacts.filter(c => {
         if (existingPhones.has(c.phone)) return false;
         if ((c.lastActivity || 0) <= cutoff) return false;
-        const hasName = Boolean(c.name && c.name.trim());
-        const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
-        return hasName || hasPic;
+        return Boolean(c.name && c.name.trim());
       });
 
       if (candidates.length === 0) {
@@ -601,14 +600,18 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       return {
         success: true,
         items,
-        availableGroups: [],
+        availableGroups: waGroups,
         hasMore: candidates.length > 3,
         totalEstimated: candidates.length,
       };
     }
 
     // Ultra-fast live fallback if cache not yet populated: fetch first 3 chats slice (< 80ms)
-    const fastSlice = await evolutionApi.fetchFastChatSlice(instanceName, 5).catch(() => []);
+    const [fastSlice, fallbackGroups] = await Promise.all([
+      evolutionApi.fetchFastChatSlice(instanceName, 5).catch(() => []),
+      evolutionApi.fetchGroups(instanceName).catch(() => []),
+    ]);
+
     const initialCandidates = fastSlice
       .filter(c => {
         const p = (c.phone || '').replace(/\D/g, '');
@@ -649,7 +652,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     return {
       success: true,
       items,
-      availableGroups: [],
+      availableGroups: fallbackGroups.length > 0 ? fallbackGroups : waGroups,
       hasMore: true,
     };
   } catch (error: any) {
@@ -731,10 +734,13 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       sendTimeEnd: '11:00',
     }));
 
+    const instanceName = `autocumple-${userId}`;
+    const waGroups = await evolutionApi.fetchGroups(instanceName).catch(() => []);
+
     return {
       success: true,
       items,
-      availableGroups: [],
+      availableGroups: waGroups,
       hasMore: remaining.length > limit,
       totalEstimated: remaining.length,
     };

@@ -157,6 +157,19 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
     handleStartWhatsAppSync();
   }, []);
 
+  // Guarantee groups are always loaded
+  useEffect(() => {
+    if (availableGroups.length === 0) {
+      import('@/app/(dashboard)/contacts/actions').then(mod => {
+        mod.fetchWhatsAppGroupsAction().then(groups => {
+          if (groups && groups.length > 0) {
+            setAvailableGroups(groups);
+          }
+        }).catch(() => {});
+      });
+    }
+  }, [availableGroups.length]);
+
   // Load WhatsApp Chats (2-Phase Progressive Fast Sync)
   const handleStartWhatsAppSync = async () => {
     setLoading(true);
