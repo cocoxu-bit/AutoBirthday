@@ -194,7 +194,7 @@ export default async function DashboardPage() {
                 <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-full">Paso 1 Listo</span>
               </div>
               <p className="text-xs text-slate-600 font-medium mt-0.5">
-                <strong>Siguiente Paso:</strong> Sincroniza tus cumpleaños de WhatsApp para activar las felicitaciones automáticas.
+                <strong>Siguiente Paso:</strong> Agrega tus cumpleaños desde WhatsApp para activar las felicitaciones automáticas.
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
             href="/contacts?sync=whatsapp"
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/25 shrink-0 self-end sm:self-center whitespace-nowrap"
           >
-            <span>Sincronizar Cumpleaños</span>
+            <span>Agregar desde WhatsApp</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>

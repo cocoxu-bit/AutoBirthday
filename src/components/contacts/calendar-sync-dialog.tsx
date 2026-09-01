@@ -384,14 +384,14 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                  {step === 'connect' ? 'Sincronizar Calendario' : step === 'deck' ? 'Revisar Cumpleaños' : '¡Sincronización Completada!'}
+                  {step === 'connect' ? 'Agregar cumpleaños desde Calendario' : step === 'deck' ? 'Revisar Cumpleaños' : '¡Cumpleaños Agregados!'}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
                   {step === 'connect' 
                     ? 'Importa automáticamente desde Google o Apple sin archivos' 
                     : step === 'deck' 
-                    ? `Contacto ${currentIndex + 1} de ${cards.length}`
-                    : 'Contactos añadidos a tu agenda'}
+                    ? `Cumpleaños ${currentIndex + 1} de ${cards.length}`
+                    : 'Cumpleaños añadidos a tu agenda'}
                 </p>
               </div>
             </div>
@@ -532,7 +532,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       </>
                     ) : (
                       <>
-                        <span>Conectar Google Calendar en 1 Clic</span>
+                        <span>Conectar Google Calendar</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
@@ -577,7 +577,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       </>
                     ) : (
                       <>
-                        <span>Sincronizar Calendario Apple</span>
+                        <span>Agregar desde Apple Calendar</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

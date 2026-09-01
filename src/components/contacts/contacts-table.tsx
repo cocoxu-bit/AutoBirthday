@@ -76,23 +76,23 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
         {/* Action Buttons: 3 Lines Layout on Top */}
         <div className="flex flex-col gap-2 w-full">
           
-          {/* Line 1: Sincronizar WhatsApp */}
+          {/* Line 1: Agregar cumpleaños desde WhatsApp */}
           <button 
             type="button"
             onClick={() => setIsWhatsAppSyncOpen(true)}
             className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold active:scale-[0.99]"
-            title="Importar y sincronizar cumpleaños desde WhatsApp"
+            title="Importar cumpleaños desde WhatsApp"
           >
             <WhatsAppIcon className="w-4 h-4 shrink-0" size={18} />
-            <span>Sincronizar WhatsApp</span>
+            <span>Agregar cumpleaños desde WhatsApp</span>
           </button>
 
-          {/* Line 2: Sincronizar Calendario (Google + Apple Calendar) */}
+          {/* Line 2: Agregar cumpleaños desde Calendario */}
           <button 
             type="button"
             onClick={() => setIsImportOpen(true)}
             className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold active:scale-[0.99]"
-            title="Sincronizar cumpleaños desde Google Calendar o Apple Calendar"
+            title="Importar cumpleaños desde Google Calendar o Apple Calendar"
           >
             <div className="flex items-center gap-1.5 shrink-0">
               <Image 
@@ -110,7 +110,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain" 
               />
             </div>
-            <span>Sincronizar Calendario</span>
+            <span>Agregar cumpleaños desde Calendario</span>
           </button>
 
           {/* Line 3: Añadir Cumpleaños */}
@@ -149,7 +149,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             <p className="text-slate-500 text-xs max-w-sm mx-auto font-medium">
               {searchTerm 
                 ? 'Prueba a buscar con otro nombre.'
-                : 'Añade o sincroniza cumpleaños para empezar a automatizar tus felicitaciones.'}
+                : 'Añade o agrega cumpleaños para empezar a automatizar tus felicitaciones.'}
             </p>
           </div>
           {!searchTerm && (
@@ -160,7 +160,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm shadow-emerald-600/20"
               >
                 <WhatsAppIcon className="w-4 h-4" size={18} />
-                <span>Sincronizar WhatsApp</span>
+                <span>Agregar desde WhatsApp</span>
               </button>
 
               <button
@@ -169,7 +169,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-all shadow-xs"
               >
                 <Calendar className="w-3.5 h-3.5 text-violet-600" />
-                <span>Sincronizar Calendario</span>
+                <span>Agregar desde Calendario</span>
               </button>
 
               <Link 

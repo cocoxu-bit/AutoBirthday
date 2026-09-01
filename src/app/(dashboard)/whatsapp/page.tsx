@@ -418,7 +418,7 @@ export default function WhatsAppPage() {
                   Siguiente Paso
                 </div>
                 <h4 className="text-base font-black text-white">
-                  Sincroniza tus Cumpleaños
+                  Agrega tus Cumpleaños
                 </h4>
                 <p className="text-xs text-slate-300 font-medium">
                   Detecta tus chats para programar felicitaciones automáticas.
@@ -431,7 +431,7 @@ export default function WhatsAppPage() {
                   className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-900/30 transition-all whitespace-nowrap"
                 >
                   <Users className="w-4 h-4 shrink-0" />
-                  <span>Sincronizar Cumpleaños</span>
+                  <span>Agregar cumpleaños desde WhatsApp</span>
                   <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </Link>
 

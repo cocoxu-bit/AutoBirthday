@@ -422,7 +422,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                  {step === 'connect' ? 'Sincronizar por WhatsApp' : step === 'deck' ? 'Revisar Cumpleaños' : 'Sincronización Completada'}
+                  {step === 'connect' ? 'Agregar cumpleaños desde WhatsApp' : step === 'deck' ? 'Revisar Cumpleaños' : '¡Cumpleaños Agregados!'}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
                   {step === 'connect' 
@@ -528,7 +528,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   </>
                 ) : (
                   <>
-                    <span>Comenzar Sincronización</span>
+                    <span>Buscar Cumpleaños en WhatsApp</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
