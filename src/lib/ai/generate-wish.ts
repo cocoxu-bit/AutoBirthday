@@ -53,16 +53,34 @@ Requisitos estrictos:
 - Evita clichés como "En este día tan especial" o "Querido/a".
 - Devuelve ÚNICAMENTE el texto final de la felicitación sin comillas ni encabezados.`;
 
+  const defaultWish = `¡Feliz cumpleaños, ${isGroup && mentionInGroup ? `@${phone || name} ` : ''}${name}! 🎂🎉 ¡Que pases un día genial!`;
+
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: prompt,
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
     });
-    
-    return response.text?.trim() || `¡Feliz cumpleaños, ${name}! 🎂🎉`;
-  } catch (error) {
-    console.error('Error generating AI wish with Gemini:', error);
-    return `¡Feliz cumpleaños, ${name}! 🎂🎉`;
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      console.warn(`Gemini API returned status ${res.status}`);
+      return defaultWish;
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    return text && text.length > 5 ? text : defaultWish;
+  } catch (error: any) {
+    console.error('Error generating AI wish with Gemini:', error?.message || error);
+    return defaultWish;
   }
 }
