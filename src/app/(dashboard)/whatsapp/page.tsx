@@ -9,18 +9,12 @@ import {
   QrCode, 
   CheckCircle2, 
   Loader2, 
-  Send, 
   Phone, 
   Copy, 
   Check, 
-  Sparkles,
-  ChevronRight,
-  ShieldCheck,
-  AlertCircle,
-  HelpCircle,
-  Users,
-  Cake,
-  ArrowRight
+  ChevronRight, 
+  Users, 
+  ArrowRight 
 } from 'lucide-react';
 import { 
   getConnectionStatus, 
@@ -463,34 +457,6 @@ export default function WhatsAppPage() {
           </div>
         )}
 
-      </div>
-
-      {/* TARJETA DE PRIVACIDAD LIMPIA */}
-      <div className="bg-white/70 backdrop-blur-md rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-4 h-4" />
-          </div>
-          <div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900">Privacidad y Seguridad Garantizada</h4>
-            <p className="text-[11px] text-slate-500">Cifrado de extremo a extremo y aislamiento por usuario</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-          <div className="p-2 bg-slate-50/80 rounded-xl border border-slate-100 space-y-0.5">
-            <span className="text-sm">🛡️</span>
-            <p className="text-[10px] font-bold text-slate-700">Sesión Aislada</p>
-          </div>
-          <div className="p-2 bg-slate-50/80 rounded-xl border border-slate-100 space-y-0.5">
-            <span className="text-sm">🔒</span>
-            <p className="text-[10px] font-bold text-slate-700">Cero Espionaje</p>
-          </div>
-          <div className="p-2 bg-slate-50/80 rounded-xl border border-slate-100 space-y-0.5">
-            <span className="text-sm">⚡</span>
-            <p className="text-[10px] font-bold text-slate-700">Solo Felicitaciones</p>
-          </div>
-        </div>
       </div>
 
     </div>
