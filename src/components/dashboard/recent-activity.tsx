@@ -18,17 +18,17 @@ interface RecentActivityProps {
 export function RecentActivity({ activity }: RecentActivityProps) {
   return (
     <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between">
-      <div className="p-5 border-b border-slate-100/80 flex items-center justify-between">
-        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <Send className="w-4 h-4 text-violet-600" />
-          Actividad y Felicitaciones Recientes
+      <div className="p-5 border-b border-slate-100/80 flex items-center justify-between gap-2">
+        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 min-w-0">
+          <Send className="w-4 h-4 text-violet-600 shrink-0" />
+          <span className="truncate">Felicitaciones Recientes</span>
         </h3>
         <Link 
           href="/wishes" 
-          className="text-xs font-bold text-violet-600 hover:text-violet-700 flex items-center gap-1"
+          className="text-xs font-bold text-violet-600 hover:text-violet-700 inline-flex items-center gap-1 shrink-0 whitespace-nowrap"
         >
           <span>Ver cola</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </Link>
       </div>
       
