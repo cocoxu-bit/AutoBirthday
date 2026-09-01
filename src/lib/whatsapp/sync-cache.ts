@@ -90,28 +90,14 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
-    // STEP 1: Fetch all data from Evolution API in parallel (cache remains 100% live during this)
-    const [rawChats, rawGroups, rawMessages] = await Promise.all([
+    // STEP 1: Fetch chats and groups from Evolution API in parallel (cache remains 100% live during this)
+    const [rawChats, rawGroups] = await Promise.all([
       evolutionApi.fetchChats(instanceName, true).catch(() => []),
       evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
-      evolutionApi.fetchMessagesBatch(instanceName, 5).catch(() => []),
     ]);
 
-    // Build name resolution map from message history
+    // Build name resolution map from group participant metadata
     const nameMap = new Map<string, string>();
-    for (const m of (rawMessages || [])) {
-      const sender = m.key?.participant || (!m.key?.fromMe ? m.key?.remoteJid : '') || '';
-      const name = m.pushName;
-      if (sender && sender.endsWith('@s.whatsapp.net') && !isInvalidName(name)) {
-        const phone = sender.replace(/@.*$/, '').replace(/\D/g, '');
-        const cleanName = (name as string).trim();
-        if (!nameMap.has(phone)) {
-          nameMap.set(phone, cleanName);
-        }
-      }
-    }
-
-    // Enrich nameMap from group participant metadata
     for (const g of (rawGroups || [])) {
       for (const p of (g.participants || [])) {
         const rawPhone = p.phoneNumber || p.id || '';

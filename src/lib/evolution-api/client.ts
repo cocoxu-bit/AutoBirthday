@@ -290,7 +290,7 @@ class EvolutionAPIClient {
     }
 
     try {
-      const [chats, contactsPost, messagesRes, groupsRes] = await Promise.all([
+      const [chats, contactsPost, groupsRes] = await Promise.all([
         this.request<any[]>(`/chat/findChats/${instanceName}`, {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
@@ -299,10 +299,6 @@ class EvolutionAPIClient {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
         }).catch(() => []),
-        this.request<any>(`/chat/findMessages/${instanceName}`, {
-          method: 'POST',
-          body: JSON.stringify({ where: {}, limit: 1000 }),
-        }).catch(() => ({})),
         this.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
       ]);
 
@@ -326,17 +322,6 @@ class EvolutionAPIClient {
           if (phone && bestName && !masterNameMap.has(phone)) {
             masterNameMap.set(phone, bestName);
           }
-        }
-      }
-
-      const msgRecords = messagesRes?.messages?.records || (Array.isArray(messagesRes) ? messagesRes : []);
-      for (const m of msgRecords) {
-        const jid = m.key?.remoteJid || m.key?.participant;
-        if (!jid || !jid.endsWith('@s.whatsapp.net')) continue;
-        const phone = jid.replace(/@.*$/, '').replace(/\D/g, '');
-        const bestName = extractBestContactName(m);
-        if (phone && bestName && !masterNameMap.has(phone)) {
-          masterNameMap.set(phone, bestName);
         }
       }
 
