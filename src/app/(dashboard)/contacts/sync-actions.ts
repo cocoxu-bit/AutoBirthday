@@ -574,6 +574,7 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
 
     let candidates = (cachedContacts || []).filter(c => {
       if (existingPhones.has(c.phone)) return false;
+      if (c.source === 'group_participant') return true;
       if ((c.lastActivity || 0) <= cutoff) return false;
       const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
       const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
@@ -621,7 +622,12 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       };
     }
 
-    candidates.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
+    // Sort: direct 1-to-1 chats first, then group participants
+    candidates.sort((a, b) => {
+      if (a.source === 'chat' && b.source !== 'chat') return -1;
+      if (a.source !== 'chat' && b.source === 'chat') return 1;
+      return (b.lastActivity || 0) - (a.lastActivity || 0);
+    });
 
     // Deliver initial batch of first 3 contacts — truly instant
     const initialCandidates = candidates.slice(0, 3);

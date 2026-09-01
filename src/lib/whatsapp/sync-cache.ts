@@ -188,22 +188,17 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
       return jid.endsWith('@g.us');
     });
 
-    const topGroups = groupChats.slice(0, 15);
-    const groupDetails = await Promise.all(
-      topGroups.map(async (g: any) => {
-        const jid = g.jid || g.remoteJid || g.id;
-        return evolutionApi.findGroupInfos(instanceName, jid).catch(() => null);
-      })
-    );
-
-    for (const g of groupDetails) {
-      if (!g || g.isCommunity || g.isCommunityAnnounce) continue;
-      const participants = g.participants || [];
+    const topGroups = groupChats.slice(0, 20);
+    for (const g of topGroups) {
+      const jid = g.jid || g.remoteJid || g.id;
+      const groupInfo = await evolutionApi.findGroupInfos(instanceName, jid).catch(() => null);
+      if (!groupInfo || groupInfo.isCommunity || groupInfo.isCommunityAnnounce) continue;
+      const participants = groupInfo.participants || [];
       // Filter out massive announcement groups (>40 members) or empty groups
       if (participants.length > 40 || participants.length < 2) continue;
 
-      const groupActivity = (g.subjectTime || g.creation || 0) * 1000 || (Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const groupSubject = (g.subject || 'Grupo de WhatsApp').trim();
+      const groupActivity = (groupInfo.subjectTime || groupInfo.creation || 0) * 1000 || (Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const groupSubject = (groupInfo.subject || 'Grupo de WhatsApp').trim();
 
       for (const p of participants) {
         const rawPhone = p.phoneNumber || p.id || '';
@@ -226,13 +221,15 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
           profilePictureUrl: null,
           hasRealName,
           source: 'group_participant',
-          originGroupId: g.id,
+          originGroupId: groupInfo.id,
           originGroupName: groupSubject,
           groupContext: groupSubject,
           lastActivity: groupActivity,
           syncTime: syncStartTime,
         });
       }
+
+      await new Promise(r => setTimeout(r, 180));
     }
 
     const allCandidates = Array.from(contactMap.values());
