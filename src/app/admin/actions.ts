@@ -873,6 +873,12 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
     const sampleReady: Array<{ name: string; phone: string; lastActivity: string; hasPic: boolean }> = [];
     const sampleExcluded: Array<{ type: 'group' | 'newsletter' | 'lid' | 'old' | 'nameless' | 'already_saved'; name: string; reason: string }> = [];
 
+    const cachedMap = new Map<string, any>();
+    (cached.docs || []).forEach((d: any) => {
+      const data = d.data();
+      if (data.phone) cachedMap.set(data.phone, data);
+    });
+
     for (let i = 0; i < (rawChats || []).length; i++) {
       const c = rawChats[i];
       const jid = c.remoteJid || c.id || '';
@@ -896,7 +902,7 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
       if (jid.endsWith('@lid')) {
         businessLidsCount++;
         if (sampleExcluded.length < 25) {
-          sampleExcluded.push({ type: 'lid', name: c.pushName || 'Identificador de empresa', reason: 'ID de privacidad (@lid)' });
+          sampleExcluded.push({ type: 'lid', name: c.pushName || 'Identificador de empresa', reason: 'ID de privacidad Meta (@lid)' });
         }
         continue;
       }
@@ -904,6 +910,7 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
       if (jid.endsWith('@s.whatsapp.net')) {
         individualChatsCount++;
         const cleanPhone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        const cachedItem = cachedMap.get(cleanPhone);
         
         const rawTs = c.lastMessage?.messageTimestamp;
         const ts = rawTs ? (rawTs > 1e8 && rawTs < 1e12 ? rawTs * 1000 : rawTs) : (c.updatedAt ? new Date(c.updatedAt).getTime() : 0);
@@ -924,14 +931,14 @@ export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Pr
           continue;
         }
 
-        const nameCandidate = c.name || c.pushName || (c.lastMessage?.fromMe ? null : c.lastMessage?.pushName);
+        const nameCandidate = cachedItem?.name || c.name || c.pushName || (c.lastMessage?.fromMe ? null : c.lastMessage?.pushName);
         const hasValidName = !isInvalidName(nameCandidate);
-        const hasPic = Boolean(c.profilePictureUrl || c.profilePicUrl);
+        const hasPic = Boolean(cachedItem?.profilePictureUrl || c.profilePictureUrl || c.profilePicUrl);
 
         if (!hasValidName && !hasPic) {
           namelessOrVoceCount++;
           if (sampleExcluded.length < 25) {
-            sampleExcluded.push({ type: 'nameless', name: `+${cleanPhone}`, reason: 'Sin nombre ni foto' });
+            sampleExcluded.push({ type: 'nameless', name: `+${cleanPhone}`, reason: 'Sin nombre ni foto de perfil' });
           }
           continue;
         }

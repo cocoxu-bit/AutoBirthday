@@ -1664,11 +1664,11 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                     Desglose Completo de Conversaciones
                   </span>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
                     <div className="p-2.5 bg-white rounded-xl border border-emerald-200">
                       <span className="text-[10px] text-emerald-700 font-bold block">🟢 1 a 1 Listos</span>
                       <span className="text-base font-black text-emerald-900">{diagnosticsData.readyToSyncCount}</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Personas reales recientes</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Personas reales (nombre/foto)</span>
                     </div>
 
                     <div className="p-2.5 bg-white rounded-xl border border-teal-200">
@@ -1681,6 +1681,12 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                       <span className="text-[10px] text-slate-500 font-bold block">👥 Grupos (@g.us)</span>
                       <span className="text-base font-black text-slate-800">{diagnosticsData.groupsCount}</span>
                       <span className="text-[10px] text-slate-400 block mt-0.5">Excluidos de sync indiv.</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-indigo-200">
+                      <span className="text-[10px] text-indigo-700 font-bold block">🔒 IDs Privacidad (@lid)</span>
+                      <span className="text-base font-black text-indigo-900">{diagnosticsData.businessLidsCount || 0}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Identificadores Meta/LID</span>
                     </div>
 
                     <div className="p-2.5 bg-white rounded-xl border border-purple-200">
@@ -1696,9 +1702,9 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                     </div>
 
                     <div className="p-2.5 bg-white rounded-xl border border-rose-200">
-                      <span className="text-[10px] text-rose-700 font-bold block">❓ Sin Nombre / SMS</span>
+                      <span className="text-[10px] text-rose-700 font-bold block">❓ Sin Nombre ni Foto</span>
                       <span className="text-base font-black text-rose-900">{diagnosticsData.namelessOrVoceCount}</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Bots / Códigos 2FA</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Bots / Números anónimos</span>
                     </div>
                   </div>
                 </div>
