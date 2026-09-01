@@ -324,37 +324,25 @@ export default function WhatsAppPage() {
                 </span>
               </div>
 
-              {/* Botón Principal: Copiar y Abrir WhatsApp en 1 toque */}
-              <div className="space-y-2 pt-1">
+              {/* Botón Principal: Copiar Código */}
+              <div className="pt-1">
                 <button
                   type="button"
-                  onClick={handleOpenWhatsAppAndCopy}
-                  className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 active:scale-98"
+                  onClick={handleCopyCode}
+                  className="w-full py-3 px-4 bg-white text-indigo-900 hover:bg-slate-50 font-black text-sm rounded-2xl shadow-lg shadow-indigo-950/20 transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
-                  <WhatsAppIcon className="w-5 h-5 text-white shrink-0" size={20} />
-                  <span>Copiar Código y Abrir WhatsApp</span>
-                  <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-emerald-700">¡Código copiado al portapapeles!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <span>Copiar Código</span>
+                    </>
+                  )}
                 </button>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={handleCopyCode}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 hover:bg-white/25 text-white font-bold text-xs rounded-xl transition-all active:scale-95"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-300" />
-                        <span>¡Copiado al portapapeles!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Solo copiar código</span>
-                      </>
-                    )}
-                  </button>
-                </div>
               </div>
             </div>
 
