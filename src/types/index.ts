@@ -12,6 +12,7 @@ export interface WhatsAppGroup {
   subject: string;     // Group Title/Name
   pictureUrl?: string | null;
   size?: number;
+  participantPhones?: string[]; // Clean phone numbers of participants in this group
 }
 
 export interface WhatsAppChatContact {

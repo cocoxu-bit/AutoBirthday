@@ -177,28 +177,48 @@ class EvolutionAPIClient {
     }
 
     try {
-      const [groups, chats] = await Promise.all([
-        this.request<any[]>(`/group/fetchAllGroups/${instanceName}?getParticipants=false`, {
-          method: 'GET',
-        }).catch(() => []),
-        this.request<any[]>(`/chat/findChats/${instanceName}`, {
-          method: 'POST',
-          body: JSON.stringify({ where: {} }),
-        }).catch(() => []),
-      ]);
+      // First try fetching groups WITH participants for smart common groups filtering
+      let groups = await this.request<any[]>(`/group/fetchAllGroups/${instanceName}?getParticipants=true`, {
+        method: 'GET',
+      }).catch(() => null);
 
-      const groupMap = new Map<string, { id: string; subject: string; pictureUrl: string | null; size: number; lastActivity: number }>();
+      // Fallback if rate-limited or error
+      if (!groups || !Array.isArray(groups)) {
+        groups = await this.request<any[]>(`/group/fetchAllGroups/${instanceName}?getParticipants=false`, {
+          method: 'GET',
+        }).catch(() => []);
+      }
+
+      const chats = await this.request<any[]>(`/chat/findChats/${instanceName}`, {
+        method: 'POST',
+        body: JSON.stringify({ where: {} }),
+      }).catch(() => []);
+
+      const groupMap = new Map<string, { 
+        id: string; 
+        subject: string; 
+        pictureUrl: string | null; 
+        size: number; 
+        lastActivity: number;
+        participantPhones?: string[];
+      }>();
 
       // 1. Add groups from fetchAllGroups
       for (const g of (groups || [])) {
         const id = g.id || g.jid;
         const time = (g.subjectTime || g.creation || 0) * 1000;
+        const participantPhones = (g.participants || []).map((p: any) => {
+          const raw = p.phoneNumber || p.id || '';
+          return raw.replace(/@.*$/, '').replace(/\D/g, '');
+        }).filter(Boolean);
+
         groupMap.set(id, {
           id,
           subject: g.subject || g.name || 'Grupo sin nombre',
           pictureUrl: g.pictureUrl || null,
-          size: g.size || 0,
+          size: g.size || participantPhones.length || 0,
           lastActivity: time,
+          participantPhones: participantPhones.length > 0 ? participantPhones : undefined,
         });
       }
 

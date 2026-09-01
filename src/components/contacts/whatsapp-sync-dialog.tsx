@@ -752,7 +752,11 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                     <button
                       type="button"
                       onClick={() => {
-                        const defaultGroup = availableGroups[0];
+                        const cleanCardPhone = (currentCard.phone || '').replace(/\D/g, '');
+                        const common = availableGroups.filter(g => 
+                          g.participantPhones && g.participantPhones.length > 0 && g.participantPhones.includes(cleanCardPhone)
+                        );
+                        const defaultGroup = common[0] || availableGroups[0];
                         updateCurrentCard({ 
                           targetType: 'group',
                           groupId: currentCard.groupId || defaultGroup?.id,
@@ -775,50 +779,91 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                   </div>
 
                   {/* Group Selector Sub-block */}
-                  {currentCard.targetType === 'group' && (
-                    <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-2.5 mt-2 animate-in fade-in duration-200">
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-emerald-900 uppercase">
-                          Selecciona el Grupo de WhatsApp:
-                        </label>
-                        {availableGroups.length === 0 ? (
-                          <p className="text-xs text-emerald-700">No se detectaron grupos en tu cuenta de WhatsApp.</p>
-                        ) : (
-                          <select
-                            value={currentCard.groupId || availableGroups[0]?.id || ''}
-                            onChange={e => {
-                              const selectedId = e.target.value;
-                              const group = availableGroups.find(g => g.id === selectedId);
-                              updateCurrentCard({
-                                groupId: selectedId,
-                                groupName: group?.subject || '',
-                              });
-                            }}
-                            className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          >
-                            {availableGroups.map(g => (
-                              <option key={g.id} value={g.id}>
-                                {g.subject}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
+                  {currentCard.targetType === 'group' && (() => {
+                    const cleanCardPhone = (currentCard.phone || '').replace(/\D/g, '');
+                    const commonGroups = availableGroups.filter(g => 
+                      g.participantPhones && g.participantPhones.length > 0 && g.participantPhones.includes(cleanCardPhone)
+                    );
+                    const hasCommonGroups = commonGroups.length > 0;
+                    const groupsToSelect = hasCommonGroups ? commonGroups : availableGroups;
 
-                      {/* Mention Checkbox */}
-                      <label className="flex items-center gap-2 cursor-pointer pt-0.5">
-                        <input
-                          type="checkbox"
-                          checked={currentCard.mentionInGroup ?? true}
-                          onChange={e => updateCurrentCard({ mentionInGroup: e.target.checked })}
-                          className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
-                        />
-                        <span className="text-xs font-bold text-emerald-900">
-                          Etiquetar con mención @{contactFirstName} en el grupo
-                        </span>
-                      </label>
-                    </div>
-                  )}
+                    return (
+                      <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-2.5 mt-2 animate-in fade-in duration-200">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold text-emerald-900 uppercase">
+                              Selecciona el Grupo de WhatsApp:
+                            </label>
+                            {hasCommonGroups && (
+                              <span className="text-[10px] bg-emerald-200/80 text-emerald-900 font-extrabold px-2 py-0.5 rounded-md">
+                                ✨ {commonGroups.length} en común
+                              </span>
+                            )}
+                          </div>
+
+                          {availableGroups.length === 0 ? (
+                            <p className="text-xs text-emerald-700">No se detectaron grupos en tu cuenta de WhatsApp.</p>
+                          ) : hasCommonGroups ? (
+                            <select
+                              value={currentCard.groupId || commonGroups[0]?.id || ''}
+                              onChange={e => {
+                                const selectedId = e.target.value;
+                                const group = availableGroups.find(g => g.id === selectedId);
+                                updateCurrentCard({
+                                  groupId: selectedId,
+                                  groupName: group?.subject || '',
+                                });
+                              }}
+                              className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            >
+                              {commonGroups.map(g => (
+                                <option key={g.id} value={g.id}>
+                                  {g.subject}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <div className="space-y-1.5">
+                              <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200/60">
+                                Sin grupos en común detectados. Mostrando todos tus grupos:
+                              </p>
+                              <select
+                                value={currentCard.groupId || availableGroups[0]?.id || ''}
+                                onChange={e => {
+                                  const selectedId = e.target.value;
+                                  const group = availableGroups.find(g => g.id === selectedId);
+                                  updateCurrentCard({
+                                    groupId: selectedId,
+                                    groupName: group?.subject || '',
+                                  });
+                                }}
+                                className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                              >
+                                {availableGroups.map(g => (
+                                  <option key={g.id} value={g.id}>
+                                    {g.subject}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mention Checkbox */}
+                        <label className="flex items-center gap-2 cursor-pointer pt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={currentCard.mentionInGroup ?? true}
+                            onChange={e => updateCurrentCard({ mentionInGroup: e.target.checked })}
+                            className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                          />
+                          <span className="text-xs font-bold text-emerald-900">
+                            Etiquetar con mención @{contactFirstName} en el grupo
+                          </span>
+                        </label>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <hr className="border-slate-100" />
