@@ -104,23 +104,24 @@ export async function prewarmWhatsAppContactsCache(userId: string): Promise<void
 
     const collectionRef = adminDb.collection('users').doc(userId).collection('wa_contacts_cache');
 
-    // STEP 1: Fetch chats and groups from Evolution API in parallel (cache remains 100% live during this)
-    const [rawChats, rawGroups] = await Promise.all([
-      evolutionApi.fetchChats(instanceName, true).catch(() => []),
-      evolutionApi.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
-    ]);
+    // STEP 1: Fetch chats and groups from Evolution API in parallel
+    let rawChats = await evolutionApi.fetchChats(instanceName, true).catch(() => []);
+    
+    // For newly connected sessions, WhatsApp Baileys streams history over 2-4 seconds.
+    // If the initial fetch returned <= 1 chats, wait briefly and retry to catch the streamed history.
+    if (rawChats.length <= 1) {
+      await new Promise(r => setTimeout(r, 2500));
+      rawChats = await evolutionApi.fetchChats(instanceName, true).catch(() => []);
+    }
+
+    const rawGroups = await evolutionApi.fetchGroups(instanceName).catch(() => []);
 
     // Build name resolution map from group participant metadata
     const nameMap = new Map<string, string>();
     for (const g of (rawGroups || [])) {
-      for (const p of (g.participants || [])) {
-        const rawPhone = p.phoneNumber || p.id || '';
-        const phone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
-        if (!phone || phone.length < 6 || nameMap.has(phone)) continue;
-
-        const pName = p.pushName || p.notify || p.name;
-        if (pName && !isInvalidName(pName)) {
-          nameMap.set(phone, pName.trim());
+      if (g.participantPhones) {
+        for (const phone of g.participantPhones) {
+          if (!phone || phone.length < 6 || nameMap.has(phone)) continue;
         }
       }
     }

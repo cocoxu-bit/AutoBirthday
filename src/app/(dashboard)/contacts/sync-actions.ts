@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { adminAuth } from '@/lib/firebase/admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { createContact as dbCreateContact } from '@/lib/firebase/firestore';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { fetchGoogleCalendarBirthdays } from '@/lib/integrations/google-calendar';
@@ -552,86 +553,78 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
       existingContacts.map(c => (c.phone || '').replace(/\D/g, ''))
     );
 
-    if (cachedContacts.length > 0) {
-      const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
-      const cutoff = Date.now() - EIGHTEEN_MONTHS;
+    const isInvalidName = (name?: string | null): boolean => {
+      if (!name) return true;
+      const clean = name.trim().toLowerCase();
+      if (!clean) return true;
+      if (clean === 'você' || clean === 'voce' || clean === 'you') return true;
+      if (clean === 'whatsapp' || clean === 'desconocido' || clean === 'unknown') return true;
+      if (/^[\d+\s\-()]+$/.test(clean)) return true;
+      if (clean.startsWith('contacto (+') || clean.startsWith('contacto(+')) return true;
+      return false;
+    };
 
-      const candidates = cachedContacts.filter(c => {
-        if (existingPhones.has(c.phone)) return false;
-        if ((c.lastActivity || 0) <= cutoff) return false;
-        const hasName = Boolean(c.name && c.name.trim());
-        const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
-        return hasName || hasPic;
-      });
+    const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - EIGHTEEN_MONTHS;
 
-      if (candidates.length === 0) {
-        return {
-          success: false,
-          error: '¡Todos tus contactos de WhatsApp ya están guardados en tu agenda!',
-        };
+    let candidates = (cachedContacts || []).filter(c => {
+      if (existingPhones.has(c.phone)) return false;
+      if ((c.lastActivity || 0) <= cutoff) return false;
+      const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
+      const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+      return hasName || hasPic;
+    });
+
+    // If cache is empty or has only <= 1 contact (common for fresh connections),
+    // perform a live fetch from Evolution API so user never gets stuck with 1 contact
+    if (candidates.length <= 1) {
+      const liveChats = await evolutionApi.fetchChats(instanceName, true).catch(() => []);
+      if (liveChats.length > 0) {
+        // Trigger background prewarm to populate Firestore cache
+        prewarmWhatsAppContactsCache(userId).catch(() => {});
+
+        const liveCandidates = liveChats
+          .filter(c => {
+            const p = (c.phone || '').replace(/\D/g, '');
+            if (!p || existingPhones.has(p)) return false;
+            if ((c.lastActivity || 0) <= cutoff) return false;
+            const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
+            const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+            return hasName || hasPic;
+          })
+          .map(c => ({
+            phone: (c.phone || '').replace(/\D/g, ''),
+            name: !isInvalidName(c.name) ? c.name : '',
+            pushName: c.pushName,
+            profilePictureUrl: c.profilePictureUrl || null,
+            hasRealName: Boolean(c.name && !isInvalidName(c.name)),
+            source: 'chat' as const,
+            lastActivity: c.lastActivity || Date.now(),
+            updatedAt: Timestamp.now(),
+          }));
+
+        if (liveCandidates.length > 0) {
+          candidates = liveCandidates;
+        }
       }
-
-      candidates.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
-
-      // Deliver initial batch of first 3 contacts — NO avatar prefetch, truly instant
-      const initialCandidates = candidates.slice(0, 3);
-
-      const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
-        id: `wa-sync-${c.phone}-${index}`,
-        name: c.name,
-        phone: c.phone,
-        pushName: c.pushName,
-        profilePictureUrl: c.profilePictureUrl || null,
-        birthDay: 0,
-        birthMonth: 0,
-        birthYear: null,
-        targetType: 'individual',
-        groupId: undefined,
-        groupName: undefined,
-        mentionInGroup: true,
-        mode: 'manual',
-        templateId: undefined,
-        customMessage: undefined,
-        aiTone: 'casual',
-        aiNotes: undefined,
-        autoSend: false,
-        sendTimeStart: '09:00',
-        sendTimeEnd: '11:00',
-      }));
-
-      return {
-        success: true,
-        items,
-        availableGroups: waGroups,
-        hasMore: candidates.length > 3,
-        totalEstimated: candidates.length,
-      };
     }
 
-    // Ultra-fast live fallback if cache not yet populated: fetch first 3 chats slice (< 80ms)
-    const [fastSlice, fallbackGroups] = await Promise.all([
-      evolutionApi.fetchFastChatSlice(instanceName, 5).catch(() => []),
-      evolutionApi.fetchGroups(instanceName).catch(() => []),
-    ]);
-
-    const initialCandidates = fastSlice
-      .filter(c => {
-        const p = (c.phone || '').replace(/\D/g, '');
-        return p && !existingPhones.has(p) && c.name && !c.name.startsWith('Contacto (+');
-      })
-      .slice(0, 3);
-
-    if (initialCandidates.length === 0) {
+    if (candidates.length === 0) {
       return {
         success: false,
-        error: 'No se encontraron conversaciones con nombre en tu WhatsApp.',
+        error: 'No se encontraron conversaciones activas en tu WhatsApp para sincronizar.',
       };
     }
+
+    candidates.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
+
+    // Deliver initial batch of first 3 contacts — truly instant
+    const initialCandidates = candidates.slice(0, 3);
 
     const items: WhatsAppSyncItem[] = initialCandidates.map((c, index) => ({
       id: `wa-sync-${c.phone}-${index}`,
       name: c.name,
-      phone: (c.phone || '').replace(/\D/g, ''),
+      phone: c.phone,
       pushName: c.pushName,
       profilePictureUrl: c.profilePictureUrl || null,
       birthDay: 0,
@@ -654,8 +647,9 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     return {
       success: true,
       items,
-      availableGroups: fallbackGroups.length > 0 ? fallbackGroups : waGroups,
-      hasMore: true,
+      availableGroups: waGroups,
+      hasMore: candidates.length > 3,
+      totalEstimated: candidates.length,
     };
   } catch (error: any) {
     console.error('getWhatsAppInitialBatchForSyncAction error:', error);
@@ -680,27 +674,64 @@ export async function getWhatsAppChunkedContactsForSyncAction(
 }> {
   try {
     const userId = await getAuthenticatedUserId();
+    const instanceName = `autocumple-${userId}`;
 
     const { getContacts } = await import('@/lib/firebase/firestore');
-    const { getCachedWhatsAppContacts } = await import('@/lib/whatsapp/sync-cache');
+    const { getCachedWhatsAppContacts, prewarmWhatsAppContactsCache } = await import('@/lib/whatsapp/sync-cache');
+
+    const isInvalidName = (name?: string | null): boolean => {
+      if (!name) return true;
+      const clean = name.trim().toLowerCase();
+      if (!clean) return true;
+      if (clean === 'você' || clean === 'voce' || clean === 'you') return true;
+      if (clean === 'whatsapp' || clean === 'desconocido' || clean === 'unknown') return true;
+      if (/^[\d+\s\-()]+$/.test(clean)) return true;
+      if (clean.startsWith('contacto (+') || clean.startsWith('contacto(+')) return true;
+      return false;
+    };
 
     // Build exclusion set: already loaded phones + already saved contacts
     const loadedSet = new Set(alreadyLoadedPhones.map(p => (p || '').replace(/\D/g, '')));
     const existingContacts = await getContacts(userId).catch(() => []);
     existingContacts.forEach(c => loadedSet.add((c.phone || '').replace(/\D/g, '')));
 
-    // Read ONLY from Firestore cache — no VPS calls, instant (<30ms)
-    const cached = await getCachedWhatsAppContacts(userId).catch(() => []);
+    let cached = await getCachedWhatsAppContacts(userId).catch(() => []);
 
     const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
     const cutoff = Date.now() - EIGHTEEN_MONTHS;
+
+    // Fallback: If cache is small and still building, pull live from Evolution API
+    if (cached.length <= 1) {
+      const liveChats = await evolutionApi.fetchChats(instanceName, true).catch(() => []);
+      if (liveChats.length > 0) {
+        prewarmWhatsAppContactsCache(userId).catch(() => {});
+        cached = liveChats
+          .filter(c => {
+            const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
+            const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+            return hasName || hasPic;
+          })
+          .map(c => ({
+            phone: (c.phone || '').replace(/\D/g, ''),
+            name: !isInvalidName(c.name) ? c.name : '',
+            pushName: c.pushName,
+            profilePictureUrl: c.profilePictureUrl || null,
+            hasRealName: Boolean(c.name && !isInvalidName(c.name)),
+            source: 'chat' as const,
+            lastActivity: c.lastActivity || Date.now(),
+            updatedAt: Timestamp.now(),
+          }));
+      }
+    }
 
     // Include all chats with activity in last 18 months
     const remaining = cached.filter(c => {
       const p = (c.phone || '').replace(/\D/g, '');
       if (!p || loadedSet.has(p)) return false;
       if (!c.lastActivity || c.lastActivity < cutoff) return false;
-      return true;
+      const hasName = Boolean(c.name && c.name.trim() && !isInvalidName(c.name));
+      const hasPic = Boolean(c.profilePictureUrl && c.profilePictureUrl.trim());
+      return hasName || hasPic;
     });
 
     if (remaining.length === 0) {
@@ -736,7 +767,6 @@ export async function getWhatsAppChunkedContactsForSyncAction(
       sendTimeEnd: '11:00',
     }));
 
-    const instanceName = `autocumple-${userId}`;
     const waGroups = await evolutionApi.fetchGroups(instanceName).catch(() => []);
 
     return {

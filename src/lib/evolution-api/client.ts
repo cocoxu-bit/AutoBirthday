@@ -45,23 +45,31 @@ class EvolutionAPIClient {
     this.apiKey = EVOLUTION_API_KEY;
   }
 
-  private async request<T>(path: string, options?: RequestInit): Promise<T> {
+  private async request<T>(path: string, options?: RequestInit, timeoutMs = 6000): Promise<T> {
     const url = process.env.EVOLUTION_API_URL || this.baseUrl || 'http://localhost:8080';
     const key = process.env.EVOLUTION_API_KEY || this.apiKey || 'autobirthday-dev-key-2024';
 
-    const res = await fetch(`${url}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': key,
-        ...options?.headers,
-      },
-    });
-    if (!res.ok) {
-      const error = await res.text();
-      throw new Error(`Evolution API error: ${res.status} - ${error}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(`${url}${path}`, {
+        ...options,
+        signal: options?.signal || controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': key,
+          ...options?.headers,
+        },
+      });
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`Evolution API error: ${res.status} - ${error}`);
+      }
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
     }
-    return res.json();
   }
 
   async createInstance(instanceName: string, webhookUrl?: string) {
@@ -177,16 +185,16 @@ class EvolutionAPIClient {
     }
 
     try {
-      // First try fetching groups WITH participants for smart common groups filtering
+      // First try fetching groups WITH participants for smart common groups filtering (max 3.5s)
       let groups = await this.request<any[]>(`/group/fetchAllGroups/${instanceName}?getParticipants=true`, {
         method: 'GET',
-      }).catch(() => null);
+      }, 3500).catch(() => null);
 
-      // Fallback if rate-limited or error
+      // Fallback if rate-limited or error (max 3s)
       if (!groups || !Array.isArray(groups)) {
         groups = await this.request<any[]>(`/group/fetchAllGroups/${instanceName}?getParticipants=false`, {
           method: 'GET',
-        }).catch(() => []);
+        }, 3000).catch(() => []);
       }
 
       const chats = await this.request<any[]>(`/chat/findChats/${instanceName}`, {
@@ -322,7 +330,7 @@ class EvolutionAPIClient {
     }
 
     try {
-      const [chats, contactsPost, groupsRes] = await Promise.all([
+      const [chats, contactsPost] = await Promise.all([
         this.request<any[]>(`/chat/findChats/${instanceName}`, {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
@@ -331,7 +339,6 @@ class EvolutionAPIClient {
           method: 'POST',
           body: JSON.stringify({ where: {} }),
         }).catch(() => []),
-        this.fetchAllGroupsWithParticipants(instanceName).catch(() => []),
       ]);
 
       const masterNameMap = new Map<string, string>();
@@ -343,17 +350,6 @@ class EvolutionAPIClient {
         const bestName = extractBestContactName(c);
         if (phone && bestName) {
           masterNameMap.set(phone, bestName);
-        }
-      }
-
-      for (const g of (groupsRes || [])) {
-        for (const p of (g.participants || [])) {
-          const rawPhone = p.phoneNumber || p.id || '';
-          const phone = rawPhone.replace(/@.*$/, '').replace(/\D/g, '');
-          const bestName = extractBestContactName(p);
-          if (phone && bestName && !masterNameMap.has(phone)) {
-            masterNameMap.set(phone, bestName);
-          }
         }
       }
 
