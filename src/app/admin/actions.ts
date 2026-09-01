@@ -790,3 +790,190 @@ export async function getAdminSystemTelemetryAction(): Promise<{
     };
   }
 }
+
+export interface AdminWhatsAppDiagnostics {
+  userId: string;
+  userEmail: string;
+  userName: string;
+  connected: boolean;
+  instanceState: string;
+  instancePhone?: string | null;
+  totalRawChats: number;
+  groupsCount: number;
+  newslettersCount: number;
+  businessLidsCount: number;
+  individualChatsCount: number;
+  olderThan18MonthsCount: number;
+  namelessOrVoceCount: number;
+  alreadySavedCount: number;
+  readyToSyncCount: number;
+  savedInAgendaCount: number;
+  cachedInFirestoreCount: number;
+  sampleReady: Array<{
+    name: string;
+    phone: string;
+    lastActivity: string;
+    hasPic: boolean;
+  }>;
+  sampleExcluded: Array<{
+    type: 'group' | 'newsletter' | 'lid' | 'old' | 'nameless' | 'already_saved';
+    name: string;
+    reason: string;
+  }>;
+}
+
+export async function getUserWhatsAppDiagnosticsAction(targetUserId: string): Promise<{
+  success: boolean;
+  data?: AdminWhatsAppDiagnostics;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+
+    const userDoc = await adminDb.collection('users').doc(targetUserId).get();
+    const userData = userDoc.data() || {};
+    const instanceName = `autocumple-${targetUserId}`;
+
+    const conn = await evolutionApi.getConnectionState(instanceName).catch(() => null);
+    const isConnected = conn?.instance?.state === 'open';
+
+    const [rawChats, existingSnap, cached] = await Promise.all([
+      (evolutionApi as any).request(`/chat/findChats/${instanceName}`, {
+        method: 'POST',
+        body: JSON.stringify({ where: {} })
+      }).catch(() => []),
+      adminDb.collection('users').doc(targetUserId).collection('contacts').get().catch(() => ({ docs: [], size: 0 })),
+      adminDb.collection('users').doc(targetUserId).collection('wa_contacts_cache').get().catch(() => ({ docs: [], size: 0 }))
+    ]);
+
+    const existingPhones = new Set((existingSnap.docs || []).map((d: any) => (d.data().phone || '').replace(/\D/g, '')));
+    
+    const EIGHTEEN_MONTHS = 18 * 30 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - EIGHTEEN_MONTHS;
+
+    const isInvalidName = (name?: string | null): boolean => {
+      if (!name) return true;
+      const clean = name.trim().toLowerCase();
+      if (!clean) return true;
+      if (clean === 'você' || clean === 'voce' || clean === 'you') return true;
+      if (clean === 'whatsapp' || clean === 'desconocido' || clean === 'unknown') return true;
+      if (/^[\d+\s\-()]+$/.test(clean)) return true;
+      if (clean.startsWith('contacto (+') || clean.startsWith('contacto(+')) return true;
+      return false;
+    };
+
+    let groupsCount = 0;
+    let newslettersCount = 0;
+    let businessLidsCount = 0;
+    let individualChatsCount = 0;
+    let olderThan18MonthsCount = 0;
+    let namelessOrVoceCount = 0;
+    let alreadySavedCount = 0;
+
+    const sampleReady: Array<{ name: string; phone: string; lastActivity: string; hasPic: boolean }> = [];
+    const sampleExcluded: Array<{ type: 'group' | 'newsletter' | 'lid' | 'old' | 'nameless' | 'already_saved'; name: string; reason: string }> = [];
+
+    for (let i = 0; i < (rawChats || []).length; i++) {
+      const c = rawChats[i];
+      const jid = c.remoteJid || c.id || '';
+
+      if (jid.endsWith('@g.us')) {
+        groupsCount++;
+        if (sampleExcluded.length < 25) {
+          sampleExcluded.push({ type: 'group', name: c.pushName || c.name || 'Grupo de WhatsApp', reason: 'Grupo (@g.us)' });
+        }
+        continue;
+      }
+
+      if (jid.endsWith('@newsletter')) {
+        newslettersCount++;
+        if (sampleExcluded.length < 25) {
+          sampleExcluded.push({ type: 'newsletter', name: c.pushName || c.name || 'Canal', reason: 'Canal (@newsletter)' });
+        }
+        continue;
+      }
+
+      if (jid.endsWith('@lid')) {
+        businessLidsCount++;
+        if (sampleExcluded.length < 25) {
+          sampleExcluded.push({ type: 'lid', name: c.pushName || 'Identificador de empresa', reason: 'ID de privacidad (@lid)' });
+        }
+        continue;
+      }
+
+      if (jid.endsWith('@s.whatsapp.net')) {
+        individualChatsCount++;
+        const cleanPhone = jid.replace(/@.*$/, '').replace(/\D/g, '');
+        
+        const rawTs = c.lastMessage?.messageTimestamp;
+        const ts = rawTs ? (rawTs > 1e8 && rawTs < 1e12 ? rawTs * 1000 : rawTs) : (c.updatedAt ? new Date(c.updatedAt).getTime() : 0);
+
+        if (ts > 0 && ts < cutoff) {
+          olderThan18MonthsCount++;
+          if (sampleExcluded.length < 25) {
+            sampleExcluded.push({ type: 'old', name: c.name || c.pushName || (`+${cleanPhone}`), reason: 'Inactivo (>18 meses)' });
+          }
+          continue;
+        }
+
+        if (existingPhones.has(cleanPhone)) {
+          alreadySavedCount++;
+          if (sampleExcluded.length < 25) {
+            sampleExcluded.push({ type: 'already_saved', name: c.name || c.pushName || (`+${cleanPhone}`), reason: 'Ya en la agenda' });
+          }
+          continue;
+        }
+
+        const nameCandidate = c.name || c.pushName || (c.lastMessage?.fromMe ? null : c.lastMessage?.pushName);
+        if (isInvalidName(nameCandidate)) {
+          namelessOrVoceCount++;
+          if (sampleExcluded.length < 25) {
+            sampleExcluded.push({ type: 'nameless', name: `+${cleanPhone}`, reason: 'Sin nombre identificable' });
+          }
+          continue;
+        }
+
+        sampleReady.push({
+          name: (nameCandidate || '').trim(),
+          phone: `+${cleanPhone}`,
+          lastActivity: ts > 0 ? new Date(ts).toISOString() : 'Reciente',
+          hasPic: Boolean(c.profilePictureUrl || c.profilePicUrl)
+        });
+      }
+    }
+
+    sampleReady.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+
+    return {
+      success: true,
+      data: {
+        userId: targetUserId,
+        userEmail: userData.email || 'Sin correo',
+        userName: userData.displayName || userData.name || 'Usuario',
+        connected: Boolean(isConnected),
+        instanceState: conn?.instance?.state || 'disconnected',
+        instancePhone: userData.whatsappInstance?.phoneNumber || null,
+        totalRawChats: (rawChats || []).length,
+        groupsCount,
+        newslettersCount,
+        businessLidsCount,
+        individualChatsCount,
+        olderThan18MonthsCount,
+        namelessOrVoceCount,
+        alreadySavedCount,
+        readyToSyncCount: sampleReady.length,
+        savedInAgendaCount: existingSnap.size || 0,
+        cachedInFirestoreCount: cached.size || 0,
+        sampleReady,
+        sampleExcluded: sampleExcluded.slice(0, 20)
+      }
+    };
+  } catch (error: any) {
+    console.error('getUserWhatsAppDiagnosticsAction error:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al obtener diagnóstico de WhatsApp'
+    };
+  }
+}
+

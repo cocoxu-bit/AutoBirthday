@@ -40,9 +40,11 @@ import {
   AdminUserRecord, 
   AdminWishRecord,
   AdminSystemTelemetry,
+  AdminWhatsAppDiagnostics,
   getAdminAnalyticsDataAction, 
   getAdminGlobalWishesAction,
   getAdminSystemTelemetryAction,
+  getUserWhatsAppDiagnosticsAction,
   adminDeleteUserAction,
   adminTestWhatsAppInstanceAction,
   adminRestartWhatsAppInstanceAction,
@@ -84,6 +86,31 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [whatsAppTestResult, setWhatsAppTestResult] = useState<{ state?: string; message?: string; phone?: string | null } | null>(null);
   const [restartingWhatsApp, setRestartingWhatsApp] = useState(false);
   const [togglingSuspension, setTogglingSuspension] = useState(false);
+
+  // Full WhatsApp Diagnostics Breakdown Modal
+  const [diagModalUser, setDiagModalUser] = useState<AdminUserRecord | null>(null);
+  const [diagnosticsData, setDiagnosticsData] = useState<AdminWhatsAppDiagnostics | null>(null);
+  const [loadingDiagnostics, setLoadingDiagnostics] = useState(false);
+  const [diagTab, setDiagTab] = useState<'ready' | 'excluded'>('ready');
+
+  const handleOpenDiagnostics = async (user: AdminUserRecord) => {
+    setDiagModalUser(user);
+    setDiagnosticsData(null);
+    setLoadingDiagnostics(true);
+    setDiagTab('ready');
+    try {
+      const res = await getUserWhatsAppDiagnosticsAction(user.id);
+      if (res.success && res.data) {
+        setDiagnosticsData(res.data);
+      } else {
+        toast.error(res.error || 'Error al obtener diagnóstico de WhatsApp');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Error de conexión');
+    } finally {
+      setLoadingDiagnostics(false);
+    }
+  };
 
   // Global Wishes tab state
   const [wishes, setWishes] = useState<AdminWishRecord[]>([]);
@@ -710,6 +737,17 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                           {/* Action Detail */}
                           <td className="py-3.5 px-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenDiagnostics(u);
+                                }}
+                                title="Diagnóstico de sincronización WhatsApp"
+                                className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                              >
+                                <Activity className="w-4 h-4" />
+                              </button>
                               {u.email !== 'lucasjimeneznavarro@gmail.com' && (
                                 <button
                                   type="button"
@@ -1350,7 +1388,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                   className="flex-1 py-2 bg-white hover:bg-emerald-100/80 text-emerald-900 border border-emerald-200 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-2xs"
                 >
                   <Radio className={`w-3.5 h-3.5 ${testingWhatsApp ? 'animate-pulse text-emerald-600' : ''}`} />
-                  <span>{testingWhatsApp ? 'Probando socket...' : 'Test Conexión'}</span>
+                  <span>{testingWhatsApp ? 'Probando...' : 'Test Conexión'}</span>
                 </button>
 
                 <button
@@ -1363,6 +1401,15 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                   <span>{restartingWhatsApp ? 'Reiniciando...' : 'Reiniciar Instancia'}</span>
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={() => handleOpenDiagnostics(selectedUser)}
+                className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
+              >
+                <Activity className="w-4 h-4" />
+                <span>Ver Desglose y Diagnóstico de Chats</span>
+              </button>
             </div>
 
             {/* Account Status / Danger Zone */}
@@ -1463,6 +1510,226 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                 Cerrar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* WHATSAPP FULL DIAGNOSTICS MODAL */}
+      {diagModalUser && (
+        <div 
+          onClick={() => !loadingDiagnostics && setDiagModalUser(null)}
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-5 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                  <WhatsAppIcon className="w-6 h-6 text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base leading-tight flex items-center gap-2">
+                    <span>Diagnóstico de Sincronización WhatsApp</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {diagModalUser.displayName} <span className="text-slate-400">({diagModalUser.email})</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={loadingDiagnostics}
+                  onClick={() => handleOpenDiagnostics(diagModalUser)}
+                  title="Re-ejecutar diagnóstico en vivo"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingDiagnostics ? 'animate-spin text-emerald-600' : ''}`} />
+                </button>
+                <button 
+                  onClick={() => setDiagModalUser(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center font-bold text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {loadingDiagnostics ? (
+              <div className="py-16 text-center space-y-3">
+                <RefreshCw className="w-8 h-8 animate-spin text-emerald-600 mx-auto" />
+                <p className="font-bold text-slate-800 text-sm">Analizando conversaciones y libreta de WhatsApp...</p>
+                <p className="text-xs text-slate-400">Consultando Evolution API y caché de Firestore</p>
+              </div>
+            ) : !diagnosticsData ? (
+              <div className="py-12 text-center text-slate-400 text-sm">
+                No se pudieron cargar los datos de diagnóstico.
+              </div>
+            ) : !diagnosticsData.connected ? (
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-2">
+                <AlertTriangle className="w-8 h-8 text-amber-600 mx-auto" />
+                <p className="font-black text-slate-900 text-sm">WhatsApp No Conectado</p>
+                <p className="text-xs text-slate-600">
+                  El usuario no tiene una sesión de WhatsApp activa en este momento (estado: <code className="font-bold">{diagnosticsData.instanceState}</code>).
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* 4 Top KPI Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Chats</span>
+                    <span className="text-lg font-black text-slate-900 block mt-0.5">{diagnosticsData.totalRawChats}</span>
+                  </div>
+                  <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 text-center">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700 block">Listos p/ Sync</span>
+                    <span className="text-lg font-black text-emerald-900 block mt-0.5">{diagnosticsData.readyToSyncCount}</span>
+                  </div>
+                  <div className="p-3 bg-teal-50 rounded-2xl border border-teal-200/80 text-center">
+                    <span className="text-[10px] font-bold uppercase text-teal-700 block">En Agenda</span>
+                    <span className="text-lg font-black text-teal-900 block mt-0.5">{diagnosticsData.savedInAgendaCount}</span>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-2xl border border-purple-200/80 text-center">
+                    <span className="text-[10px] font-bold uppercase text-purple-700 block">Caché Firestore</span>
+                    <span className="text-lg font-black text-purple-900 block mt-0.5">{diagnosticsData.cachedInFirestoreCount}</span>
+                  </div>
+                </div>
+
+                {/* Categorization Grid */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                  <span className="text-xs font-black text-slate-900 block uppercase tracking-wider">
+                    Desglose Completo de Conversaciones
+                  </span>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="p-2.5 bg-white rounded-xl border border-emerald-200">
+                      <span className="text-[10px] text-emerald-700 font-bold block">🟢 1 a 1 Listos</span>
+                      <span className="text-base font-black text-emerald-900">{diagnosticsData.readyToSyncCount}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Personas reales recientes</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-teal-200">
+                      <span className="text-[10px] text-teal-700 font-bold block">🛡️ Ya en Agenda</span>
+                      <span className="text-base font-black text-teal-900">{diagnosticsData.alreadySavedCount}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Excluidos (sin duplicados)</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-500 font-bold block">👥 Grupos (@g.us)</span>
+                      <span className="text-base font-black text-slate-800">{diagnosticsData.groupsCount}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Excluidos de sync indiv.</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-purple-200">
+                      <span className="text-[10px] text-purple-700 font-bold block">📢 Canales (@newsletter)</span>
+                      <span className="text-base font-black text-purple-900">{diagnosticsData.newslettersCount}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Excluidos</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-amber-200">
+                      <span className="text-[10px] text-amber-700 font-bold block">⏳ Inactivos (+18 meses)</span>
+                      <span className="text-base font-black text-amber-900">{diagnosticsData.olderThan18MonthsCount}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Excluidos por ventana</span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-xl border border-rose-200">
+                      <span className="text-[10px] text-rose-700 font-bold block">❓ Sin Nombre / SMS</span>
+                      <span className="text-base font-black text-rose-900">{diagnosticsData.namelessOrVoceCount}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Bots / Códigos 2FA</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <button
+                      type="button"
+                      onClick={() => setDiagTab('ready')}
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 ${
+                        diagTab === 'ready'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Listos para Sincronizar ({diagnosticsData.sampleReady.length})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDiagTab('excluded')}
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 ${
+                        diagTab === 'excluded'
+                          ? 'bg-slate-800 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Muestra Descartados ({diagnosticsData.sampleExcluded.length})</span>
+                    </button>
+                  </div>
+
+                  {diagTab === 'ready' ? (
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {diagnosticsData.sampleReady.length === 0 ? (
+                        <p className="text-center py-6 text-xs text-slate-400">No hay contactos pendientes de sincronizar.</p>
+                      ) : (
+                        diagnosticsData.sampleReady.map((item, idx) => (
+                          <div 
+                            key={`${item.phone}-${idx}`}
+                            className="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-emerald-50/50 rounded-xl border border-slate-100 text-xs transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="w-5 text-[11px] font-bold text-slate-400">{idx + 1}</span>
+                              <div>
+                                <p className="font-bold text-slate-900">{item.name}</p>
+                                <p className="text-[11px] text-slate-400 font-mono">{item.phone}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                                item.hasPic ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                {item.hasPic ? 'Foto ✅' : 'Sin foto'}
+                              </span>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                {item.lastActivity.includes('T') ? new Date(item.lastActivity).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : item.lastActivity}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {diagnosticsData.sampleExcluded.map((item, idx) => (
+                        <div 
+                          key={idx}
+                          className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs"
+                        >
+                          <span className="font-medium text-slate-700 truncate max-w-[280px]">{item.name}</span>
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 whitespace-nowrap">
+                            {item.reason}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setDiagModalUser(null)}
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs transition-colors"
+            >
+              Cerrar Diagnóstico
+            </button>
           </div>
         </div>
       )}
