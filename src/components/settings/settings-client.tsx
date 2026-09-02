@@ -6,8 +6,11 @@ import { toast } from 'sonner';
 import { UserProfile } from '@/types';
 import { updateUserSettings, deleteAccount } from '@/app/(dashboard)/settings/actions';
 import { signOutUser } from '@/lib/firebase/auth';
-import { User, MessageCircle, Info, AlertTriangle, LogOut, Globe, Clock, Sparkles, Loader2, Save } from 'lucide-react';
+import { User, MessageCircle, Info, AlertTriangle, LogOut, Globe, Clock, Sparkles, Loader2, Save, Languages } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n/context';
+import { SUPPORTED_LOCALES, SupportedLocale } from '@/lib/i18n/config';
 
 interface SettingsClientProps {
   userProfile: UserProfile & { [key: string]: any };
@@ -26,8 +29,10 @@ const COMMON_TIMEZONES = [
 
 export function SettingsClient({ userProfile }: SettingsClientProps) {
   const router = useRouter();
+  const { locale, setLocale, t } = useTranslation();
   const [displayName, setDisplayName] = useState(userProfile.displayName || '');
   const [timezone, setTimezone] = useState(userProfile.timezone || 'Europe/Madrid');
+  const [selectedLocale, setSelectedLocale] = useState<SupportedLocale>((userProfile.locale as SupportedLocale) || locale);
   const [sendTimeStart, setSendTimeStart] = useState(userProfile.defaultSendTimeStart || '09:30');
   const [sendTimeEnd, setSendTimeEnd] = useState(userProfile.defaultSendTimeEnd || '11:45');
   const [aiTone, setAiTone] = useState(userProfile.defaultAiTone || 'casual');
@@ -45,13 +50,16 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
     const res = await updateUserSettings({
       displayName: displayName.trim(),
       timezone,
+      locale: selectedLocale,
       defaultSendTimeStart: sendTimeStart,
       defaultSendTimeEnd: sendTimeEnd,
       defaultAiTone: aiTone,
     });
 
     if (res.success) {
-      toast.success('Ajustes guardados con éxito 🎉');
+      setLocale(selectedLocale);
+      toast.success(t('settings.savedSuccess'));
+      router.refresh();
     } else {
       toast.error(res.error || 'Error al actualizar los ajustes');
     }
@@ -127,7 +135,56 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
         </div>
       </div>
 
-      {/* 2. Preferencias de Automatización */}
+      {/* 2. Idioma de la Aplicación */}
+      <div className="bg-white/70 backdrop-blur rounded-3xl border border-white/40 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100/80 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-100 text-emerald-700 rounded-2xl">
+              <Languages className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">{t('settings.language')}</h2>
+              <p className="text-xs text-slate-500">{t('settings.languageDesc')}</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Object.values(SUPPORTED_LOCALES).map((loc) => {
+              const isSelected = selectedLocale === loc.code;
+              return (
+                <button
+                  key={loc.code}
+                  type="button"
+                  onClick={() => setSelectedLocale(loc.code)}
+                  className={cn(
+                    "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all text-center group cursor-pointer",
+                    isSelected
+                      ? "border-violet-600 bg-violet-50/80 text-violet-950 shadow-sm ring-2 ring-violet-200"
+                      : "border-slate-200 bg-white/60 hover:bg-white text-slate-700 hover:border-slate-300"
+                  )}
+                >
+                  <span className="text-3xl mb-1.5 transform group-hover:scale-110 transition-transform">{loc.flag}</span>
+                  <span className="text-sm font-bold">{loc.nativeName}</span>
+                  <span className="text-[11px] text-slate-400">{loc.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 pt-3 flex justify-end border-t border-slate-100">
+            <button 
+              onClick={handleSaveSettings}
+              disabled={isSaving}
+              className="px-5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {t('settings.saveButton')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Preferencias de Automatización */}
       <div className="bg-white/70 backdrop-blur rounded-3xl border border-white/40 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-100/80 flex items-center gap-3">
           <div className="p-2.5 bg-blue-100 text-blue-700 rounded-2xl">

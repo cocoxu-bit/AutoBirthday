@@ -4,17 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, Smartphone, Cake, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const mobileNavItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  { href: "/contacts", icon: Users, label: "Cumpleaños" },
-  { href: "/wishes", icon: Cake, label: "Felicitaciones" },
-  { href: "/whatsapp", icon: Smartphone, label: "WhatsApp" },
-  { href: "/settings", icon: Settings, label: "Ajustes" },
-];
+import { useTranslation } from "@/lib/i18n/context";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const mobileNavItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
+    { href: "/contacts", icon: Users, label: t("nav.contacts") },
+    { href: "/wishes", icon: Cake, label: t("nav.wishes") },
+    { href: "/whatsapp", icon: Smartphone, label: t("nav.whatsapp") },
+    { href: "/settings", icon: Settings, label: t("nav.settings") },
+  ];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-t border-slate-200/80 shadow-lg shadow-slate-900/5 z-40">

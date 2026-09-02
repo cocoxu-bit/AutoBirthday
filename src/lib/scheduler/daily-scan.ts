@@ -61,9 +61,11 @@ export async function executeDailyScan(
 
   for (const target of targetDates) {
     const contactsDocs: Array<{ id: string; data: () => any; userId: string }> = [];
+    const usersMap = new Map<string, any>();
 
     const usersSnapshot = await adminDb.collection('users').get();
     for (const userDoc of usersSnapshot.docs) {
+      usersMap.set(userDoc.id, userDoc.data());
       const userContacts = await adminDb
         .collection('users')
         .doc(userDoc.id)
@@ -108,6 +110,7 @@ export async function executeDailyScan(
 
         let generatedMessage = contact.customMessage || '';
         const age = contact.birthYear ? year - contact.birthYear : undefined;
+        const currentUserData = usersMap.get(userId);
 
         if (contact.mode === 'template' && contact.templateId) {
           const templateDoc = await adminDb
@@ -135,6 +138,7 @@ export async function executeDailyScan(
             groupName: contact.groupName,
             mentionInGroup: contact.mentionInGroup,
             phone: contact.phone,
+            locale: currentUserData?.locale || 'es',
           });
         }
 

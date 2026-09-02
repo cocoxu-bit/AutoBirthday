@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { onAuthChange } from "@/lib/firebase/auth";
+import { useTranslation } from "@/lib/i18n/context";
 import {
   LayoutDashboard,
   Users,
@@ -19,19 +20,20 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  { href: "/contacts", icon: Users, label: "Cumpleaños" },
-  { href: "/wishes", icon: Cake, label: "Felicitaciones" },
-  { href: "/templates", icon: FileText, label: "Plantillas" },
-  { href: "/whatsapp", icon: Smartphone, label: "WhatsApp", isWhatsApp: true },
-  { href: "/settings", icon: Settings, label: "Configuración" },
-];
-
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const navItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
+    { href: "/contacts", icon: Users, label: t("nav.contacts") },
+    { href: "/wishes", icon: Cake, label: t("nav.wishes") },
+    { href: "/templates", icon: FileText, label: t("nav.templates") },
+    { href: "/whatsapp", icon: Smartphone, label: t("nav.whatsapp"), isWhatsApp: true },
+    { href: "/settings", icon: Settings, label: t("nav.settings") },
+  ];
 
   useEffect(() => {
     const unsub = onAuthChange((user) => {

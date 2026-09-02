@@ -16,212 +16,582 @@
         height: 1080px;
         overflow: hidden;
         background: #081412;
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        color: #0f172a;
       }
 
-      .bg-scene-16x9 {
+      .stage-16x9 {
         position: relative;
         width: 1920px;
         height: 1080px;
-        background: radial-gradient(circle at 50% 25%, #1b3d39 0%, #0d2220 55%, #081412 100%);
+        background: radial-gradient(circle at 50% 30%, #15332e 0%, #0c1c19 60%, #06100e 100%);
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 60px 100px;
       }
 
       .bg-grid {
         position: absolute;
         inset: 0;
         background-image: 
-          linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-        background-size: 60px 60px;
+          linear-gradient(to right, rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+        background-size: 50px 50px;
         pointer-events: none;
       }
 
-      .ep-container {
+      .glow-ambient {
+        position: absolute;
+        width: 700px;
+        height: 700px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+        filter: blur(80px);
+        pointer-events: none;
+      }
+
+      /* LEFT: Web Window */
+      .web-window {
+        width: 960px;
+        height: 940px;
+        background: #f4f8f6;
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        height: 100%;
-        padding: 80px 120px;
+        flex-direction: column;
+        overflow: hidden;
         position: relative;
         z-index: 10;
       }
 
-      .left-col {
-        flex: 1;
-        max-width: 800px;
+      .browser-bar {
+        height: 52px;
+        background: #e8f1ec;
+        border-bottom: 1px solid #d8e5df;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        padding: 0 20px;
+        gap: 16px;
       }
 
-      .badge-step {
+      .traffic-lights {
+        display: flex;
+        gap: 8px;
+      }
+      .traffic-dot {
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+      }
+      .dot-red { background: #ff5f56; }
+      .dot-yellow { background: #ffbd2e; }
+      .dot-green { background: #27c93f; }
+
+      .url-bar {
+        flex: 1;
+        max-width: 520px;
+        height: 32px;
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #c2d4cb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #163e38;
+        gap: 8px;
+        margin: 0 auto;
+      }
+
+      .web-body {
+        flex: 1;
+        padding: 36px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .ab-card {
+        width: 560px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 28px;
+        box-shadow: 0 20px 45px rgba(20, 40, 37, 0.08);
+        padding: 32px 36px;
+      }
+
+      .ab-pill-header {
         display: inline-flex;
         align-items: center;
-        gap: 12px;
-        padding: 10px 24px;
-        background: rgba(40, 89, 83, 0.45);
-        border: 1px solid rgba(16, 185, 129, 0.4);
+        gap: 6px;
+        padding: 4px 14px;
         border-radius: 9999px;
-        box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
-      }
-
-      .badge-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #10b981;
-        box-shadow: 0 0 10px #10b981;
-      }
-
-      .badge-text {
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #ffffff;
-      }
-
-      .title-main-16x9 {
-        font-size: 64px;
+        background: #def0ea;
+        color: #0b1d1b;
+        font-size: 12px;
         font-weight: 800;
-        line-height: 1.15;
-        letter-spacing: -1px;
+        text-transform: uppercase;
+      }
+
+      .ab-card-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #020617;
+        margin-top: 10px;
+      }
+
+      .ab-card-subtitle {
+        font-size: 14px;
+        color: #334155;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .tab-switcher {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: #e2e8f0;
+        border-radius: 16px;
+        padding: 4px;
+        gap: 4px;
         margin-top: 24px;
       }
 
-      .gradient-emerald {
-        background: linear-gradient(135deg, #ffffff 40%, #93cebe 75%, #10b981 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-
-      .subtitle-16x9 {
-        font-size: 26px;
-        color: #bde2d6;
-        line-height: 1.4;
-        max-width: 800px;
-        margin-top: 16px;
-      }
-
-      .step-list {
-        margin-top: 36px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        width: 100%;
-      }
-
-      .step-item {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        padding: 16px 20px;
-        background: rgba(20, 40, 37, 0.6);
-        border: 1px solid rgba(147, 206, 190, 0.25);
-        border-radius: 16px;
-        font-size: 20px;
-        color: #ffffff;
-      }
-
-      .step-num {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: #10b981;
-        color: #081412;
-        font-weight: 800;
+      .tab-btn {
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        gap: 8px;
+        border: none;
+        background: transparent;
+        color: #334155;
+        cursor: pointer;
       }
 
-      .right-col {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        position: relative;
+      .tab-btn.active {
+        background: #ffffff;
+        color: #020617;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       }
 
-      .qr-card {
-        width: 480px;
-        background: rgba(20, 40, 37, 0.9);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        border-radius: 28px;
-        padding: 40px;
+      .view-qr-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-        position: relative;
-        overflow: hidden;
+        margin-top: 22px;
       }
 
-      .qr-box {
-        position: relative;
-        width: 240px;
-        height: 240px;
+      .qr-white-box {
+        width: 210px;
+        height: 210px;
         background: #ffffff;
+        border: 1px solid #94a3b8;
         border-radius: 20px;
-        padding: 16px;
+        padding: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 20px 0;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+      }
+
+      .qr-instruction-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 9999px;
+        background: #def0ea;
+        border: 1px solid #5db69f;
+        color: #0b1d1b;
+        font-size: 13px;
+        font-weight: 800;
+        margin-top: 18px;
+      }
+
+      .view-code-container {
+        display: none;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 22px;
+      }
+
+      .code-result-card {
+        background: #0b1d1b;
+        border: 1px solid #204b46;
+        border-radius: 22px;
+        padding: 20px;
+        color: #ffffff;
+        text-align: center;
+      }
+
+      .code-display {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 14px;
+        padding: 8px 24px;
+        display: inline-block;
+        font-family: monospace;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        color: #ffffff;
+        margin: 10px 0;
+      }
+
+      .copy-btn-sim {
+        width: 100%;
+        padding: 12px;
+        background: #ffffff;
+        color: #020617;
+        font-size: 14px;
+        font-weight: 800;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .view-connected-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 10px 0;
+      }
+
+      .success-icon-box {
+        width: 68px;
+        height: 68px;
+        border-radius: 22px;
+        background: #def0ea;
+        color: #064e3b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 900;
+        margin-bottom: 14px;
+      }
+
+      .next-step-box {
+        width: 100%;
+        background: #091715;
+        border: 1px solid #163e38;
+        border-radius: 20px;
+        padding: 20px 24px;
+        color: #ffffff;
+        text-align: left;
+        margin-top: 20px;
+      }
+
+      .action-green-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 13px 18px;
+        background: #10b981;
+        color: #020617;
+        font-size: 15px;
+        font-weight: 900;
+        border-radius: 12px;
+        margin-top: 14px;
+        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+      }
+
+      /* RIGHT: Phone */
+      .phone-wrapper {
+        width: 640px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 20;
+      }
+
+      .phone-body {
+        width: 440px;
+        height: 880px;
+        background: #000000;
+        border-radius: 56px;
+        border: 10px solid #1e293b;
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dynamic-island {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 32px;
+        background: #000000;
+        border-radius: 20px;
+        z-index: 50;
+      }
+
+      .wa-screen {
+        width: 100%;
+        height: 100%;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        position: relative;
         overflow: hidden;
       }
 
-      .laser-beam {
+      .wa-statusbar {
+        height: 48px;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 800;
+        color: #020617;
+        z-index: 40;
+      }
+
+      .wa-top-header {
+        height: 54px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        border-bottom: 1px solid #cbd5e1;
+        font-size: 20px;
+        font-weight: 800;
+        color: #020617;
+      }
+
+      .wa-view-chats {
+        flex: 1;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-list-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .wa-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .wa-bottom-nav {
+        height: 72px;
+        background: #ffffff;
+        border-top: 1px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding-bottom: 8px;
+      }
+
+      .nav-tab-wa {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #334155;
+      }
+
+      .wa-view-devices {
+        position: absolute;
+        inset: 48px 0 0 0;
+        background: #f8fafc;
+        display: none;
+        flex-direction: column;
+        z-index: 20;
+      }
+
+      .wa-back-header {
+        height: 52px;
+        background: #ffffff;
+        border-bottom: 1px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 12px;
+        font-size: 17px;
+        font-weight: 800;
+        color: #020617;
+      }
+
+      .devices-content {
+        padding: 30px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .link-btn-green {
+        width: 100%;
+        padding: 15px;
+        background: #15803d;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 800;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 6px 20px rgba(21, 128, 61, 0.35);
+        margin-top: 24px;
+      }
+
+      .link-by-phone-link {
+        margin-top: 16px;
+        color: #0369a1;
+        font-size: 14px;
+        font-weight: 800;
+        text-decoration: underline;
+      }
+
+      .wa-view-camera {
+        position: absolute;
+        inset: 48px 0 0 0;
+        background: #000000;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+      }
+
+      .camera-viewfinder {
+        width: 260px;
+        height: 260px;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 28px;
+        position: relative;
+        box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .corner-bracket {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        border-color: #22c55e;
+        border-style: solid;
+      }
+      .bracket-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 20px; }
+      .bracket-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 20px; }
+      .bracket-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 20px; }
+      .bracket-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 20px; }
+
+      .wa-view-codepaste {
+        position: absolute;
+        inset: 48px 0 0 0;
+        background: #ffffff;
+        display: none;
+        flex-direction: column;
+        z-index: 30;
+        padding: 30px 24px;
+        text-align: center;
+      }
+
+      .code-boxes-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin: 30px 0;
+      }
+
+      .code-char-box {
+        width: 42px;
+        height: 52px;
+        border: 2px solid #64748b;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        font-size: 24px;
+        font-weight: 900;
+        color: #020617;
+      }
+
+      .active-session-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 16px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 18px;
+        text-align: left;
+        margin-top: 24px;
+      }
+
+      .pointer-hand {
         position: absolute;
         top: 0;
         left: 0;
-        right: 0;
-        height: 4px;
-        background: #10b981;
-        box-shadow: 0 0 16px #10b981, 0 0 24px #34d399;
-        z-index: 5;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(16, 185, 129, 0.4);
+        border: 3px solid #10b981;
+        box-shadow: 0 0 20px #10b981;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
       }
 
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 20px;
-        border-radius: 9999px;
-        font-size: 17px;
-        font-weight: 700;
-        background: rgba(245, 158, 11, 0.2);
-        border: 1px solid rgba(245, 158, 11, 0.6);
-        color: #fef08a;
-      }
-
-      .status-pill.connected {
-        background: rgba(16, 185, 129, 0.25);
-        border-color: rgba(16, 185, 129, 0.8);
-        color: #ffffff;
-      }
-
-      .success-toast {
+      .top-guide-pill {
         position: absolute;
-        bottom: -40px;
-        background: #10b981;
-        color: #081412;
-        padding: 14px 28px;
-        border-radius: 16px;
-        font-size: 20px;
-        font-weight: 800;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #081412;
+        border: 1px solid #10b981;
+        padding: 10px 24px;
+        border-radius: 9999px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffffff;
         display: flex;
         align-items: center;
-        gap: 12px;
-        box-shadow: 0 15px 35px rgba(16, 185, 129, 0.5);
-        z-index: 20;
+        gap: 10px;
+        z-index: 80;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       }
     </style>
   </head>
@@ -231,73 +601,246 @@
       class="clip"
       data-composition-id="ep01-horizontal"
       data-start="0"
-      data-duration="15"
+      data-duration="24"
       data-width="1920"
       data-height="1080"
     >
-      <div class="bg-scene-16x9">
+      <div class="stage-16x9">
         <div class="bg-grid"></div>
+        <div class="glow-ambient" style="top: -100px; left: 200px;" data-layout-allow-overflow="true"></div>
+        <div class="glow-ambient" style="bottom: -100px; right: 200px;" data-layout-allow-overflow="true"></div>
 
-        <div class="ep-container">
-          <div class="left-col">
-            <div id="badge" class="badge-step">
-              <span class="badge-dot"></span>
-              <span class="badge-text">Paso 1 · Vinculación Instantánea</span>
+        <!-- Top Guide Banner -->
+        <div id="guidePill" class="top-guide-pill">
+          <span style="font-size: 20px;">📱</span>
+          <span id="guideText">Paso 1: Abre WhatsApp y vincula tu cuenta</span>
+        </div>
+
+        <!-- Touch Cursor -->
+        <div id="handCursor" class="pointer-hand"></div>
+
+        <!-- LEFT: AutoBirthday Web UI -->
+        <div class="web-window">
+          <div class="browser-bar">
+            <div class="traffic-lights">
+              <div class="traffic-dot dot-red"></div>
+              <div class="traffic-dot dot-yellow"></div>
+              <div class="traffic-dot dot-green"></div>
             </div>
-
-            <h1 id="title" class="title-main-16x9">
-              Conecta tu <span class="gradient-emerald">WhatsApp</span> en 10 segundos
-            </h1>
-
-            <p id="subtitle" class="subtitle-16x9">
-              Sincroniza tu cuenta de forma segura para que tu agente pueda enviar felicitaciones automáticas a tus seres queridos o clientes.
-            </p>
-
-            <div class="step-list">
-              <div id="step-1" class="step-item">
-                <div class="step-num">1</div>
-                <span>Abre WhatsApp en tu teléfono</span>
-              </div>
-              <div id="step-2" class="step-item">
-                <div class="step-num">2</div>
-                <span>Ve a <strong>Ajustes > Dispositivos Vinculados</strong></span>
-              </div>
-              <div id="step-3" class="step-item">
-                <div class="step-num">3</div>
-                <span>Escanea el código QR en pantalla</span>
-              </div>
+            <div class="url-bar">
+              <span>🔒</span>
+              <span>autobirthday.app/whatsapp</span>
             </div>
           </div>
 
-          <div class="right-col">
-            <div id="qrCard" class="qr-card">
-              <div style="font-size: 22px; font-weight: 700; color: #ffffff;">Escanear Código QR</div>
-              <div style="font-size: 15px; color: #bde2d6; margin-top: 4px;">Instancia Evolution API · Segura y Encriptada</div>
-
-              <div class="qr-box">
-                <div id="laser" class="laser-beam"></div>
-                <svg width="190" height="190" viewBox="0 0 100 100" fill="#142825">
-                  <path d="M5 5 h30 v30 h-30 z M10 10 v20 h20 v-20 z M15 15 h10 v10 h-10 z" />
-                  <path d="M65 5 h30 v30 h-30 z M70 10 v20 h20 v-20 z M75 15 h10 v10 h-10 z" />
-                  <path d="M5 65 h30 v30 h-30 z M10 70 v20 h20 v-20 z M15 75 h10 v10 h-10 z" />
-                  <rect x="45" y="10" width="10" height="10" />
-                  <rect x="45" y="30" width="10" height="20" />
-                  <rect x="10" y="45" width="20" height="10" />
-                  <rect x="75" y="45" width="15" height="10" />
-                  <rect x="45" y="65" width="15" height="15" />
-                  <rect x="70" y="70" width="20" height="20" />
-                </svg>
+          <div class="web-body">
+            <div class="ab-card">
+              <div style="text-align: center;">
+                <div class="ab-pill-header">
+                  <span>📱</span>
+                  <span>WhatsApp</span>
+                </div>
+                <h2 id="abTitle" class="ab-card-title">Conecta tu Cuenta</h2>
+                <p id="abSub" class="ab-card-subtitle">Selecciona cómo prefieres conectar tu número:</p>
               </div>
 
-              <div id="statusPill" class="status-pill">
-                <span id="statusIcon">⏳</span>
-                <span id="statusText">Esperando escaneo...</span>
+              <div id="tabBar" class="tab-switcher">
+                <button id="tabMobile" class="tab-btn active">
+                  <span>📱</span>
+                  <span>En este móvil</span>
+                </button>
+                <button id="tabQr" class="tab-btn">
+                  <span>📷</span>
+                  <span>Código QR</span>
+                </button>
+              </div>
+
+              <!-- VIEW 1: QR CODE VIEW -->
+              <div id="webQrView" class="view-qr-container">
+                <div class="qr-white-box">
+                  <svg width="180" height="180" viewBox="0 0 100 100" fill="#020617">
+                    <path d="M5 5 h30 v30 h-30 z M10 10 v20 h20 v-20 z M15 15 h10 v10 h-10 z" />
+                    <path d="M65 5 h30 v30 h-30 z M70 10 v20 h20 v-20 z M75 15 h10 v10 h-10 z" />
+                    <path d="M5 65 h30 v30 h-30 z M10 70 v20 h20 v-20 z M15 75 h10 v10 h-10 z" />
+                    <rect x="45" y="10" width="10" height="10" />
+                    <rect x="45" y="30" width="10" height="20" />
+                    <rect x="10" y="45" width="20" height="10" />
+                    <rect x="75" y="45" width="15" height="10" />
+                    <rect x="45" y="65" width="15" height="15" />
+                    <rect x="70" y="70" width="20" height="20" />
+                  </svg>
+                </div>
+                <div class="qr-instruction-pill">
+                  <span>⏳</span>
+                  <span>Apunta la cámara de WhatsApp a este código</span>
+                </div>
+              </div>
+
+              <!-- VIEW 2: PAIRING CODE VIEW -->
+              <div id="webCodeView" class="view-code-container">
+                <div class="code-result-card">
+                  <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #ffffff;">Tu Código de Vinculación</div>
+                  <div class="code-display">7K4B-9X2M</div>
+                  <div id="copyCodeBtn" class="copy-btn-sim">
+                    <span>📋</span>
+                    <span id="copyBtnText">Copiar Código</span>
+                  </div>
+                </div>
+                <div style="font-size: 13px; color: #0f172a; font-weight: 700; text-align: center;">
+                  Pégalo en WhatsApp > Dispositivos vinculados
+                </div>
+              </div>
+
+              <!-- VIEW 3: CONNECTED VIEW -->
+              <div id="webConnectedView" class="view-connected-container">
+                <div class="success-icon-box">✓</div>
+                <h3 style="font-size: 24px; font-weight: 900; color: #020617;">¡WhatsApp Conectado! 🎉</h3>
+                <div style="margin-top: 6px; padding: 4px 16px; background: #def0ea; border: 1px solid #10b981; border-radius: 9999px; font-family: monospace; font-size: 14px; font-weight: 900; color: #064e3b;">
+                  +34 612 34 56 78
+                </div>
+
+                <div class="next-step-box">
+                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #34d399;">Siguiente Paso</div>
+                  <div style="font-size: 18px; font-weight: 800; color: #ffffff; margin-top: 2px;">Agrega tus Cumpleaños</div>
+                  <div style="font-size: 13px; color: #e2e8f0; margin-top: 2px;">Detecta tus chats para programar felicitaciones automáticas.</div>
+                  <div class="action-green-btn">
+                    <span>👥</span>
+                    <span>Agregar cumpleaños desde WhatsApp ➔</span>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div id="toast" class="success-toast" style="opacity: 0;">
-              <span>✅</span>
-              <span>¡WhatsApp Vinculado con Éxito!</span>
+        <!-- RIGHT: Realistic WhatsApp Phone Mockup -->
+        <div class="phone-wrapper">
+          <div class="phone-body">
+            <div class="dynamic-island"></div>
+
+            <div class="wa-screen">
+              <div id="waStatusBar" class="wa-statusbar">
+                <span id="waClock">09:41</span>
+                <span>📶 🔋</span>
+              </div>
+
+              <!-- SCREEN A: WhatsApp Chats -->
+              <div id="waScreenChats" class="wa-view-chats">
+                <div class="wa-top-header">
+                  <span>Chats</span>
+                  <span style="font-size: 22px; color: #16a34a; font-weight: 900;">＋</span>
+                </div>
+
+                <div style="flex: 1; overflow: hidden;">
+                  <div class="chat-list-item">
+                    <div class="wa-avatar">👩</div>
+                    <div style="flex: 1;">
+                      <div style="font-weight: 800; font-size: 16px; color: #020617;">Laura Gómez</div>
+                      <div style="font-size: 13px; color: #334155; font-weight: 500;">¿Nos vemos el sábado?</div>
+                    </div>
+                    <div style="font-size: 12px; color: #475569; font-weight: 600;">09:15</div>
+                  </div>
+
+                  <div class="chat-list-item">
+                    <div class="wa-avatar">👨</div>
+                    <div style="flex: 1;">
+                      <div style="font-weight: 800; font-size: 16px; color: #020617;">Carlos Mendoza</div>
+                      <div style="font-size: 13px; color: #334155; font-weight: 500;">Perfecto, te aviso luego</div>
+                    </div>
+                    <div style="font-size: 12px; color: #475569; font-weight: 600;">Ayer</div>
+                  </div>
+                </div>
+
+                <div class="wa-bottom-nav">
+                  <div class="nav-tab-wa">
+                    <span style="font-size: 20px;">💬</span>
+                    <span>Chats</span>
+                  </div>
+                  <div class="nav-tab-wa">
+                    <span style="font-size: 20px;">📞</span>
+                    <span>Llamadas</span>
+                  </div>
+                  <div id="waSettingsTab" class="nav-tab-wa">
+                    <span style="font-size: 20px;">⚙️</span>
+                    <span>Ajustes</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SCREEN B: Linked Devices Screen -->
+              <div id="waScreenDevices" class="wa-view-devices">
+                <div class="wa-back-header">
+                  <span>‹ Ajustes</span>
+                  <span style="font-weight: 800;">Dispositivos vinculados</span>
+                </div>
+
+                <div class="devices-content">
+                  <div style="font-size: 64px; margin: 10px 0;">💻 📱</div>
+                  <h3 style="font-size: 20px; font-weight: 900; color: #020617;">Usa WhatsApp en la Web</h3>
+                  <p style="font-size: 14px; color: #334155; font-weight: 600; margin-top: 6px;">
+                    Vincula tu cuenta con AutoBirthday para enviar saludos automáticos.
+                  </p>
+
+                  <div id="waLinkDeviceBtn" class="link-btn-green">
+                    <span>📷</span>
+                    <span>Vincular un dispositivo</span>
+                  </div>
+
+                  <div id="waLinkPhoneLink" class="link-by-phone-link">
+                    Vincular con el número de teléfono
+                  </div>
+
+                  <div id="waActiveSession" class="active-session-item" style="display: none;">
+                    <div style="font-size: 28px;">💻</div>
+                    <div>
+                      <div style="font-weight: 800; font-size: 15px; color: #020617;">Google Chrome (macOS)</div>
+                      <div style="font-size: 13px; color: #047857; font-weight: 800;">● Activo ahora</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SCREEN C: Camera Viewfinder in WhatsApp -->
+              <div id="waScreenCamera" class="wa-view-camera">
+                <div class="camera-viewfinder">
+                  <div class="corner-bracket bracket-tl"></div>
+                  <div class="corner-bracket bracket-tr"></div>
+                  <div class="corner-bracket bracket-bl"></div>
+                  <div class="corner-bracket bracket-br"></div>
+                  <div id="scannerLine" style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #22c55e; box-shadow: 0 0 12px #22c55e;"></div>
+                </div>
+                <div style="color: #ffffff; font-size: 15px; font-weight: 700; margin-top: 24px;">
+                  Apunta al código QR de la pantalla
+                </div>
+              </div>
+
+              <!-- SCREEN D: Pairing Code Input in WhatsApp -->
+              <div id="waScreenCodePaste" class="wa-view-codepaste">
+                <div class="wa-back-header" style="margin: -30px -24px 20px -24px;">
+                  <span>‹ Volver</span>
+                  <span style="font-weight: 800;">Introduce el código</span>
+                </div>
+
+                <div style="font-size: 15px; color: #334155; font-weight: 600; margin-top: 10px;">
+                  Escribe el código que ves en AutoBirthday
+                </div>
+
+                <div class="code-boxes-row">
+                  <div id="c1" class="code-char-box">-</div>
+                  <div id="c2" class="code-char-box">-</div>
+                  <div id="c3" class="code-char-box">-</div>
+                  <div id="c4" class="code-char-box">-</div>
+                  <div style="display: flex; align-items: center; font-size: 20px; color: #475569; font-weight: 800;">-</div>
+                  <div id="c5" class="code-char-box">-</div>
+                  <div id="c6" class="code-char-box">-</div>
+                  <div id="c7" class="code-char-box">-</div>
+                  <div id="c8" class="code-char-box">-</div>
+                </div>
+
+                <div id="pasteButtonWa" style="background: #e2e8f0; padding: 12px 20px; border-radius: 14px; font-size: 15px; font-weight: 800; color: #0369a1; display: inline-block; margin: 0 auto;">
+                  📋 Pegar código copiado
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -308,70 +851,152 @@
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
 
-      // 0.0s - Entrance
-      tl.from("#badge", { opacity: 0, y: -20, duration: 0.6, ease: "power2.out" }, 0.2);
-      tl.from("#title", { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 0.5);
-      tl.from("#subtitle", { opacity: 0, y: 20, duration: 0.7, ease: "power2.out" }, 0.8);
+      // Init
+      tl.set("#handCursor", { x: 1680, y: 920, opacity: 0 }, 0);
+      tl.from(".web-window", { opacity: 0, x: -50, duration: 0.8, ease: "power3.out" }, 0.2);
+      tl.from(".phone-wrapper", { opacity: 0, x: 50, duration: 0.8, ease: "power3.out" }, 0.4);
+      tl.from("#guidePill", { opacity: 0, y: -20, duration: 0.6, ease: "back.out(1.5)" }, 0.6);
 
-      // Stagger steps
-      tl.from(["#step-1", "#step-2", "#step-3"], {
-        opacity: 0,
-        x: -40,
-        duration: 0.6,
-        stagger: 0.25,
-        ease: "power2.out"
-      }, 1.2);
+      // Default: Tab QR selected for Desktop
+      tl.to("#tabMobile", { backgroundColor: "transparent", color: "#334155", duration: 0.1 }, 0.1);
+      tl.to("#tabQr", { backgroundColor: "#ffffff", color: "#020617", duration: 0.1 }, 0.1);
 
-      // QR Card reveals
-      tl.from("#qrCard", {
-        opacity: 0,
-        scale: 0.9,
-        y: 30,
-        duration: 0.8,
-        ease: "back.out(1.5)"
-      }, 1.5);
+      // SCENE 2: (2s - 8s) QR Code Flow
+      tl.to("#handCursor", { opacity: 1, x: 1680, y: 920, duration: 0.6, ease: "power2.out" }, 2.0);
+      tl.to("#handCursor", { scale: 0.8, duration: 0.15, yoyo: true, repeat: 1 }, 2.6);
 
-      // Laser scanning animation with y transform
-      tl.fromTo("#laser", 
-        { y: 0 }, 
-        { y: 236, duration: 1.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 
-        2.2
-      );
-
-      // 7.5s - Successful connection state change
-      tl.to("#statusPill", {
-        scale: 1.08,
-        duration: 0.3,
-        onComplete: () => {
-          const pill = document.getElementById("statusPill");
-          pill.classList.add("connected");
-          document.getElementById("statusIcon").textContent = "🟢";
-          document.getElementById("statusText").textContent = "Conectado · Sesión Activa";
+      // Show Devices screen, hide Chats screen
+      tl.to("#waScreenDevices", {
+        display: "flex",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("waScreenChats").style.display = "none";
+          document.getElementById("waScreenDevices").style.display = "flex";
         }
-      }, 7.5);
-      tl.to("#statusPill", { scale: 1.0, duration: 0.3 }, 7.8);
+      }, 2.8);
 
-      // Show celebration toast with fromTo
-      tl.fromTo("#toast", 
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: -10, duration: 0.6, ease: "back.out(1.8)" },
-        8.2
+      // Move to "Vincular un dispositivo"
+      tl.to("#handCursor", { x: 1530, y: 490, duration: 0.7, ease: "power2.out" }, 3.2);
+      tl.to("#handCursor", { scale: 0.8, duration: 0.15, yoyo: true, repeat: 1 }, 4.0);
+
+      // Show Camera screen, hide Devices screen
+      tl.to("#waScreenCamera", {
+        display: "flex",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("waScreenDevices").style.display = "none";
+          document.getElementById("waScreenCamera").style.display = "flex";
+          document.getElementById("waStatusBar").style.color = "#ffffff";
+        }
+      }, 4.2);
+
+      tl.fromTo("#scannerLine", 
+        { y: 0 }, 
+        { y: 250, duration: 1.0, repeat: 2, yoyo: true, ease: "sine.inOut" }, 
+        4.5
       );
 
-      // Highlight step 3 as completed
-      tl.to("#step-3", {
-        borderColor: "rgba(16, 185, 129, 0.8)",
-        backgroundColor: "rgba(40, 89, 83, 0.6)",
-        duration: 0.5
-      }, 8.5);
+      // SCENE 3: (8s - 16s) Mobile Pairing Code Flow
+      tl.to("#guideText", { textContent: "💡 ¿Estás desde el móvil? Es aún más rápido con código:", duration: 0.2 }, 7.5);
 
-      // Outro fade
-      tl.to(".ep-container", {
-        opacity: 0,
-        scale: 0.98,
-        duration: 0.8,
-        ease: "power2.in"
-      }, 14.2);
+      // Switch tab to "En este móvil"
+      tl.to("#tabQr", { backgroundColor: "transparent", color: "#334155", duration: 0.2 }, 8.0);
+      tl.to("#tabMobile", { backgroundColor: "#ffffff", color: "#020617", duration: 0.2 }, 8.0);
+
+      tl.to("#webQrView", {
+        display: "none",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("webQrView").style.display = "none";
+          document.getElementById("webCodeView").style.display = "flex";
+        }
+      }, 8.2);
+
+      // In phone, return to Devices screen
+      tl.to("#waScreenCamera", {
+        display: "none",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("waScreenCamera").style.display = "none";
+          document.getElementById("waScreenDevices").style.display = "flex";
+          document.getElementById("waStatusBar").style.color = "#020617";
+        }
+      }, 8.4);
+
+      // Tap "Copiar Código" in web
+      tl.to("#handCursor", { x: 580, y: 620, duration: 0.7, ease: "power2.out" }, 9.2);
+      tl.to("#handCursor", { scale: 0.8, duration: 0.15, yoyo: true, repeat: 1 }, 10.0);
+      tl.to("#copyBtnText", { textContent: "✅ ¡Código copiado!", color: "#064e3b", duration: 0.2 }, 10.2);
+
+      // Move to WhatsApp "Vincular con número de teléfono"
+      tl.to("#handCursor", { x: 1530, y: 540, duration: 0.8, ease: "power2.out" }, 10.8);
+      tl.to("#handCursor", { scale: 0.8, duration: 0.15, yoyo: true, repeat: 1 }, 11.6);
+
+      // Show Code Paste screen
+      tl.to("#waScreenCodePaste", {
+        display: "flex",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("waScreenDevices").style.display = "none";
+          document.getElementById("waScreenCodePaste").style.display = "flex";
+        }
+      }, 11.8);
+
+      // Tap "Pegar código copiado"
+      tl.to("#handCursor", { x: 1530, y: 460, duration: 0.6, ease: "power2.out" }, 12.2);
+      tl.to("#handCursor", { scale: 0.8, duration: 0.15, yoyo: true, repeat: 1 }, 12.8);
+
+      tl.to("#c1", { textContent: "7", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.0);
+      tl.to("#c2", { textContent: "K", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.1);
+      tl.to("#c3", { textContent: "4", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.2);
+      tl.to("#c4", { textContent: "B", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.3);
+      tl.to("#c5", { textContent: "9", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.4);
+      tl.to("#c6", { textContent: "X", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.5);
+      tl.to("#c7", { textContent: "2", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.6);
+      tl.to("#c8", { textContent: "M", borderColor: "#059669", color: "#059669", duration: 0.1 }, 13.7);
+
+      // SCENE 4: (14.5s - 24s) Instant Success
+      tl.to("#handCursor", { opacity: 0, duration: 0.3 }, 14.0);
+      tl.to("#guideText", { textContent: "🎉 ¡Listo! WhatsApp vinculado correctamente", duration: 0.2 }, 14.5);
+
+      // Show Active Session in WhatsApp
+      tl.to("#waScreenCodePaste", {
+        display: "none",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("waScreenCodePaste").style.display = "none";
+          document.getElementById("waScreenDevices").style.display = "flex";
+          document.getElementById("waActiveSession").style.display = "flex";
+          document.getElementById("waLinkDeviceBtn").style.display = "none";
+          document.getElementById("waLinkPhoneLink").style.display = "none";
+        }
+      }, 14.8);
+
+      // In AutoBirthday, show Connected View
+      tl.to("#webCodeView", {
+        display: "none",
+        duration: 0.1,
+        onStart: () => {
+          document.getElementById("webCodeView").style.display = "none";
+          document.getElementById("tabBar").style.display = "none";
+          document.getElementById("abTitle").style.display = "none";
+          document.getElementById("abSub").style.display = "none";
+          document.getElementById("webConnectedView").style.display = "flex";
+        }
+      }, 15.0);
+
+      tl.from("#webConnectedView", { opacity: 0, scale: 0.95, duration: 0.6, ease: "back.out(1.6)" }, 15.2);
+
+      tl.to(".action-green-btn", {
+        scale: 1.04,
+        boxShadow: "0 8px 24px rgba(16, 185, 129, 0.5)",
+        duration: 0.6,
+        repeat: 3,
+        yoyo: true,
+        ease: "sine.inOut"
+      }, 16.5);
+
+      tl.to(".stage-16x9", { opacity: 0, scale: 0.98, duration: 0.8, ease: "power2.in" }, 23.2);
 
       window.__timelines["ep01-horizontal"] = tl;
     </script>

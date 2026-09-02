@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
+import { getServerLocale } from "@/lib/i18n/server";
+import { LanguageProvider } from "@/lib/i18n/context";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -39,15 +41,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getServerLocale();
+
   return (
-    <html lang="es" className="h-full antialiased">
+    <html lang={locale} className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-gradient-festive font-sans">
-        {children}
+        <LanguageProvider initialLocale={locale}>
+          {children}
+        </LanguageProvider>
         <Toaster
           position="top-right"
           richColors

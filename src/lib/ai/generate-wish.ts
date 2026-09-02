@@ -10,16 +10,25 @@ interface GenerateWishParams {
   groupName?: string;
   mentionInGroup?: boolean;
   phone?: string;
+  locale?: 'es' | 'en' | 'pt' | 'de';
 }
 
 export async function generateBirthdayWish(params: GenerateWishParams): Promise<string> {
-  const { name, age, relationship, tone, notes, isGroup, groupName, mentionInGroup, phone } = params;
+  const { name, age, relationship, tone, notes, isGroup, groupName, mentionInGroup, phone, locale = 'es' } = params;
   const apiKey = process.env.GEMINI_API_KEY;
+
+  const defaultWishes: Record<string, string> = {
+    es: `¡Feliz cumpleaños, ${isGroup && mentionInGroup ? `@${phone || name} ` : ''}${name}! 🎂🎉 ¡Que pases un día genial!`,
+    en: `Happy Birthday, ${isGroup && mentionInGroup ? `@${phone || name} ` : ''}${name}! 🎂🎉 Hope you have a wonderful day!`,
+    pt: `Feliz aniversário, ${isGroup && mentionInGroup ? `@${phone || name} ` : ''}${name}! 🎂🎉 Tudo de bom hoje e sempre!`,
+    de: `Alles Gute zum Geburtstag, ${isGroup && mentionInGroup ? `@${phone || name} ` : ''}${name}! 🎂🎉 Hab einen tollen Tag!`,
+  };
+
+  const defaultWish = defaultWishes[locale] || defaultWishes.es;
 
   if (!apiKey) {
     console.warn('GEMINI_API_KEY no configurada. Usando felicitación por defecto.');
-    const tag = isGroup && mentionInGroup ? `@${phone || name} ` : '';
-    return `¡Feliz cumpleaños, ${tag}${name}! 🎂🎉 ¡Que pases un día genial!`;
+    return defaultWish;
   }
   
   const toneDescriptions = {
@@ -28,6 +37,15 @@ export async function generateBirthdayWish(params: GenerateWishParams): Promise<
     formal: 'respetuoso, cordial y profesional',
     emotivo: 'sincero, entrañable y muy cariñoso',
   };
+
+  const languageInstructions: Record<string, string> = {
+    es: "- Escribe en español de España natural y espontáneo.",
+    en: "- Write in natural, warm and spontaneous English.",
+    pt: "- Escreva em português natural, caloroso e espontâneo.",
+    de: "- Schreibe auf natürlichem, herzlichem und modernem Deutsch.",
+  };
+
+  const langInstruction = languageInstructions[locale] || languageInstructions.es;
 
   const groupContext = isGroup
     ? `\nCONTEXTO ESPECIAL DE GRUPO DE WHATSAPP:
@@ -46,14 +64,12 @@ Tono deseado: ${toneDescriptions[tone] || 'casual'}
 ${notes ? `Notas, anécdotas o detalles personales: ${notes}` : ''}${groupContext}
 
 Requisitos estrictos:
-- Escribe en español de España natural y espontáneo.
+${langInstruction}
 - Usa emojis con estilo (2-4 emojis máximo).
 - Longitud: 1-3 frases (máximo 220 caracteres).
 - Debe sentirse 100% humano y espontáneo, NO robótico ni genérico.
-- Evita clichés como "En este día tan especial" o "Querido/a".
+- Evita clichés como "En este día tan especial" o "Dear".
 - Devuelve ÚNICAMENTE el texto final de la felicitación sin comillas ni encabezados.`;
-
-  const defaultWish = `¡Feliz cumpleaños, ${isGroup && mentionInGroup ? `@${phone || name} ` : ''}${name}! 🎂🎉 ¡Que pases un día genial!`;
 
   try {
     const controller = new AbortController();

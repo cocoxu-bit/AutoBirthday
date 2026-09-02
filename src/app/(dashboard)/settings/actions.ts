@@ -16,6 +16,7 @@ async function getAuthenticatedUserId(): Promise<string> {
 export async function updateUserSettings(data: {
   displayName?: string;
   timezone?: string;
+  locale?: 'es' | 'en' | 'pt' | 'de';
   defaultSendTimeStart?: string;
   defaultSendTimeEnd?: string;
   defaultAiTone?: string;
@@ -25,6 +26,16 @@ export async function updateUserSettings(data: {
     
     if (data.displayName) {
       await adminAuth.updateUser(userId, { displayName: data.displayName }).catch(() => {});
+    }
+
+    if (data.locale) {
+      const cookieStore = await cookies();
+      cookieStore.set('NEXT_LOCALE', data.locale, {
+        path: '/',
+        maxAge: 31536000,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      });
     }
     
     await updateUserProfile(userId, {

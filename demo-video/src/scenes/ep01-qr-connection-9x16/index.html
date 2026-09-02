@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1080, height=1920" />
+    <meta name="viewport" content="width=1080, height=1350" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       * {
@@ -13,208 +13,550 @@
       html, body {
         margin: 0;
         width: 1080px;
-        height: 1920px;
+        height: 1350px;
         overflow: hidden;
-        background: #081412;
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        color: #ffffff;
+        background: #0F172A;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        user-select: none;
       }
 
-      .bg-scene-9x16 {
+      /* 4:5 DRAWER CANVAS */
+      .drawer-viewport {
         position: relative;
         width: 1080px;
-        height: 1920px;
-        background: radial-gradient(circle at 50% 20%, #1b3d39 0%, #0d2220 55%, #081412 100%);
+        height: 1350px;
         overflow: hidden;
+        background: #0F172A;
       }
 
-      .bg-grid {
+      /* SCREEN LAYERS */
+      .scene-screen {
         position: absolute;
         inset: 0;
-        background-image: 
-          linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-        background-size: 60px 60px;
-        pointer-events: none;
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+        opacity: 0;
+        display: none;
       }
 
-      .ep-container-vertical {
+      /* --------------------------------------------------------
+         SCENE 1 & 5: AUTOBIRTHDAY DARK SLATE CARD (0F172A)
+         -------------------------------------------------------- */
+      #screenAutoBirthday {
+        background: radial-gradient(circle at 50% 10%, #1E293B 0%, #0F172A 100%);
         display: flex;
         flex-direction: column;
+        opacity: 1;
+      }
+
+      .ab-header {
+        height: 120px;
+        padding: 0 48px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid #334155;
+        display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 100%;
-        height: 100%;
-        padding: 120px 60px 100px 60px;
-        position: relative;
-        z-index: 10;
-        text-align: center;
       }
 
-      .header-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        max-width: 920px;
-      }
-
-      .badge-step {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 28px;
-        background: rgba(40, 89, 83, 0.5);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        border-radius: 9999px;
-        box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
-      }
-
-      .badge-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #10b981;
-        box-shadow: 0 0 12px #10b981;
-      }
-
-      .badge-text {
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #ffffff;
-      }
-
-      .title-main-9x16 {
-        font-size: 58px;
-        font-weight: 800;
-        line-height: 1.15;
-        letter-spacing: -1px;
-        margin-top: 24px;
-      }
-
-      .gradient-emerald {
-        background: linear-gradient(135deg, #ffffff 40%, #93cebe 75%, #10b981 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-
-      .subtitle-9x16 {
-        font-size: 26px;
-        color: #bde2d6;
-        line-height: 1.4;
-        max-width: 860px;
-        margin-top: 16px;
-      }
-
-      .qr-card-vert {
-        width: 680px;
-        background: rgba(20, 40, 37, 0.9);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        border-radius: 36px;
-        padding: 48px 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
-        position: relative;
-        margin: 40px 0;
-      }
-
-      .qr-box-vert {
-        position: relative;
-        width: 360px;
-        height: 360px;
-        background: #ffffff;
-        border-radius: 28px;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 32px 0;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-        overflow: hidden;
-      }
-
-      .laser-beam-vert {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: #10b981;
-        box-shadow: 0 0 20px #10b981, 0 0 30px #34d399;
-        z-index: 5;
-      }
-
-      .status-pill-vert {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 28px;
-        border-radius: 9999px;
-        font-size: 22px;
-        font-weight: 700;
-        background: rgba(245, 158, 11, 0.2);
-        border: 1px solid rgba(245, 158, 11, 0.6);
-        color: #fef08a;
-      }
-
-      .status-pill-vert.connected {
-        background: rgba(16, 185, 129, 0.25);
-        border-color: rgba(16, 185, 129, 0.8);
-        color: #ffffff;
-      }
-
-      .steps-vert {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        width: 100%;
-        max-width: 800px;
-      }
-
-      .step-item-vert {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 22px 28px;
-        background: rgba(20, 40, 37, 0.6);
-        border: 1px solid rgba(147, 206, 190, 0.25);
-        border-radius: 20px;
-        font-size: 24px;
-        text-align: left;
-        color: #ffffff;
-      }
-
-      .step-num-vert {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: #10b981;
-        color: #081412;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        flex-shrink: 0;
-      }
-
-      .toast-vert {
-        position: absolute;
-        top: 48%;
-        background: #10b981;
-        color: #081412;
-        padding: 20px 36px;
-        border-radius: 20px;
-        font-size: 26px;
-        font-weight: 800;
+      .ab-brand {
         display: flex;
         align-items: center;
         gap: 16px;
-        box-shadow: 0 20px 50px rgba(16, 185, 129, 0.5);
-        z-index: 30;
+      }
+
+      .ab-logo-box {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      }
+
+      .ab-brand-text {
+        font-size: 32px;
+        font-weight: 900;
+        color: #FFFFFF;
+        letter-spacing: -0.5px;
+      }
+
+      .ab-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 20px;
+        border-radius: 9999px;
+        font-size: 17px;
+        font-weight: 700;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .ab-status-disconnected {
+        background: rgba(239, 68, 68, 0.15);
+        color: #F87171;
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .ab-status-connected {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34D399;
+        border-color: rgba(16, 185, 129, 0.3);
+      }
+
+      .ab-content-box {
+        flex: 1;
+        padding: 44px 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .ab-card-main {
+        background: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 40px;
+        padding: 44px 40px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+
+      .ab-badge-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 18px;
+        border-radius: 9999px;
+        background: rgba(16, 185, 129, 0.15);
+        color: #34D399;
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        width: fit-content;
+        margin: 0 auto;
+      }
+
+      .ab-title {
+        font-size: 38px;
+        font-weight: 900;
+        color: #FFFFFF;
+        text-align: center;
+        letter-spacing: -0.5px;
+      }
+
+      .ab-tabs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 6px;
+        background: #0F172A;
+        border-radius: 24px;
+        gap: 6px;
+      }
+
+      .ab-tab-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 16px;
+        border-radius: 18px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #94A3B8;
+      }
+      .ab-tab-item.active {
+        background: #285953;
+        color: #FFFFFF;
+        font-weight: 900;
+        box-shadow: 0 4px 14px rgba(40, 89, 83, 0.4);
+      }
+
+      .ab-code-container {
+        background: #0B1320;
+        border: 2px solid #285953;
+        border-radius: 32px;
+        padding: 36px 30px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .ab-digits-box {
+        font-family: monospace;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 6px;
+        color: #FFFFFF;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 16px 40px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .ab-btn-copy {
+        width: 100%;
+        padding: 22px;
+        background: #2563EB;
+        color: #FFFFFF;
+        font-size: 22px;
+        font-weight: 900;
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+      }
+
+      .ab-toast {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%) translateY(30px);
+        background: #0284C7;
+        color: #FFFFFF;
+        padding: 18px 40px;
+        border-radius: 9999px;
+        font-size: 20px;
+        font-weight: 800;
+        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 500;
+      }
+
+      /* SUCCESS HERO (ESCENA 5) */
+      .ab-success-card {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        text-align: center;
+      }
+
+      .ab-check-icon-large {
+        width: 96px;
+        height: 96px;
+        border-radius: 32px;
+        background: rgba(16, 185, 129, 0.2);
+        border: 2px solid #10B981;
+        color: #34D399;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 50px;
+        font-weight: 900;
+      }
+
+      .ab-phone-pill {
+        font-family: monospace;
+        font-size: 30px;
+        font-weight: 900;
+        color: #34D399;
+        background: rgba(16, 185, 129, 0.15);
+        padding: 8px 28px;
+        border-radius: 9999px;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .ab-cta-banner {
+        width: 100%;
+        background: linear-gradient(135deg, #16322F 0%, #204B46 50%, #0F172A 100%);
+        border: 1px solid #285953;
+        border-radius: 30px;
+        padding: 32px 30px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .ab-btn-primary-action {
+        width: 100%;
+        padding: 22px;
+        background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+        color: #FFFFFF;
+        font-size: 21px;
+        font-weight: 900;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      }
+
+      /* --------------------------------------------------------
+         SCENE 2, 3, 4: OFFICIAL WHATSAPP ANDROID (LIGHT MODE #FFF)
+         -------------------------------------------------------- */
+      #screenWhatsApp {
+        background: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Top Header */
+      .wa-top-bar {
+        height: 120px;
+        padding: 0 40px;
+        background: #FFFFFF;
+        border-bottom: 1px solid #E9EDEF;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .wa-logo {
+        font-size: 36px;
+        font-weight: 900;
+        color: #0F7A3E;
+        letter-spacing: -0.5px;
+      }
+
+      .wa-top-actions {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        font-size: 28px;
+        color: #111B21;
+      }
+
+      .wa-body {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* SUB-VIEW 1: CHATS LIST + 3-DOTS MENU (wa-01 & wa-02) */
+      #waViewChats {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        padding: 24px 40px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .wa-search-pill {
+        background: #F0F2F5;
+        border-radius: 9999px;
+        padding: 16px 24px;
+        font-size: 20px;
+        color: #52525B;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .wa-chat-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 18px 0;
+        border-bottom: 1px solid #F0F2F5;
+      }
+
+      .wa-avatar-circle {
+        width: 66px;
+        height: 66px;
+        border-radius: 50%;
+        background: #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+      }
+
+      /* 3-DOTS POPUP MENU (wa-02-linked-devices.png) */
+      .wa-dropdown-menu {
+        position: absolute;
+        top: 20px;
+        right: 40px;
+        width: 440px;
+        background: #FFFFFF;
+        border-radius: 22px;
+        box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
+        border: 1px solid #E2E8F0;
+        padding: 12px 0;
+        z-index: 100;
+        display: none;
+        flex-direction: column;
+      }
+
+      .wa-menu-row {
+        padding: 18px 30px;
+        font-size: 21px;
+        font-weight: 600;
+        color: #111B21;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .wa-menu-row.active {
+        background: #F0F2F5;
+        font-weight: 800;
+      }
+
+      .wa-dot-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #F59E0B;
+      }
+
+      /* SUB-VIEW 2: DISPOSITIVOS VINCULADOS (wa-03) */
+      #waViewDevices {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        display: none;
+        flex-direction: column;
+        padding: 40px 48px;
+        text-align: center;
+      }
+
+      .wa-top-nav-bar {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 30px;
+        text-align: left;
+      }
+
+      .wa-btn-vincular-primary {
+        width: 100%;
+        padding: 22px;
+        background: #0F7A3E;
+        color: #FFFFFF;
+        font-size: 22px;
+        font-weight: 800;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(15, 122, 62, 0.3);
+        margin-top: 20px;
+      }
+
+      .wa-phone-link-secondary {
+        margin-top: 24px;
+        font-size: 21px;
+        font-weight: 800;
+        color: #027EB5;
+        text-decoration: underline;
+        cursor: pointer;
+        padding: 10px;
+      }
+
+      /* SUB-VIEW 3: INGRESA EL CÓDIGO (wa-05) */
+      #waViewCode {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        display: none;
+        flex-direction: column;
+        padding: 40px 48px;
+        text-align: center;
+      }
+
+      .wa-eight-pills {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 40px 0 28px 0;
+      }
+
+      .wa-pill {
+        width: 76px;
+        height: 104px;
+        background: #F0F2F5;
+        border: 2px solid transparent;
+        border-radius: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        font-size: 44px;
+        font-weight: 900;
+        color: #111B21;
+      }
+
+      .wa-pill.active-cell {
+        border-color: #0F7A3E;
+        background: #FFFFFF;
+      }
+
+      /* Context Menu Popover [ Pegar ] */
+      .wa-paste-popover {
+        position: absolute;
+        top: 240px;
+        left: 450px;
+        background: #111B21;
+        color: #FFFFFF;
+        padding: 14px 32px;
+        border-radius: 18px;
+        font-size: 20px;
+        font-weight: 800;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+        z-index: 80;
+      }
+
+      .wa-success-alert {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: #0F7A3E;
+        font-size: 22px;
+        font-weight: 800;
+        margin-top: 24px;
+      }
+
+      /* TOUCH CURSOR */
+      .touch-pointer-ring {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        border: 3px solid #10B981;
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.6);
+        pointer-events: none;
+        z-index: 2000;
+        opacity: 0;
+      }
+
+      .touch-ripple-wave {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 3px solid #10B981;
+        pointer-events: none;
+        z-index: 1999;
+        opacity: 0;
+        transform-origin: 50% 50%;
       }
     </style>
   </head>
@@ -222,73 +564,246 @@
     <div
       id="root"
       class="clip"
-      data-composition-id="ep01-vertical"
+      data-composition-id="screencast-drawer-15s"
       data-start="0"
       data-duration="15"
       data-width="1080"
-      data-height="1920"
+      data-height="1350"
     >
-      <div class="bg-scene-9x16">
-        <div class="bg-grid"></div>
+      <div class="drawer-viewport">
+        <!-- TOUCH CURSOR & RIPPLE -->
+        <div id="touchPointer" class="touch-pointer-ring"></div>
+        <div id="touchRipple" class="touch-ripple-wave"></div>
 
-        <div class="ep-container-vertical">
-          <div class="header-section">
-            <div id="badgeVert" class="badge-step">
-              <span class="badge-dot"></span>
-              <span class="badge-text">Paso 1 · Conexión Rápida</span>
+        <!-- ========================================================
+             SCREEN 1 & 5: AUTOBIRTHDAY PWA (DARK SLATE THEME)
+             ======================================================== -->
+        <div id="screenAutoBirthday" class="scene-screen" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+          <header class="ab-header">
+            <div class="ab-brand">
+              <div class="ab-logo-box">🎂</div>
+              <h1 class="ab-brand-text">AutoBirthday</h1>
             </div>
 
-            <h1 id="titleVert" class="title-main-9x16">
-              Conecta tu <span class="gradient-emerald">WhatsApp</span>
-            </h1>
+            <div id="abStatusBadge" class="ab-status-pill ab-status-disconnected">
+              <div id="abStatusDot" style="width: 10px; height: 10px; border-radius: 50%; background: #EF4444;"></div>
+              <span id="abStatusLabel">Desconectado</span>
+            </div>
+          </header>
 
-            <p id="subVert" class="subtitle-9x16">
-              Escanea el código QR desde tu teléfono para activar el agente automático de felicitaciones.
-            </p>
+          <main class="ab-content-box">
+            <div class="ab-card-main">
+              <!-- Header -->
+              <div class="ab-badge-tag">
+                <span>📱</span>
+                <span>WhatsApp</span>
+              </div>
+              <h2 id="abTitle" class="ab-title">Conecta tu WhatsApp</h2>
+
+              <!-- Tabs -->
+              <div id="abTabsRow" class="ab-tabs-grid">
+                <div class="ab-tab-item active">
+                  <span>📱</span>
+                  <span>En este móvil</span>
+                </div>
+                <div class="ab-tab-item">
+                  <span>📷</span>
+                  <span>Código QR</span>
+                </div>
+              </div>
+
+              <!-- ESCENA 1: CÓDIGO INICIAL -->
+              <div id="abInitialView" data-layout-allow-overlap="true" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="ab-code-container">
+                  <p style="font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #93CEBE;">
+                    Tu Código de Vinculación
+                  </p>
+
+                  <div class="ab-digits-box">
+                    7K4B - 9X2M
+                  </div>
+
+                  <div id="btnCopyPwa" class="ab-btn-copy">
+                    <span id="copyPwaIcon">📋</span>
+                    <span id="copyPwaText">Copiar Código</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ESCENA 5: ESTADO VINCULADO CON ÉXITO -->
+              <div id="abSuccessView" class="ab-success-card" data-layout-allow-overlap="true">
+                <div class="ab-check-icon-large">✓</div>
+
+                <div>
+                  <h3 style="font-size: 32px; font-weight: 900; color: #FFFFFF;">¡WhatsApp Conectado! 🎉</h3>
+                  <div style="margin-top: 10px;">
+                    <span class="ab-phone-pill">+34 612 34 56 78</span>
+                  </div>
+                </div>
+
+                <div class="ab-cta-banner">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 800; color: #93CEBE; text-transform: uppercase; letter-spacing: 1.5px;">Siguiente Paso</div>
+                    <h4 style="font-size: 24px; font-weight: 900; color: #FFFFFF; margin-top: 4px;">Agrega tus Cumpleaños</h4>
+                    <p style="font-size: 16px; color: #94A3B8; margin-top: 4px;">Detecta tus chats para programar felicitaciones automáticas.</p>
+                  </div>
+
+                  <div id="btnFinalCta" class="ab-btn-primary-action">
+                    <span style="color: #ffffff;">👥</span><span style="color: #ffffff;">Agregar cumpleaños desde WhatsApp</span>
+                    <span>➔</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <div id="nativeToast" class="ab-toast" data-layout-allow-overlap="true">
+            <span style="font-weight: 900;">✓</span>
+            <span>Código copiado al portapapeles</span>
           </div>
+        </div>
 
-          <div id="qrCardVert" class="qr-card-vert">
-            <div style="font-size: 26px; font-weight: 700; color: #ffffff;">Escanear Código QR</div>
-            <div style="font-size: 18px; color: #bde2d6; margin-top: 6px;">Instancia Encriptada & Segura</div>
+        <!-- ========================================================
+             SCREEN 2, 3, 4: NATIVE WHATSAPP ANDROID (LIGHT THEME)
+             ======================================================== -->
+        <div id="screenWhatsApp" class="scene-screen" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+          <!-- WhatsApp Top Bar -->
+          <header class="wa-top-bar">
+            <h2 id="waMainHeaderTitle" class="wa-logo">WhatsApp</h2>
+            <div id="waHeaderActions" class="wa-top-actions">
+              <span>📷</span>
+              <span>🔍</span>
+              <span id="waDotsMenuIcon">⋮</span>
+            </div>
+          </header>
 
-            <div class="qr-box-vert">
-              <div id="laserVert" class="laser-beam-vert"></div>
-              <svg width="280" height="280" viewBox="0 0 100 100" fill="#142825">
-                <path d="M5 5 h30 v30 h-30 z M10 10 v20 h20 v-20 z M15 15 h10 v10 h-10 z" />
-                <path d="M65 5 h30 v30 h-30 z M70 10 v20 h20 v-20 z M75 15 h10 v10 h-10 z" />
-                <path d="M5 65 h30 v30 h-30 z M10 70 v20 h20 v-20 z M15 75 h10 v10 h-10 z" />
-                <rect x="45" y="10" width="10" height="10" />
-                <rect x="45" y="30" width="10" height="20" />
-                <rect x="10" y="45" width="20" height="10" />
-                <rect x="75" y="45" width="15" height="10" />
-                <rect x="45" y="65" width="15" height="15" />
-                <rect x="70" y="70" width="20" height="20" />
-              </svg>
+          <div class="wa-body" data-layout-allow-overlap="true">
+            <!-- 1. CHATS VIEW WITH 3-DOTS DROPDOWN -->
+            <div id="waViewChats" data-layout-allow-overlap="true">
+              <div class="wa-search-pill">
+                <span>🔍</span>
+                <span>Preguntar a Meta AI o buscar</span>
+              </div>
+
+              <!-- Realistic chat rows -->
+              <div class="wa-chat-item">
+                <div class="wa-avatar-circle">🎾</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 21px; font-weight: 800; color: #111B21;">Pádel Los Galácticos</div>
+                  <div style="font-size: 16px; color: #52525B; margin-top: 4px;">Mañana a las 19:30 h</div>
+                </div>
+                <span style="font-size: 15px; color: #52525B;">12:40</span>
+              </div>
+
+              <div class="wa-chat-item">
+                <div class="wa-avatar-circle">❤️</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 21px; font-weight: 800; color: #111B21;">Mamá ❤️</div>
+                  <div style="font-size: 16px; color: #52525B; margin-top: 4px;">Vale hijo, luego te llamo</div>
+                </div>
+                <span style="font-size: 15px; color: #52525B;">11:15</span>
+              </div>
+
+              <div class="wa-chat-item">
+                <div class="wa-avatar-circle">👤</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 21px; font-weight: 800; color: #111B21;">Carlos</div>
+                  <div style="font-size: 16px; color: #52525B; margin-top: 4px;">¿Viste el partido ayer?</div>
+                </div>
+                <span style="font-size: 15px; color: #52525B;">Ayer</span>
+              </div>
+
+              <div class="wa-chat-item">
+                <div class="wa-avatar-circle">📌</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 21px; font-weight: 800; color: #111B21;">Notas 📌</div>
+                  <div style="font-size: 16px; color: #52525B; margin-top: 4px;">✓ Foto</div>
+                </div>
+                <span style="font-size: 15px; color: #52525B;">09:30</span>
+              </div>
+
+              <!-- Real 3-dots native menu -->
+              <div id="waDropdownMenu" class="wa-dropdown-menu">
+                <div class="wa-menu-row"><span>Nuevo grupo</span></div>
+                <div class="wa-menu-row"><span>Nueva difusión</span></div>
+                <div id="waMenuRowDevices" class="wa-menu-row active">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="wa-dot-indicator"></span>
+                    <span>Dispositivos vinculados</span>
+                  </div>
+                </div>
+                <div class="wa-menu-row"><span>Mensajes destacados</span></div>
+                <div class="wa-menu-row"><span>Ajustes</span></div>
+              </div>
             </div>
 
-            <div id="statusPillVert" class="status-pill-vert">
-              <span id="statusIconVert">⏳</span>
-              <span id="statusTextVert">Esperando escaneo...</span>
-            </div>
-          </div>
+            <!-- 2. DISPOSITIVOS VINCULADOS SCREEN -->
+            <div id="waViewDevices" data-layout-allow-overlap="true">
+              <div class="wa-top-nav-bar">
+                <span style="font-size: 30px; font-weight: 700; color: #111B21;">←</span>
+                <span style="font-size: 26px; font-weight: 800; color: #111B21;">Dispositivos vinculados</span>
+              </div>
 
-          <div id="toastVert" class="toast-vert" style="opacity: 0;">
-            <span>🎉</span>
-            <span>¡WhatsApp Conectado!</span>
-          </div>
+              <div style="width: 100%; height: 220px; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
+                <svg width="220" height="150" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="20" y="30" width="60" height="95" rx="12" fill="#D1FAE5" stroke="#111B21" stroke-width="4"/>
+                  <rect x="35" y="45" width="30" height="40" rx="4" fill="#ffffff" stroke="#111B21" stroke-width="3"/>
+                  <path d="M100 20L180 20L195 95L90 95Z" fill="#1EA855" stroke="#111B21" stroke-width="4"/>
+                  <path d="M75 95L210 95L200 125L65 125Z" fill="#10B981" stroke="#111B21" stroke-width="4"/>
+                  <rect x="110" y="35" width="65" height="45" rx="4" fill="#D1FAE5"/>
+                  <circle cx="142" cy="58" r="10" fill="#1EA855"/>
+                </svg>
+              </div>
 
-          <div class="steps-vert">
-            <div id="vStep1" class="step-item-vert">
-              <div class="step-num-vert">1</div>
-              <span>Abre WhatsApp > Ajustes</span>
+              <h3 style="font-size: 28px; font-weight: 900; color: #111B21; margin-bottom: 8px;">Usa WhatsApp en otros dispositivos</h3>
+              <p style="font-size: 19px; color: #52525B; line-height: 1.4; margin-bottom: 20px;">Vincula tu cuenta con AutoBirthday para programar felicitaciones automáticas.</p>
+
+              <div class="wa-btn-vincular-primary">
+                Vincular un dispositivo
+              </div>
+
+              <div id="btnLinkPhoneLink" class="wa-phone-link-secondary">
+                o vincular con el número de teléfono
+              </div>
             </div>
-            <div id="vStep2" class="step-item-vert">
-              <div class="step-num-vert">2</div>
-              <span>Dispositivos Vinculados</span>
-            </div>
-            <div id="vStep3" class="step-item-vert">
-              <div class="step-num-vert">3</div>
-              <span>Escanea y ¡Listo!</span>
+
+            <!-- 3. INGRESA EL CÓDIGO SCREEN -->
+            <div id="waViewCode" data-layout-allow-overlap="true">
+              <div class="wa-top-nav-bar">
+                <span style="font-size: 30px; font-weight: 700; color: #111B21;">←</span>
+                <span style="font-size: 26px; font-weight: 800; color: #111B21;">Ingresa el código</span>
+              </div>
+
+              <p style="font-size: 19px; color: #111B21; text-align: left; line-height: 1.5; margin-bottom: 30px;">
+                Para obtener tu código, abre AutoBirthday y haz clic en <strong>Vincular con el número de teléfono</strong>.
+              </p>
+
+              <!-- Floating context menu [ Pegar ] -->
+              <div id="waPasteMenu" class="wa-paste-popover" data-layout-allow-overlap="true">
+                <span data-layout-allow-overlap="true">📋</span><span data-layout-allow-overlap="true">Pegar</span>
+              </div>
+
+              <!-- 8 cells from screenshot wa-05 -->
+              <div class="wa-eight-pills">
+                <div id="c1" data-layout-allow-overlap="true" class="wa-pill active-cell">-</div>
+                <div id="c2" data-layout-allow-overlap="true" class="wa-pill">-</div>
+                <div id="c3" data-layout-allow-overlap="true" class="wa-pill">-</div>
+                <div id="c4" data-layout-allow-overlap="true" class="wa-pill">-</div>
+                <span data-layout-allow-overlap="true" style="font-size: 32px; font-weight: 900; color: #111B21; margin: 0 6px;">-</span>
+                <div id="c5" data-layout-allow-overlap="true" class="wa-pill">-</div>
+                <div id="c6" data-layout-allow-overlap="true" class="wa-pill">-</div>
+                <div id="c7" data-layout-allow-overlap="true" class="wa-pill">-</div>
+                <div id="c8" data-layout-allow-overlap="true" class="wa-pill">-</div>
+              </div>
+
+              <p style="font-size: 16px; color: #52525B;">
+                Nunca ingreses un código si no lo solicitaste.
+              </p>
+
+              <div id="waSuccessRow" class="wa-success-alert">
+                <span style="font-size: 30px;">✓</span>
+                <span>¡Dispositivo vinculado con éxito!</span>
+              </div>
             </div>
           </div>
         </div>
@@ -297,69 +812,167 @@
 
     <script>
       window.__timelines = window.__timelines || {};
+
+      // Initial state
+      gsap.set("#screenAutoBirthday", { opacity: 1, display: "flex" });
+      gsap.set("#screenWhatsApp", { opacity: 0, display: "none" });
+
       const tl = gsap.timeline({ paused: true });
 
-      // Entrance
-      tl.from("#badgeVert", { opacity: 0, y: -20, duration: 0.6 }, 0.2);
-      tl.from("#titleVert", { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 0.5);
-      tl.from("#subVert", { opacity: 0, y: 20, duration: 0.7 }, 0.8);
+      function triggerTap(x, y, atTime) {
+        tl.set("#touchPointer", { x: x - 32, y: y - 32 }, atTime);
+        tl.set("#touchRipple", { x: x - 32, y: y - 32, opacity: 1, scale: 0.5 }, atTime);
+        tl.to("#touchPointer", { scale: 0.8, duration: 0.1, yoyo: true, repeat: 1 }, atTime);
+        tl.to("#touchRipple", { scale: 2.0, opacity: 0, duration: 0.45, ease: "power2.out" }, atTime + 0.05);
+      }
 
-      tl.from("#qrCardVert", {
-        opacity: 0,
-        scale: 0.9,
-        y: 40,
-        duration: 0.8,
-        ease: "back.out(1.4)"
-      }, 1.2);
+      // Initial pointer
+      tl.set("#touchPointer", { x: 540, y: 880, opacity: 0 }, 0);
 
-      tl.from(["#vStep1", "#vStep2", "#vStep3"], {
-        opacity: 0,
-        x: -30,
-        duration: 0.6,
-        stagger: 0.2,
-        ease: "power2.out"
-      }, 1.5);
+      // ========================================================
+      // ESCENA 1: COPIAR CÓDIGO EN AUTOBIRTHDAY (00:00 - 00:03.5 | 3.5s)
+      // ========================================================
+      tl.to("#touchPointer", { opacity: 0.85, duration: 0.4 }, 0.5);
+      tl.to("#touchPointer", { x: 540, y: 780, duration: 0.6, ease: "power2.out" }, 0.6);
 
-      // Laser scan using y transform
-      tl.fromTo("#laserVert", 
-        { y: 0 }, 
-        { y: 350, duration: 1.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 
-        2.2
-      );
+      // 00:01.5: Tap en [ Copiar Código ]
+      triggerTap(540, 780, 1.5);
 
-      // 7.5s - Connect
-      tl.to("#statusPillVert", {
-        scale: 1.08,
-        duration: 0.3,
-        onComplete: () => {
-          const pill = document.getElementById("statusPillVert");
-          pill.classList.add("connected");
-          document.getElementById("statusIconVert").textContent = "🟢";
-          document.getElementById("statusTextVert").textContent = "Conectado · Sesión Activa";
-        }
-      }, 7.5);
-      tl.to("#statusPillVert", { scale: 1.0, duration: 0.3 }, 7.8);
+      // Botón cambia a verde: [ ✓ ¡Copiado! ]
+      tl.to("#btnCopyPwa", {
+        backgroundColor: "#059669",
+        duration: 0.15
+      }, 1.65);
+      tl.to("#copyPwaText", { textContent: "¡Copiado!", duration: 0.05 }, 1.65);
+      tl.to("#copyPwaIcon", { textContent: "✓", duration: 0.05 }, 1.65);
 
-      tl.fromTo("#toastVert", 
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.6, ease: "back.out(1.8)" },
-        8.2
-      );
+      // Toast inferior: "Código copiado al portapapeles"
+      tl.to("#nativeToast", {
+        opacity: 1,
+        y: 0,
+        duration: 0.4,
+        ease: "back.out(1.7)"
+      }, 1.8);
 
-      tl.to("#vStep3", {
-        borderColor: "rgba(16, 185, 129, 0.8)",
-        backgroundColor: "rgba(40, 89, 83, 0.6)",
-        duration: 0.5
-      }, 8.5);
+      // Pausa visual de asimilación hasta 03.5s
 
-      tl.to(".ep-container-vertical", {
-        opacity: 0,
-        scale: 0.98,
-        duration: 0.8,
-        ease: "power2.in"
-      }, 14.2);
+      // ========================================================
+      // ESCENA 2: APERTURA DE WHATSAPP Y MENÚ 3 PUNTITOS (00:03.5 - 00:07.0 | 3.5s)
+      // ========================================================
+      // Crossfade suave de 0.3s a WhatsApp
+      tl.to("#screenAutoBirthday", { opacity: 0, duration: 0.15 }, 3.35);
+      tl.set("#screenAutoBirthday", { display: "none" }, 3.5);
+      tl.set("#screenWhatsApp", { display: "flex" }, 3.49);
+      tl.to("#screenWhatsApp", { opacity: 1, duration: 0.15 }, 3.5);
 
-      window.__timelines["ep01-vertical"] = tl;
+      // Pointer moves to 3 dots (⋮) top right
+      tl.to("#touchPointer", { x: 1010, y: 60, opacity: 0.85, duration: 0.6, ease: "power2.out" }, 3.8);
+
+      // 00:04.5: Tap en los 3 PUNTOS VERTICALES (⋮)
+      triggerTap(1010, 60, 4.5);
+
+      // 00:05.2: Despliegue del menú flotante nativo
+      tl.set("#waDropdownMenu", { display: "flex" }, 5.2);
+      tl.fromTo("#waDropdownMenu", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.5)" }, 5.2);
+
+      // Pointer targets "Dispositivos vinculados" row
+      tl.to("#touchPointer", { x: 840, y: 220, duration: 0.5, ease: "power2.out" }, 5.4);
+
+      // 00:06.0: Tap en "Dispositivos vinculados"
+      triggerTap(840, 220, 6.0);
+
+      // ========================================================
+      // ESCENA 3: PANTALLA DISPOSITIVOS VINCULADOS (00:07.0 - 00:09.5 | 2.5s)
+      // ========================================================
+      // Clean slide/transition to Dispositivos vinculados
+      tl.set("#waViewChats", { display: "none" }, 6.9);
+      tl.set("#waViewDevices", { display: "flex" }, 6.9);
+
+      // Pointer targets "o vincular con el número de teléfono"
+      tl.to("#touchPointer", { x: 540, y: 650, duration: 0.6, ease: "power2.inOut" }, 7.2);
+
+      // 00:08.0: Tap exactamente en "o vincular con el número de teléfono"
+      triggerTap(540, 650, 8.0);
+
+      // ========================================================
+      // ESCENA 4: PEGAR EL CÓDIGO DE 8 DÍGITOS (00:09.5 - 00:12.5 | 3.0s)
+      // ========================================================
+      // Clean transition to "Ingresa el código"
+      tl.set("#waViewDevices", { display: "none" }, 9.4);
+      tl.set("#waViewCode", { display: "flex" }, 9.4);
+
+      // Pointer taps on first cell
+      tl.to("#touchPointer", { x: 540, y: 350, duration: 0.4, ease: "power2.out" }, 9.7);
+
+      // 00:10.2: Touch on first box
+      triggerTap(540, 350, 10.2);
+
+      // Native floating popover [ Pegar ] appears
+      tl.set("#waPasteMenu", { display: "flex" }, 10.4);
+      tl.fromTo("#waPasteMenu", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1.0, duration: 0.15, ease: "back.out(1.5)" }, 10.4);
+
+      // Pointer targets [ Pegar ]
+      tl.to("#touchPointer", { x: 540, y: 260, duration: 0.25, ease: "power2.out" }, 10.5);
+
+      // 00:10.8: Tap en [ Pegar ]
+      triggerTap(540, 260, 10.8);
+      tl.set("#waPasteMenu", { display: "none" }, 10.95);
+
+      // 00:11.2: Rellenar las 8 casillas con spring animation: [ 7 ][ K ][ 4 ][ B ] - [ 9 ][ X ][ 2 ][ M ]
+      const chars = ["7", "K", "4", "B", "9", "X", "2", "M"];
+      chars.forEach((c, idx) => {
+        const id = `#c${idx + 1}`;
+        const time = 11.0 + idx * 0.03;
+        tl.to(id, {
+          textContent: c,
+          borderColor: "#0F7A3E",
+          color: "#0F7A3E",
+          backgroundColor: "#D1FAE5",
+          duration: 0.05
+        }, time);
+        tl.fromTo(id, { scale: 1.18 }, { scale: 1.0, duration: 0.15, ease: "back.out(2)" }, time);
+      });
+
+      // 00:11.8: Aparece check verde "¡Dispositivo vinculado con éxito!"
+      tl.set("#waSuccessRow", { display: "flex" }, 11.8);
+      tl.fromTo("#waSuccessRow", { scale: 0.8, opacity: 0 }, { scale: 1.0, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }, 11.8);
+
+      // ========================================================
+      // ESCENA 5: REGRESO A AUTOBIRTHDAY VINCULADO (00:12.5 - 00:15.0 | 2.5s)
+      // ========================================================
+      // Configure AutoBirthday success state BEFORE crossfade
+      tl.set("#abInitialView", { display: "none" }, 12.4);
+      tl.set("#abTabsRow", { display: "none" }, 12.4);
+      tl.set("#nativeToast", { display: "none" }, 12.4);
+      tl.set("#abTitle", { textContent: "WhatsApp Vinculado" }, 12.4);
+      tl.set("#abStatusBadge", { className: "ab-status-pill ab-status-connected" }, 12.4);
+      tl.set("#abStatusDot", { backgroundColor: "#10B981" }, 12.4);
+      tl.set("#abStatusLabel", { textContent: "Conectado" }, 12.4);
+      tl.set("#abSuccessView", { display: "flex" }, 12.4);
+
+      // Crossfade back to AutoBirthday (00:12.5)
+      tl.to("#screenWhatsApp", { opacity: 0, duration: 0.15 }, 12.35);
+      tl.set("#screenWhatsApp", { display: "none" }, 12.5);
+      tl.set("#screenAutoBirthday", { display: "flex" }, 12.49);
+      tl.to("#screenAutoBirthday", { opacity: 1, duration: 0.15 }, 12.5);
+
+      // Pointer targets [ Agregar cumpleaños desde WhatsApp → ]
+      tl.to("#touchPointer", { x: 540, y: 920, duration: 0.6, ease: "power2.out" }, 13.0);
+
+      // Tap on primary button at 13.8s
+      triggerTap(540, 920, 13.8);
+
+      tl.to("#btnFinalCta", {
+        scale: 0.96,
+        duration: 0.1,
+        yoyo: true,
+        repeat: 1,
+        boxShadow: "0 16px 45px rgba(16, 185, 129, 0.7)"
+      }, 13.8);
+
+      // Freeze limpio de 1s hasta 15.0s
+
+      window.__timelines["screencast-drawer-15s"] = tl;
     </script>
   </body>
 </html>

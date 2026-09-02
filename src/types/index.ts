@@ -80,6 +80,7 @@ export interface UserProfile<T = Timestamp> {
   displayName?: string;
   email: string;
   timezone: string;
+  locale?: 'es' | 'en' | 'pt' | 'de';
   createdAt: T;
   whatsappInstance?: WhatsAppInstance;
 }
