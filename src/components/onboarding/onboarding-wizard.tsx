@@ -43,18 +43,20 @@ interface OnboardingWizardProps {
   initialIsConnected?: boolean;
   initialContactsCount?: number;
   displayName?: string;
+  forcedStep?: 1 | 2 | 3;
 }
 
 export function OnboardingWizard({
   initialIsConnected = false,
   initialContactsCount = 0,
   displayName = '',
+  forcedStep,
 }: OnboardingWizardProps) {
   const router = useRouter();
   const { t, locale, setLocale } = useTranslation();
   
   // Step: 1 = Connect WA, 2 = Import Birthdays, 3 = Completed Celebration
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(initialIsConnected ? 2 : 1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(forcedStep || 1);
   
   // WhatsApp connection state
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus>(initialIsConnected ? 'connected' : 'disconnected');
@@ -194,35 +196,47 @@ export function OnboardingWizard({
           </span>
         </div>
 
-        {/* Step Indicator Badges */}
+        {/* Step Indicator Badges (Clickable to switch between steps) */}
         <div className="hidden sm:flex items-center gap-2 text-xs font-bold bg-slate-900 border border-slate-800 p-1 rounded-2xl">
-          <div className={`px-3 py-1 rounded-xl transition-all ${
-            currentStep === 1 
-              ? 'bg-violet-600 text-white shadow-sm font-black' 
-              : waStatus === 'connected' 
-              ? 'text-emerald-400' 
-              : 'text-slate-500'
-          }`}>
+          <button
+            type="button"
+            onClick={() => setCurrentStep(1)}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              currentStep === 1 
+                ? 'bg-violet-600 text-white shadow-sm font-black' 
+                : waStatus === 'connected' 
+                ? 'text-emerald-400 hover:text-emerald-300' 
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
             {t('onboarding.wizardStep1')}
-          </div>
+          </button>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <div className={`px-3 py-1 rounded-xl transition-all ${
-            currentStep === 2 
-              ? 'bg-violet-600 text-white shadow-sm font-black' 
-              : currentStep === 3 
-              ? 'text-emerald-400' 
-              : 'text-slate-500'
-          }`}>
+          <button
+            type="button"
+            onClick={() => setCurrentStep(2)}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              currentStep === 2 
+                ? 'bg-violet-600 text-white shadow-sm font-black' 
+                : currentStep === 3 
+                ? 'text-emerald-400 hover:text-emerald-300' 
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
             {t('onboarding.wizardStep2')}
-          </div>
+          </button>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <div className={`px-3 py-1 rounded-xl transition-all ${
-            currentStep === 3 
-              ? 'bg-emerald-600 text-white shadow-sm font-black' 
-              : 'text-slate-500'
-          }`}>
+          <button
+            type="button"
+            onClick={() => setCurrentStep(3)}
+            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              currentStep === 3 
+                ? 'bg-emerald-600 text-white shadow-sm font-black' 
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
             {t('onboarding.wizardStep3')}
-          </div>
+          </button>
         </div>
 
         {/* Skip action button */}
