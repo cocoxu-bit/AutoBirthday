@@ -46,7 +46,7 @@ export default function RegisterPage() {
         throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Cuenta vinculada con éxito! 🎉");
-      window.location.href = "/onboarding";
+      window.location.href = "/dashboard";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al registrarse con Google";
@@ -87,7 +87,7 @@ export default function RegisterPage() {
         throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
       toast.success("¡Cuenta creada con éxito! 🎉");
-      window.location.href = "/onboarding";
+      window.location.href = "/dashboard";
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error al crear la cuenta";

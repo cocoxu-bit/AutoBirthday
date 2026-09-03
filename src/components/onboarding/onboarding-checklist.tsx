@@ -17,7 +17,10 @@ import {
   ExternalLink,
   PartyPopper
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { WhatsAppVideoDrawer } from '@/components/whatsapp/whatsapp-video-drawer';
+import { WhatsAppSyncDialog } from '@/components/contacts/whatsapp-sync-dialog';
+import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { useTranslation } from '@/lib/i18n/context';
 
 interface OnboardingChecklistProps {
@@ -31,9 +34,11 @@ export function OnboardingChecklist({
   contactsCount,
   hasReceivedWelcome = false,
 }: OnboardingChecklistProps) {
+  const router = useRouter();
   const { t } = useTranslation();
   const [videoModalOpen, setVideoModalOpen] = useState(false);
-  const [defaultTab, setDefaultTab] = useState<'whatsapp' | 'contacts' | 'assistant'>('whatsapp');
+  const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
+  const [isCalendarSyncOpen, setIsCalendarSyncOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -94,10 +99,7 @@ export function OnboardingChecklist({
 
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => {
-                setDefaultTab('whatsapp');
-                setVideoModalOpen(true);
-              }}
+              onClick={() => setVideoModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors border border-white/10"
               title={t('onboarding.watchVideo')}
             >
@@ -163,13 +165,24 @@ export function OnboardingChecklist({
                 {step1 ? t('onboarding.step1DescDone') : t('onboarding.step1DescPending')}
               </p>
               {!step1 && (
-                <Link
-                  href="/whatsapp"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300"
-                >
-                  <span>{t('onboarding.step1Cta')}</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
+                <div className="mt-3 flex items-center gap-3">
+                  <Link
+                    href="/whatsapp"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300"
+                  >
+                    <span>{t('onboarding.step1Cta')}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <span className="text-slate-600 text-xs">&bull;</span>
+                  <button
+                    type="button"
+                    onClick={() => setVideoModalOpen(true)}
+                    className="text-xs font-medium text-slate-300 hover:text-white inline-flex items-center gap-1"
+                  >
+                    <Play className="w-3 h-3 fill-current text-violet-400" />
+                    <span>Ver vídeo (15s)</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -193,13 +206,29 @@ export function OnboardingChecklist({
                 {step2 ? t('onboarding.step2DescDone').replace('{count}', contactsCount.toString()) : t('onboarding.step2DescPending')}
               </p>
               {!step2 && (
-                <Link
-                  href="/contacts/new"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-violet-300 hover:text-white"
-                >
-                  <span>{t('onboarding.step2Cta')}</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsWhatsAppSyncOpen(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition-colors"
+                  >
+                    <span>Sincronizar WhatsApp</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCalendarSyncOpen(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 text-xs font-bold transition-colors"
+                  >
+                    <span>Calendario</span>
+                  </button>
+                  <Link
+                    href="/contacts/new"
+                    className="inline-flex items-center gap-0.5 text-xs text-slate-400 hover:text-white font-medium pl-1"
+                  >
+                    <span>Manual</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
               )}
             </div>
 
@@ -234,6 +263,26 @@ export function OnboardingChecklist({
         isOpen={videoModalOpen}
         onClose={() => setVideoModalOpen(false)}
       />
+
+      {/* WHATSAPP SYNC REVIEW DIALOG */}
+      {isWhatsAppSyncOpen && (
+        <WhatsAppSyncDialog
+          onClose={() => {
+            setIsWhatsAppSyncOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* CALENDAR SYNC REVIEW DIALOG */}
+      {isCalendarSyncOpen && (
+        <CalendarSyncDialog
+          onClose={() => {
+            setIsCalendarSyncOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
     </>
   );
 }

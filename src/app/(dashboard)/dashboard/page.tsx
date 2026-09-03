@@ -167,8 +167,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 pb-20 md:pb-6 max-w-7xl mx-auto">
-      {/* High-priority alert banner when WhatsApp is disconnected */}
-      {!data?.isWhatsAppConnected && (
+      {/* 1. Onboarding Checklist - El panel de arriba del todo (desaparece al completar los pasos) */}
+      <OnboardingChecklist
+        isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
+        contactsCount={data?.stats?.activeContacts || 0}
+        hasReceivedWelcome={Boolean(data?.hasReceivedWelcomeMessage)}
+      />
+
+      {/* Alerta de WhatsApp desconectado (solo para usuarios activos con contactos guardados) */}
+      {!data?.isWhatsAppConnected && (data?.stats?.activeContacts || 0) > 0 && (
         <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-500/20 via-red-500/15 to-rose-500/20 border-2 border-red-400/80 rounded-3xl backdrop-blur-md shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse-slow">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-red-500 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
@@ -188,39 +195,6 @@ export default async function DashboardPage() {
           </Link>
         </div>
       )}
-
-      {/* Prominent Onboarding Step 2: When WhatsApp is connected but has 0 contacts */}
-      {data?.isWhatsAppConnected && (data?.stats?.activeContacts === 0) && (
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-violet-500/15 border-2 border-emerald-400/80 rounded-3xl backdrop-blur-md shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
-              🎉
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-black text-slate-900">{t('whatsapp.connectedSuccess')}</h4>
-              </div>
-              <p className="text-xs text-slate-600 font-medium mt-0.5">
-                {t('dashboard.subtitle')}
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/contacts?sync=whatsapp"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/25 shrink-0 self-end sm:self-center whitespace-nowrap"
-          >
-            <span>{t('dashboard.syncButton')}</span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-          </Link>
-        </div>
-      )}
-
-      {/* Revolut / Airbnb Style Onboarding Checklist */}
-      <OnboardingChecklist
-        isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
-        contactsCount={data?.stats?.activeContacts || 0}
-        hasReceivedWelcome={Boolean(data?.hasReceivedWelcomeMessage)}
-      />
 
       {/* WhatsApp Connection Health Monitor (Only appears if disconnected/connecting) */}
       <ConnectionStatusCard 
