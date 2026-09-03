@@ -110,7 +110,7 @@ export function VideoGuideModal({ isOpen, onClose, defaultTab = 'whatsapp' }: Vi
                   <div className="relative w-full max-w-[220px] sm:max-w-[240px] aspect-[9/16] bg-slate-950 rounded-[2.5rem] p-2.5 shadow-2xl border-4 border-slate-800 ring-1 ring-violet-500/20 overflow-hidden">
                     <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-16 h-3.5 bg-slate-950 rounded-full z-20" />
                     <video
-                      src="/videos/whatsapp-connection-guide.mp4"
+                      src="/videos/WA.mp4"
                       autoPlay
                       loop
                       muted

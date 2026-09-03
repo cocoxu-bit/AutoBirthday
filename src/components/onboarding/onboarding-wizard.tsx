@@ -35,6 +35,7 @@ import {
   refreshQRCode 
 } from '@/app/(dashboard)/whatsapp/actions';
 import { completeOnboardingAction } from '@/app/onboarding/actions';
+import { WhatsAppVideoDrawer } from '@/components/whatsapp/whatsapp-video-drawer';
 import { useTranslation } from '@/lib/i18n/context';
 import { WhatsAppInstanceStatus } from '@/types';
 
@@ -65,14 +66,11 @@ export function OnboardingWizard({
   const [loadingAction, setLoadingAction] = useState(false);
   const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
   
-  // Modals for Step 2
+  // Modals for Step 2 & Video Drawer
+  const [isVideoDrawerOpen, setIsVideoDrawerOpen] = useState(false);
   const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
   const [isCalendarSyncOpen, setIsCalendarSyncOpen] = useState(false);
   const [importedCount, setImportedCount] = useState(initialContactsCount);
-  
-  // Video player control
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isVideoMuted, setIsVideoMuted] = useState(true);
 
   // Poll connection status while in step 1
   useEffect(() => {
@@ -157,13 +155,6 @@ export function OnboardingWizard({
     setCopied(true);
     toast.success(t('whatsapp.copied'));
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const toggleVideoMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsVideoMuted(videoRef.current.muted);
-    }
   };
 
   const handleFinishOnboarding = async () => {
@@ -266,50 +257,40 @@ export function OnboardingWizard({
               </p>
             </div>
 
-            {/* TWO-COLUMN LAYOUT: VIDEO + CONNECTION CARD */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className="max-w-xl mx-auto w-full space-y-4">
               
-              {/* LEFT: VERTICAL 9:16 VIDEO PLAYER MOCKUP */}
-              <div className="md:col-span-5 flex flex-col items-center">
-                <div className="relative w-full max-w-[260px] aspect-[9/16] bg-slate-900 rounded-[2.5rem] p-2.5 shadow-2xl border-4 border-slate-800 ring-1 ring-violet-500/20 overflow-hidden group">
-                  
-                  {/* Phone Notch */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-950 rounded-full z-20" />
-                  
-                  {/* Native Video Player */}
-                  <video
-                    ref={videoRef}
-                    src="/videos/whatsapp-connection-guide.mp4"
-                    autoPlay
-                    loop
-                    muted={isVideoMuted}
-                    playsInline
-                    className="w-full h-full object-cover rounded-[2rem]"
-                  />
-
-                  {/* Top Badge Overlay */}
-                  <div className="absolute top-6 left-5 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                    <Play className="w-2.5 h-2.5 fill-violet-400 text-violet-400" />
-                    <span>{t('onboarding.videoHelpBadge')}</span>
+              {/* VIDEO TUTORIAL TRIGGER BANNER (BOTTOM SHEET DRAWER) */}
+              <button
+                type="button"
+                onClick={() => setIsVideoDrawerOpen(true)}
+                className="w-full p-4 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-violet-500/15 hover:from-emerald-500/25 hover:to-violet-500/25 border border-emerald-500/30 hover:border-emerald-500/50 rounded-3xl transition-all flex items-center justify-between group shadow-xl text-left"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-bold text-sm group-hover:scale-110 transition-transform shadow-inner shrink-0">
+                    <Play className="w-5 h-5 fill-current ml-0.5" />
                   </div>
-
-                  {/* Sound Toggle Button */}
-                  <button
-                    type="button"
-                    onClick={toggleVideoMute}
-                    className="absolute bottom-5 right-5 z-20 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg transition-transform hover:scale-105 active:scale-95"
-                    title={isVideoMuted ? "Activar audio" : "Silenciar"}
-                  >
-                    {isVideoMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-                  </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-black text-white group-hover:text-emerald-300 transition-colors">
+                        {t('onboarding.videoHelpTitle')}
+                      </span>
+                      <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                        15s
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Ver cómo se hace en el móvil paso a paso (se abre desde abajo)
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-2.5 text-center font-medium">
-                  {t('onboarding.videoHelpSubtitle')}
-                </p>
-              </div>
+                <span className="text-xs font-bold text-emerald-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 shrink-0">
+                  <span className="hidden sm:inline">Ver vídeo</span>
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </button>
 
-              {/* RIGHT: INTERACTIVE CONNECTION CARD */}
-              <div className="md:col-span-7 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-5 backdrop-blur-md">
+              {/* INTERACTIVE CONNECTION CARD */}
+              <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-5 backdrop-blur-md">
                 
                 {/* Method selector tabs */}
                 <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950/80 rounded-2xl border border-slate-800/80 text-xs font-bold">
@@ -637,6 +618,12 @@ export function OnboardingWizard({
           }} 
         />
       )}
+
+      {/* VIDEO BOTTOM SHEET DRAWER */}
+      <WhatsAppVideoDrawer
+        isOpen={isVideoDrawerOpen}
+        onClose={() => setIsVideoDrawerOpen(false)}
+      />
 
     </div>
   );

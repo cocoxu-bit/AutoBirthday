@@ -15,7 +15,8 @@ import {
   ChevronRight, 
   Users, 
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Play
 } from 'lucide-react';
 import { 
   getConnectionStatus, 
@@ -26,6 +27,7 @@ import {
   sendTestMessage 
 } from './actions';
 import { QRScanner } from '@/components/whatsapp/qr-scanner';
+import { WhatsAppVideoDrawer } from '@/components/whatsapp/whatsapp-video-drawer';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { toast } from 'sonner';
 import { WhatsAppInstanceStatus } from '@/types';
@@ -44,6 +46,7 @@ export default function WhatsAppPage() {
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isVideoDrawerOpen, setIsVideoDrawerOpen] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -221,6 +224,31 @@ export default function WhatsAppPage() {
         {showConnectionForm && (
           <div className="space-y-4">
             
+            {/* Botón Ver Vídeo Tutorial (Bottom Sheet Drawer) */}
+            <button
+              type="button"
+              onClick={() => setIsVideoDrawerOpen(true)}
+              className="w-full p-3 bg-gradient-to-r from-emerald-50 via-teal-50/60 to-emerald-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-200/80 rounded-2xl transition-all flex items-center justify-between group shadow-sm text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">
+                    ¿Cómo se vincula? Ver vídeo de 15 segundos
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Paso a paso en tu teléfono móvil
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-emerald-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                <span>Ver</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </button>
+
             {/* Selector de Método */}
             <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1 text-xs font-bold">
               <button
@@ -478,6 +506,12 @@ export default function WhatsAppPage() {
         )}
 
       </div>
+
+      {/* VIDEO BOTTOM SHEET DRAWER */}
+      <WhatsAppVideoDrawer
+        isOpen={isVideoDrawerOpen}
+        onClose={() => setIsVideoDrawerOpen(false)}
+      />
 
     </div>
   );

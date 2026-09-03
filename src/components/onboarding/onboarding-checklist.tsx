@@ -17,7 +17,7 @@ import {
   ExternalLink,
   PartyPopper
 } from 'lucide-react';
-import { VideoGuideModal } from './video-guide-modal';
+import { WhatsAppVideoDrawer } from '@/components/whatsapp/whatsapp-video-drawer';
 import { useTranslation } from '@/lib/i18n/context';
 
 interface OnboardingChecklistProps {
@@ -229,11 +229,10 @@ export function OnboardingChecklist({
 
       </div>
 
-      {/* VIDEO / MICRO-GUIDE MODAL */}
-      <VideoGuideModal
+      {/* VIDEO BOTTOM SHEET DRAWER */}
+      <WhatsAppVideoDrawer
         isOpen={videoModalOpen}
         onClose={() => setVideoModalOpen(false)}
-        defaultTab={defaultTab}
       />
     </>
   );

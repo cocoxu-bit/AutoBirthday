@@ -4,18 +4,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { LogOut, Play } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { signOutUser } from "@/lib/firebase/auth";
 import { toast } from "sonner";
 import { WhatsAppInstanceStatus } from "@/types";
-import { VideoGuideModal } from "@/components/onboarding/video-guide-modal";
 import { useTranslation } from "@/lib/i18n/context";
 
 export function Header() {
   const router = useRouter();
   const { t } = useTranslation();
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus>('disconnected');
-  const [guideOpen, setGuideOpen] = useState(false);
 
   useEffect(() => {
     async function checkWa() {
@@ -53,17 +51,6 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Video Guides Quick Action */}
-        <button
-          onClick={() => setGuideOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-all shadow-sm"
-          title={t('header.guidesButton')}
-        >
-          <Play className="w-3 h-3 fill-violet-600 text-violet-600 ml-0.5" />
-          <span className="hidden sm:inline">{t('header.guidesButton')}</span>
-          <span className="sm:hidden">{t('header.guidesButton')}</span>
-        </button>
-
         {/* Real-time WhatsApp Status Badge */}
         <Link
           href="/whatsapp"
@@ -97,11 +84,6 @@ export function Header() {
           <span className="hidden sm:inline">{t('header.logout')}</span>
         </button>
       </div>
-
-      <VideoGuideModal
-        isOpen={guideOpen}
-        onClose={() => setGuideOpen(false)}
-      />
     </header>
   );
 }

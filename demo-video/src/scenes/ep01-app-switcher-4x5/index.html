@@ -15,7 +15,7 @@
         width: 1080px;
         height: 1350px;
         overflow: hidden;
-        background: #020617;
+        background: #f4f8f6;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
         user-select: none;
       }
@@ -26,7 +26,7 @@
         width: 1080px;
         height: 1350px;
         overflow: hidden;
-        background: #020617;
+        background: #f4f8f6;
       }
 
       /* ========================================================
@@ -75,6 +75,7 @@
         will-change: transform, border-radius, box-shadow;
         overflow: hidden;
         z-index: 10;
+        background: #f4f8f6;
       }
 
       .app-switcher-badge {
@@ -584,7 +585,7 @@
 
       .wa-chats-scroll-body {
         flex: 1;
-        padding: 14px 36px 156px 36px; /* space for wa-bottom-nav + system bar */
+        padding: 14px 36px 156px 36px;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -694,7 +695,7 @@
 
       .wa-bottom-nav {
         position: absolute;
-        bottom: 58px; /* sits right above system nav bar */
+        bottom: 58px;
         left: 0;
         right: 0;
         height: 94px;
@@ -885,7 +886,7 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        margin-bottom: 58px; /* above system nav bar */
+        margin-bottom: 58px;
       }
 
       .wa-link-phone-white {
@@ -1019,14 +1020,14 @@
     <div
       id="root"
       class="clip"
-      data-composition-id="screencast-switcher-17s"
+      data-composition-id="screencast-switcher-16s"
       data-start="0"
-      data-duration="17"
+      data-duration="16"
       data-width="1080"
       data-height="1350"
     >
       <div class="drawer-viewport">
-        <!-- SYSTEM WALLPAPER IN BACKGROUND -->
+        <!-- SYSTEM WALLPAPER IN BACKGROUND (Z-INDEX 1) -->
         <div class="system-wallpaper">
           <div class="wallpaper-glow-1"></div>
           <div class="wallpaper-glow-2"></div>
@@ -1040,8 +1041,16 @@
 
         <!-- ========================================================
              APP CARD 1: AUTOBIRTHDAY WRAPPER
+             Starts 100% full screen, visible, exactly at (0, 0)
              ======================================================== -->
-        <div id="cardAutoBirthday" class="app-card-wrapper" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true" style="z-index: 10;">
+        <div 
+          id="cardAutoBirthday" 
+          class="app-card-wrapper" 
+          data-layout-allow-overflow="true" 
+          data-layout-allow-occlusion="true" 
+          data-layout-allow-overlap="true" 
+          style="z-index: 10; opacity: 1; transform: matrix(1, 0, 0, 1, 0, 0); border-radius: 0px;"
+        >
           <!-- Switcher Badge -->
           <div id="badgeAutoBirthday" class="app-switcher-badge" data-layout-allow-overflow="true">
             <span style="font-size: 22px;">🎂</span>
@@ -1177,8 +1186,16 @@
 
         <!-- ========================================================
              APP CARD 2: WHATSAPP WRAPPER
+             Starts hidden until multitask switcher is activated
              ======================================================== -->
-        <div id="cardWhatsApp" class="app-card-wrapper" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true" style="z-index: 20; opacity: 0;">
+        <div 
+          id="cardWhatsApp" 
+          class="app-card-wrapper" 
+          data-layout-allow-overflow="true" 
+          data-layout-allow-occlusion="true" 
+          data-layout-allow-overlap="true" 
+          style="z-index: 20; display: none; opacity: 0;"
+        >
           <!-- Switcher Badge -->
           <div id="badgeWhatsApp" class="app-switcher-badge" data-layout-allow-overflow="true">
             <span style="font-size: 22px;">💬</span>
@@ -1613,16 +1630,16 @@
     <script>
       window.__timelines = window.__timelines || {};
 
-      // Initial card setups
+      // Initial visual states
       gsap.set("#cardAutoBirthday", { scale: 1.0, x: 0, y: 0, borderRadius: 0, opacity: 1, zIndex: 10 });
-      gsap.set("#cardWhatsApp", { scale: 0.72, x: 900, y: -20, borderRadius: 40, opacity: 0, zIndex: 20 });
+      gsap.set("#cardWhatsApp", { scale: 0.72, x: 900, y: -20, borderRadius: 40, opacity: 0, display: "none", zIndex: 20 });
       gsap.set("#badgeAutoBirthday", { opacity: 0 });
       gsap.set("#badgeWhatsApp", { opacity: 0 });
       gsap.set("#touchPoint", { x: 540, y: 512, opacity: 0 });
 
       const tl = gsap.timeline({ paused: true });
 
-      // Translucent Touch Point Tap Animation (Simulates finger touch with elastic tactile impulse & soft expanding wave)
+      // Translucent Touch Point Tap Animation (Elastic tactile impulse + soft expanding wave)
       function performTap(x, y, atTime) {
         tl.set("#touchPoint", { x: x, y: y, opacity: 1 }, atTime);
         tl.set("#tapWave", { x: x, y: y, opacity: 0.9, scale: 0.4 }, atTime);
@@ -1642,170 +1659,161 @@
       }
 
       // ========================================================
-      // 1. ESCENA 1: COPIAR CÓDIGO EN AUTOBIRTHDAY (00:00 - 00:02.4)
+      // 1. ESCENA 1: INICIO COMPLETO AUTOBIRTHDAY (00:00 - 00:03.0)
+      // Arranca 100% visible con tarjeta de código y panel
       // ========================================================
       // Touch point glides to Button 1: [ 📋 Copiar Código ] (X: 540, Y: 512)
-      tl.to("#touchPoint", { opacity: 1, duration: 0.35 }, 0.4);
-      tl.to("#touchPoint", { x: 540, y: 512, duration: 0.5, ease: "power2.out" }, 0.5);
+      tl.to("#touchPoint", { opacity: 1, duration: 0.4 }, 0.6);
+      tl.to("#touchPoint", { x: 540, y: 512, duration: 0.5, ease: "power2.out" }, 0.8);
 
-      // CLICK 1 (00:01.0): Copiar Código
-      performTap(540, 512, 1.0);
+      // CLICK 1 (00:01.5): Exact tap on [ 📋 Copiar Código ]
+      performTap(540, 512, 1.5);
 
-      // Feedback botón verde + toast
-      tl.to("#btnCopyPwa", { backgroundColor: "#059669", color: "#ffffff", duration: 0.15 }, 1.12);
-      tl.to("#copyPwaText", { textContent: "¡Copiado!", duration: 0.05 }, 1.12);
-      tl.to("#copyPwaIcon", { textContent: "✓", duration: 0.05 }, 1.12);
+      // Feedback botón verde + toast a 00:02.0
+      tl.to("#btnCopyPwa", { backgroundColor: "#059669", color: "#ffffff", duration: 0.15 }, 1.62);
+      tl.to("#copyPwaText", { textContent: "¡Copiado!", duration: 0.05 }, 1.62);
+      tl.to("#copyPwaIcon", { textContent: "✓", duration: 0.05 }, 1.62);
 
-      tl.to("#toastCopied", { opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.7)" }, 1.25);
+      tl.to("#toastCopied", { opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.7)" }, 1.85);
 
       // ========================================================
-      // 2. TRANSICIÓN 1: CAMBIO DE APP POR BOTÓN DE NAVEGACIÓN (00:02.0 - 00:04.6)
+      // 2. TRANSICIÓN 1: MULTITAREA APP SWITCHER A WHATSAPP (00:02.6 - 00:04.6)
       // ========================================================
       // Touch point moves down to the Recent Apps button ||| (X: 240, Y: 1321)
-      tl.to("#touchPoint", { x: 240, y: 1321, duration: 0.55, ease: "power2.out" }, 1.8);
+      tl.to("#touchPoint", { x: 240, y: 1321, duration: 0.55, ease: "power2.out" }, 2.45);
 
-      // CLICK NAV 1 (00:02.4): Tap en el botón ||| de navegación reciente
-      performTap(240, 1321, 2.4);
-      tl.set("#btnNavRecents", { className: "nav-btn active-press" }, 2.4);
-      tl.to("#btnNavRecents", { className: "nav-btn", duration: 0.2 }, 2.55);
+      // CLICK NAV 1 (00:03.0): Tap en el botón ||| de navegación reciente
+      performTap(240, 1321, 3.0);
+      tl.set("#btnNavRecents", { className: "nav-btn active-press" }, 3.0);
+      tl.to("#btnNavRecents", { className: "nav-btn", duration: 0.15 }, 3.15);
 
-      // AutoBirthday card scales down into multitask switcher view
+      // AutoBirthday card scales down into task switcher (00:03.0 - 00:03.45)
       tl.to("#cardAutoBirthday", {
         scale: 0.72,
         y: -20,
         borderRadius: 40,
         boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)",
-        duration: 0.5,
+        duration: 0.45,
         ease: "power3.out"
-      }, 2.5);
-      tl.to("#badgeAutoBirthday", { opacity: 1, duration: 0.3 }, 2.65);
+      }, 3.05);
+      tl.to("#badgeAutoBirthday", { opacity: 1, duration: 0.25 }, 3.2);
 
-      // Multitask Swipe: AutoBirthday slides left, WhatsApp slides to center
-      tl.to("#cardAutoBirthday", { x: -900, duration: 0.6, ease: "power3.inOut" }, 3.1);
-      tl.set("#cardWhatsApp", { opacity: 1 }, 3.0);
-      tl.fromTo("#cardWhatsApp", 
-        { x: 900, scale: 0.72, y: -20, borderRadius: 40, boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)" },
-        { x: 0, duration: 0.6, ease: "power3.inOut" },
-        3.1
-      );
-      tl.to("#badgeWhatsApp", { opacity: 1, duration: 0.3 }, 3.35);
+      // Multitask Swipe (00:03.45 - 00:03.95): AutoBirthday slides left, WhatsApp slides into center
+      tl.to("#cardAutoBirthday", { x: -900, duration: 0.5, ease: "power3.inOut" }, 3.45);
+      tl.set("#cardWhatsApp", { display: "block", opacity: 1, x: 900, scale: 0.72, y: -20, borderRadius: 40, boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)" }, 3.4);
+      tl.to("#cardWhatsApp", { x: 0, duration: 0.5, ease: "power3.inOut" }, 3.45);
+      tl.to("#badgeWhatsApp", { opacity: 1, duration: 0.25 }, 3.65);
 
       // Touch point moves to center of WhatsApp app card in switcher (X: 540, Y: 620)
-      tl.to("#touchPoint", { x: 540, y: 620, duration: 0.45, ease: "power2.out" }, 3.6);
+      tl.to("#touchPoint", { x: 540, y: 620, duration: 0.4, ease: "power2.out" }, 3.8);
 
-      // CLICK SELECT 1 (00:04.1): Tap en la tarjeta de WhatsApp para abrirla
-      performTap(540, 620, 4.1);
+      // CLICK SELECT 1 (00:04.2): Tap en la tarjeta de WhatsApp para maximizar
+      performTap(540, 620, 4.2);
 
-      // WhatsApp card zooms up to fullscreen!
+      // WhatsApp card zooms up to fullscreen! (00:04.25 - 00:04.65)
       tl.to("#cardWhatsApp", {
         scale: 1.0,
         y: 0,
         borderRadius: 0,
         boxShadow: "none",
-        duration: 0.45,
+        duration: 0.4,
         ease: "power3.out"
-      }, 4.2);
-      tl.to("#badgeWhatsApp", { opacity: 0, duration: 0.2 }, 4.2);
+      }, 4.25);
+      tl.to("#badgeWhatsApp", { opacity: 0, duration: 0.2 }, 4.25);
 
       // ========================================================
-      // 3. ESCENA 2: WHATSAPP - 3 PUNTOS Y MENÚ (00:04.6 - 00:06.6)
+      // 3. FLUJO WHATSAPP (00:04.6 - 00:12.0)
       // ========================================================
       // Touch point moves to 3 dots button (X: 1015, Y: 54)
-      tl.to("#touchPoint", { x: 1015, y: 54, duration: 0.45, ease: "power2.out" }, 4.7);
+      tl.to("#touchPoint", { x: 1015, y: 54, duration: 0.45, ease: "power2.out" }, 4.65);
 
-      // CLICK 2 (00:05.2): 3 puntos verticales
-      performTap(1015, 54, 5.2);
+      // CLICK 2 (00:05.1): 3 puntos verticales (⋮)
+      performTap(1015, 54, 5.1);
 
-      // Menu appears
-      tl.set("#waDropdownMenu", { display: "flex" }, 5.4);
-      tl.fromTo("#waDropdownMenu", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.5)" }, 5.4);
+      // Despliegue del menú nativo
+      tl.set("#waDropdownMenu", { display: "flex" }, 5.3);
+      tl.fromTo("#waDropdownMenu", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.5)" }, 5.3);
 
       // Touch point moves to Dispositivos vinculados (X: 814, Y: 335)
-      tl.to("#touchPoint", { x: 814, y: 335, duration: 0.4, ease: "power2.out" }, 5.55);
+      tl.to("#touchPoint", { x: 814, y: 335, duration: 0.4, ease: "power2.out" }, 5.45);
 
-      // CLICK 3 (00:06.0): Dispositivos vinculados
-      performTap(814, 335, 6.0);
-      tl.set("#waItemDevices", { className: "wa-menu-item active-tap" }, 6.0);
+      // CLICK 3 (00:05.9): Dispositivos vinculados
+      performTap(814, 335, 5.9);
+      tl.set("#waItemDevices", { className: "wa-menu-item active-tap" }, 5.9);
 
-      // ========================================================
-      // 4. ESCENA 3: PANTALLA DISPOSITIVOS VINCULADOS (00:06.6 - 00:08.4)
-      // ========================================================
-      tl.set("#waScreenChats", { display: "none" }, 6.4);
-      tl.set("#waScreenDevices", { display: "flex" }, 6.4);
+      // Pantalla Dispositivos vinculados
+      tl.set("#waScreenChats", { display: "none" }, 6.35);
+      tl.set("#waScreenDevices", { display: "flex" }, 6.35);
 
       // Touch point moves to green button Vincular un dispositivo (X: 540, Y: 515)
-      tl.to("#touchPoint", { x: 540, y: 515, duration: 0.55, ease: "power2.inOut" }, 6.6);
+      tl.to("#touchPoint", { x: 540, y: 515, duration: 0.55, ease: "power2.inOut" }, 6.55);
 
-      // CLICK 4 (00:07.4): Vincular un dispositivo
-      performTap(540, 515, 7.4);
-      tl.to("#btnVincularDispositivo", { scale: 0.96, duration: 0.1, yoyo: true, repeat: 1 }, 7.4);
+      // CLICK 4 (00:07.1): Vincular un dispositivo
+      performTap(540, 515, 7.1);
+      tl.to("#btnVincularDispositivo", { scale: 0.96, duration: 0.1, yoyo: true, repeat: 1 }, 7.1);
 
-      // ========================================================
-      // 5. ESCENA 4: ESCANEA QR / CÁMARA (00:08.4 - 00:10.2)
-      // ========================================================
-      tl.set("#waScreenDevices", { display: "none" }, 8.2);
-      tl.set("#waScreenScanner", { display: "flex" }, 8.2);
+      // Pantalla Escáner QR / Cámara
+      tl.set("#waScreenDevices", { display: "none" }, 7.7);
+      tl.set("#waScreenScanner", { display: "flex" }, 7.7);
 
-      // Laser animation
-      tl.fromTo(".wa-laser-bar", { y: -220 }, { y: 220, duration: 1.1, repeat: 1, yoyo: true, ease: "sine.inOut" }, 8.2);
+      // Laser scanning animation
+      tl.fromTo(".wa-laser-bar", { y: -220 }, { y: 220, duration: 1.0, repeat: 1, yoyo: true, ease: "sine.inOut" }, 7.7);
 
       // Touch point moves to bottom bar Vincular con número (X: 540, Y: 1252)
-      tl.to("#touchPoint", { x: 540, y: 1252, duration: 0.6, ease: "power2.inOut" }, 8.5);
+      tl.to("#touchPoint", { x: 540, y: 1252, duration: 0.55, ease: "power2.inOut" }, 7.95);
 
-      // CLICK 5 (00:09.3): Vincular con número de teléfono
-      performTap(540, 1252, 9.3);
-      tl.to("#btnLinkWithPhone", { backgroundColor: "#1E293B", duration: 0.1, yoyo: true, repeat: 1 }, 9.3);
+      // CLICK 5 (00:08.5): Vincular con el número de teléfono
+      performTap(540, 1252, 8.5);
+      tl.to("#btnLinkWithPhone", { backgroundColor: "#1E293B", duration: 0.1, yoyo: true, repeat: 1 }, 8.5);
 
-      // ========================================================
-      // 6. ESCENA 5: INGRESA EL CÓDIGO (00:10.2 - 00:12.6)
-      // ========================================================
-      tl.set("#waScreenScanner", { display: "none" }, 10.0);
-      tl.set("#waScreenCode", { display: "flex" }, 10.0);
+      // Pantalla Ingresa el código
+      tl.set("#waScreenScanner", { display: "none" }, 9.1);
+      tl.set("#waScreenCode", { display: "flex" }, 9.1);
 
       // Popover Pegar
-      tl.set("#waPopoverPaste", { display: "flex" }, 10.2);
-      tl.fromTo("#waPopoverPaste", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.6)" }, 10.2);
+      tl.set("#waPopoverPaste", { display: "flex" }, 9.4);
+      tl.fromTo("#waPopoverPaste", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.6)" }, 9.4);
 
-      tl.to("#touchPoint", { x: 540, y: 448, duration: 0.35, ease: "power2.out" }, 10.3);
+      tl.to("#touchPoint", { x: 540, y: 448, duration: 0.35, ease: "power2.out" }, 9.5);
 
-      // CLICK 6 (00:10.7): Pegar
-      performTap(540, 448, 10.7);
-      tl.set("#waPopoverPaste", { display: "none" }, 10.85);
+      // CLICK 6 (00:09.9): Pegar
+      performTap(540, 448, 9.9);
+      tl.set("#waPopoverPaste", { display: "none" }, 10.05);
 
       // Digits elastic fill: [ 7 ][ K ][ 4 ][ B ] - [ 9 ][ X ][ 2 ][ M ]
       const chars = ["7", "K", "4", "B", "9", "X", "2", "M"];
       chars.forEach((c, idx) => {
         const id = `#c${idx + 1}`;
-        const time = 10.95 + idx * 0.035;
+        const time = 10.15 + idx * 0.035;
         tl.to(id, { textContent: c, borderColor: "#0F7A3E", color: "#0F7A3E", backgroundColor: "#D1FAE5", duration: 0.05 }, time);
         tl.fromTo(id, { scale: 1.16 }, { scale: 1.0, duration: 0.14, ease: "back.out(2)" }, time);
       });
 
-      // Check verde de éxito
-      tl.set("#waSuccessRow", { display: "flex" }, 11.5);
-      tl.fromTo("#waSuccessRow", { scale: 0.8, opacity: 0 }, { scale: 1.0, opacity: 1, duration: 0.25, ease: "back.out(1.7)" }, 11.5);
+      // Check verde de éxito a 00:10.8
+      tl.set("#waSuccessRow", { display: "flex" }, 10.8);
+      tl.fromTo("#waSuccessRow", { scale: 0.8, opacity: 0 }, { scale: 1.0, opacity: 1, duration: 0.25, ease: "back.out(1.7)" }, 10.8);
 
       // ========================================================
-      // 7. TRANSICIÓN 2: CAMBIO DE APP DE VUELTA A AUTOBIRTHDAY (00:12.4 - 00:15.0)
+      // 4. RETORNO POR MULTITAREA (00:12.0 - 00:14.2)
       // ========================================================
       // Touch point moves down to the Recent Apps button ||| (X: 240, Y: 1321)
-      tl.to("#touchPoint", { x: 240, y: 1321, duration: 0.55, ease: "power2.out" }, 12.2);
+      tl.to("#touchPoint", { x: 240, y: 1321, duration: 0.55, ease: "power2.out" }, 12.0);
 
-      // CLICK NAV 2 (00:12.8): Tap en el botón ||| de navegación reciente
-      performTap(240, 1321, 12.8);
-      tl.set("#btnNavRecents", { className: "nav-btn active-press" }, 12.8);
-      tl.to("#btnNavRecents", { className: "nav-btn", duration: 0.2 }, 12.95);
+      // CLICK NAV 2 (00:12.6): Tap en el botón ||| de navegación reciente
+      performTap(240, 1321, 12.6);
+      tl.set("#btnNavRecents", { className: "nav-btn active-press" }, 12.6);
+      tl.to("#btnNavRecents", { className: "nav-btn", duration: 0.15 }, 12.75);
 
-      // Prepare AutoBirthday connected state while minimized
-      tl.set("#abPendingView", { display: "none" }, 12.8);
-      tl.set("#abTabsContainer", { display: "none" }, 12.8);
-      tl.set("#toastCopied", { display: "none" }, 12.8);
-      tl.set("#abCardTitle", { textContent: "WhatsApp Vinculado" }, 12.8);
-      tl.set("#abCardSubtitle", { textContent: "Tu cuenta está lista para enviar felicitaciones automáticas." }, 12.8);
-      tl.set("#abStatusPill", { className: "ab-status-badge ab-status-connected" }, 12.8);
-      tl.set("#abStatusDot", { backgroundColor: "#10B981" }, 12.8);
-      tl.set("#abStatusText", { textContent: "Conectado" }, 12.8);
-      tl.set("#abSuccessHero", { display: "flex" }, 12.8);
+      // Prepare AutoBirthday connected state in background
+      tl.set("#abPendingView", { display: "none" }, 12.7);
+      tl.set("#abTabsContainer", { display: "none" }, 12.7);
+      tl.set("#toastCopied", { display: "none" }, 12.7);
+      tl.set("#abCardTitle", { textContent: "WhatsApp Vinculado" }, 12.7);
+      tl.set("#abCardSubtitle", { textContent: "Tu cuenta está lista para enviar felicitaciones automáticas." }, 12.7);
+      tl.set("#abStatusPill", { className: "ab-status-badge ab-status-connected" }, 12.7);
+      tl.set("#abStatusDot", { backgroundColor: "#10B981" }, 12.7);
+      tl.set("#abStatusText", { textContent: "Conectado" }, 12.7);
+      tl.set("#abSuccessHero", { display: "flex" }, 12.7);
 
       // WhatsApp card scales down into multitask switcher
       tl.to("#cardWhatsApp", {
@@ -1813,45 +1821,43 @@
         y: -20,
         borderRadius: 40,
         boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)",
-        duration: 0.5,
+        duration: 0.45,
         ease: "power3.out"
-      }, 12.9);
-      tl.to("#badgeWhatsApp", { opacity: 1, duration: 0.3 }, 13.05);
+      }, 12.65);
+      tl.to("#badgeWhatsApp", { opacity: 1, duration: 0.25 }, 12.8);
 
       // Multitask Swipe: WhatsApp slides right, AutoBirthday slides to center
-      tl.to("#cardWhatsApp", { x: 900, duration: 0.6, ease: "power3.inOut" }, 13.5);
-      tl.fromTo("#cardAutoBirthday",
-        { x: -900, scale: 0.72, y: -20, borderRadius: 40, boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)" },
-        { x: 0, duration: 0.6, ease: "power3.inOut" },
-        13.5
-      );
-      tl.to("#badgeAutoBirthday", { opacity: 1, duration: 0.3 }, 13.75);
+      tl.to("#cardWhatsApp", { x: 900, duration: 0.5, ease: "power3.inOut" }, 13.05);
+      tl.set("#cardAutoBirthday", { x: -900, scale: 0.72, y: -20, borderRadius: 40, opacity: 1, display: "block", boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)" }, 13.0);
+      tl.to("#cardAutoBirthday", { x: 0, duration: 0.5, ease: "power3.inOut" }, 13.05);
+      tl.to("#badgeAutoBirthday", { opacity: 1, duration: 0.25 }, 13.25);
 
       // Touch point moves to center of AutoBirthday card in switcher (X: 540, Y: 620)
-      tl.to("#touchPoint", { x: 540, y: 620, duration: 0.45, ease: "power2.out" }, 14.0);
+      tl.to("#touchPoint", { x: 540, y: 620, duration: 0.4, ease: "power2.out" }, 13.35);
 
-      // CLICK SELECT 2 (00:14.5): Tap en la tarjeta de AutoBirthday para abrirla
-      performTap(540, 620, 14.5);
+      // CLICK SELECT 2 (00:13.7): Tap en la tarjeta de AutoBirthday para abrirla
+      performTap(540, 620, 13.7);
 
-      // AutoBirthday card zooms up to fullscreen!
+      // AutoBirthday card zooms up to fullscreen! (00:13.75 - 00:14.15)
       tl.to("#cardAutoBirthday", {
         scale: 1.0,
         y: 0,
         borderRadius: 0,
         boxShadow: "none",
-        duration: 0.45,
+        duration: 0.4,
         ease: "power3.out"
-      }, 14.6);
-      tl.to("#badgeAutoBirthday", { opacity: 0, duration: 0.2 }, 14.6);
+      }, 13.75);
+      tl.to("#badgeAutoBirthday", { opacity: 0, duration: 0.2 }, 13.75);
 
       // ========================================================
-      // 8. ESCENA 6: AUTOBIRTHDAY VINCULADO Y CTA (00:15.0 - 00:17.0)
+      // 5. PANTALLA FINAL: AUTOBIRTHDAY VINCULADO + CTA (00:14.2 - 00:16.0)
+      // Muestra check animado, datos y tap en CTA, con 1s visible
       // ========================================================
-      // Touch point moves to Button 7: [ Agregar cumpleaños desde WhatsApp → ] (X: 540, Y: 615)
-      tl.to("#touchPoint", { x: 540, y: 615, duration: 0.55, ease: "power2.out" }, 15.1);
+      // Touch point moves to CTA [ Agregar cumpleaños desde WhatsApp → ] (X: 540, Y: 615)
+      tl.to("#touchPoint", { x: 540, y: 615, duration: 0.45, ease: "power2.out" }, 14.3);
 
-      // CLICK 7 (00:15.8): CTA final
-      performTap(540, 615, 15.8);
+      // CLICK 7 (00:14.8): Tap en el botón CTA final
+      performTap(540, 615, 14.8);
 
       tl.to("#btnPanelFinalCta", {
         scale: 0.96,
@@ -1859,11 +1865,14 @@
         yoyo: true,
         repeat: 1,
         boxShadow: "0 12px 30px rgba(4, 120, 87, 0.6)"
-      }, 15.8);
+      }, 14.8);
 
-      // Smooth settling freeze until 17.0s
+      // Touch point fades out smoothly
+      tl.to("#touchPoint", { opacity: 0, duration: 0.3 }, 15.2);
 
-      window.__timelines["screencast-switcher-17s"] = tl;
+      // Hold final state for 1 full second cleanly until 16.0s
+
+      window.__timelines["screencast-switcher-16s"] = tl;
     </script>
   </body>
 </html>
