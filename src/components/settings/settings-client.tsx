@@ -52,9 +52,15 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleLanguageChange = (code: SupportedLocale) => {
+  const handleLanguageChange = async (code: SupportedLocale) => {
     setSelectedLocale(code);
-    setLocale(code); // Instant preview
+    setLocale(code); // Instant client preview & cookie
+    try {
+      await updateUserSettings({ locale: code });
+      router.refresh();
+    } catch (err) {
+      console.error('Error auto-saving language:', err);
+    }
   };
 
   const handleSaveSettings = async () => {

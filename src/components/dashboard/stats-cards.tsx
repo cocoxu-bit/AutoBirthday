@@ -1,3 +1,5 @@
+'use client';
+
 import { Users, Cake, Clock, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
@@ -9,17 +11,30 @@ interface StatsCardsProps {
     pendingApproval: number;
     nextBirthdayDays: number | null;
     nextBirthdayName?: string;
+    nextBirthdayContact?: {
+      name: string;
+      birthDay: number;
+      birthMonth: number;
+    };
   };
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
-  const { t } = useTranslation();
+  const { t, dict } = useTranslation();
 
   const getNextBirthdayText = () => {
     if (stats.nextBirthdayDays === null) return "-";
     if (stats.nextBirthdayDays === 0) return `${t('dashboard.today')} 🎉`;
     if (stats.nextBirthdayDays === 1) return t('dashboard.tomorrow');
     return t('dashboard.inDays').replace('{days}', stats.nextBirthdayDays.toString());
+  };
+
+  const getNextBirthdaySubtitle = () => {
+    if (stats.nextBirthdayContact && dict.contactForm?.months?.[stats.nextBirthdayContact.birthMonth - 1]) {
+      const monthName = dict.contactForm.months[stats.nextBirthdayContact.birthMonth - 1];
+      return `${stats.nextBirthdayContact.name} (${stats.nextBirthdayContact.birthDay} ${monthName})`;
+    }
+    return stats.nextBirthdayName || t('dashboard.noUpcoming');
   };
 
   const items = [
@@ -50,7 +65,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
     {
       label: t('dashboard.upcomingTitle'),
       value: getNextBirthdayText(),
-      trend: stats.nextBirthdayName || t('dashboard.noUpcoming'),
+      trend: getNextBirthdaySubtitle(),
       icon: Calendar,
       color: "text-rose-600",
       bgColor: "bg-rose-100",

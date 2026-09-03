@@ -17,6 +17,7 @@ export const es = {
     success: "Operación completada con éxito",
     error: "Ha ocurrido un error",
     noData: "No hay datos disponibles",
+    yearsOld: "años",
   },
   nav: {
     dashboard: "Inicio",

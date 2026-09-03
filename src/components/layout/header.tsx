@@ -74,7 +74,7 @@ export function Header() {
               ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 animate-pulse'
               : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
           }`}
-          title={waStatus === 'connected' ? 'WhatsApp vinculado y operativo' : 'WhatsApp desconectado (pulsa para vincular)'}
+          title={waStatus === 'connected' ? t('header.whatsappConnected') : t('header.whatsappDisconnected')}
         >
           <span className={`w-2 h-2 rounded-full ${
             waStatus === 'connected'
@@ -84,17 +84,17 @@ export function Header() {
               : 'bg-red-500 shadow-sm shadow-red-500/50'
           }`} />
           <span className="hidden sm:inline">
-            {waStatus === 'connected' ? 'WhatsApp Activo' : waStatus === 'connecting' ? 'Conectando...' : 'Reconectar WA'}
+            {waStatus === 'connected' ? t('whatsapp.statusConnected') : waStatus === 'connecting' ? t('settings.whatsappConnecting') : t('whatsapp.statusDisconnected')}
           </span>
         </Link>
 
         <button
           onClick={handleSignOut}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-red-600 transition-colors rounded-xl hover:bg-red-50"
-          title="Cerrar sesión"
+          title={t('header.logout')}
         >
           <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">Cerrar sesión</span>
+          <span className="hidden sm:inline">{t('header.logout')}</span>
         </button>
       </div>
 

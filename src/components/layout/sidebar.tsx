@@ -94,7 +94,7 @@ export function Sidebar() {
             <Link
               href="/admin"
               prefetch={true}
-              title={collapsed ? "Panel Admin" : undefined}
+              title={collapsed ? t('nav.admin') : undefined}
               className={cn(
                 "flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative border",
                 pathname.startsWith("/admin")
@@ -103,7 +103,7 @@ export function Sidebar() {
               )}
             >
               <ShieldCheck className="w-5 h-5 shrink-0 text-amber-600" />
-              {!collapsed && <span className="ml-3 truncate text-xs font-black">👑 Panel Admin</span>}
+              {!collapsed && <span className="ml-3 truncate text-xs font-black">👑 {t('nav.admin')}</span>}
             </Link>
           </div>
         )}

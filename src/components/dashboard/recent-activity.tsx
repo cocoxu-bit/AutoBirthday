@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import { CheckCircle2, XCircle, Clock, Send, ArrowRight } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";

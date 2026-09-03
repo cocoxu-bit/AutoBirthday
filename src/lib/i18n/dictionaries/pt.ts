@@ -19,6 +19,7 @@ export const pt: Dictionary = {
     success: "Operação concluída com sucesso",
     error: "Ocorreu um erro",
     noData: "Nenhum dado disponível",
+    yearsOld: "anos",
   },
   nav: {
     dashboard: "Início",

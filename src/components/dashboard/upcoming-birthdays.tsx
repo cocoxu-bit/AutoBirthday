@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import { Cake, ArrowRight, UserPlus, Users } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
@@ -6,7 +8,10 @@ export interface UpcomingBirthdayItem {
   id: string;
   name: string;
   phone: string;
-  dateStr: string;
+  birthDay?: number;
+  birthMonth?: number;
+  birthYear?: number | null;
+  dateStr?: string;
   daysRemaining: number;
   isGroup?: boolean;
   groupName?: string;
@@ -19,7 +24,17 @@ interface UpcomingBirthdaysProps {
 }
 
 export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
-  const { t } = useTranslation();
+  const { t, dict } = useTranslation();
+  const currentYear = new Date().getFullYear();
+
+  const formatBirthDate = (bday: UpcomingBirthdayItem) => {
+    if (bday.birthDay && bday.birthMonth && dict.contactForm?.months?.[bday.birthMonth - 1]) {
+      const monthName = dict.contactForm.months[bday.birthMonth - 1];
+      const ageStr = bday.birthYear ? ` (${currentYear - bday.birthYear} ${t('common.yearsOld')})` : '';
+      return `${bday.birthDay} ${monthName}${ageStr}`;
+    }
+    return bday.dateStr || '';
+  };
 
   return (
     <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between">
@@ -63,7 +78,7 @@ export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
                     <p className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                       {bday.name}
                     </p>
-                    <p className="text-xs text-slate-500 font-medium">{bday.dateStr}</p>
+                    <p className="text-xs text-slate-500 font-medium">{formatBirthDate(bday)}</p>
                   </div>
                 </div>
 
