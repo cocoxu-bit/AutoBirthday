@@ -6,7 +6,19 @@ import { toast } from 'sonner';
 import { UserProfile } from '@/types';
 import { updateUserSettings, deleteAccount } from '@/app/(dashboard)/settings/actions';
 import { signOutUser } from '@/lib/firebase/auth';
-import { User, MessageCircle, Info, AlertTriangle, LogOut, Globe, Clock, Sparkles, Loader2, Save, Languages } from 'lucide-react';
+import { 
+  User, 
+  MessageCircle, 
+  AlertTriangle, 
+  LogOut, 
+  Globe, 
+  Clock, 
+  Sparkles, 
+  Loader2, 
+  Save, 
+  Languages, 
+  Settings 
+} from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/context';
@@ -40,9 +52,14 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const handleLanguageChange = (code: SupportedLocale) => {
+    setSelectedLocale(code);
+    setLocale(code); // Instant preview
+  };
+
   const handleSaveSettings = async () => {
     if (!displayName.trim()) {
-      toast.error('El nombre no puede estar vacío');
+      toast.error(t('settings.nameEmptyError'));
       return;
     }
     
@@ -61,25 +78,25 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
       toast.success(t('settings.savedSuccess'));
       router.refresh();
     } else {
-      toast.error(res.error || 'Error al actualizar los ajustes');
+      toast.error(res.error || t('common.error'));
     }
     setIsSaving(false);
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm('¿Estás TOTALMENTE SEGURO de que deseas eliminar tu cuenta? Esta acción es irreversible y borrará todos tus contactos, deseos y datos.')) {
+    if (!confirm(t('settings.deleteConfirm'))) {
       return;
     }
     
     setIsDeleting(true);
     const res = await deleteAccount();
     if (res.success) {
-      toast.success('Cuenta eliminada correctamente');
+      toast.success(t('common.success'));
       await signOutUser();
       await fetch('/api/auth/session', { method: 'DELETE' });
       router.push('/login');
     } else {
-      toast.error(res.error || 'Error al eliminar la cuenta');
+      toast.error(res.error || t('common.error'));
       setIsDeleting(false);
     }
   };
@@ -88,9 +105,10 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
     try {
       await signOutUser();
       await fetch('/api/auth/session', { method: 'DELETE' });
+      toast.success(t('header.logoutSuccess'));
       router.push('/login');
     } catch (error) {
-      toast.error('Error al cerrar sesión');
+      toast.error(t('header.logoutError'));
     }
   };
 
@@ -98,6 +116,17 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
 
   return (
     <div className="space-y-6 max-w-3xl pb-12">
+      {/* 0. Cabecera Dinámica de Ajustes */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-slate-900 text-white rounded-lg shadow-sm">
+          <Settings className="w-5 h-5" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{t('settings.title')}</h1>
+          <p className="text-slate-500 text-sm">{t('settings.subtitle')}</p>
+        </div>
+      </div>
+
       {/* 1. Perfil y Cuenta */}
       <div className="bg-white/70 backdrop-blur rounded-3xl border border-white/40 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-100/80 flex items-center justify-between">
@@ -106,15 +135,15 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Perfil y Cuenta</h2>
-              <p className="text-xs text-slate-500">Información básica de tu usuario</p>
+              <h2 className="text-base font-bold text-slate-900">{t('settings.account')}</h2>
+              <p className="text-xs text-slate-500">{t('settings.accountSubtitle')}</p>
             </div>
           </div>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Tu Nombre</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">{t('settings.nameLabel')}</label>
               <input 
                 type="text" 
                 value={displayName}
@@ -123,7 +152,7 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Correo Electrónico</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">{t('settings.emailLabel')}</label>
               <input 
                 type="text" 
                 value={userProfile.email} 
@@ -156,7 +185,7 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
                 <button
                   key={loc.code}
                   type="button"
-                  onClick={() => setSelectedLocale(loc.code)}
+                  onClick={() => handleLanguageChange(loc.code)}
                   className={cn(
                     "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all text-center group cursor-pointer",
                     isSelected
@@ -191,13 +220,13 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
             <Globe className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Zona Horaria y Automatización</h2>
-            <p className="text-xs text-slate-500">Configuración global para los escaneos y envíos</p>
+            <h2 className="text-base font-bold text-slate-900">{t('settings.automationTitle')}</h2>
+            <p className="text-xs text-slate-500">{t('settings.automationSubtitle')}</p>
           </div>
         </div>
         <div className="p-6 space-y-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Zona Horaria</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">{t('settings.timezone')}</label>
             <select 
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
@@ -207,14 +236,14 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
                 <option key={tz.value} value={tz.value}>{tz.label}</option>
               ))}
             </select>
-            <p className="text-[11px] text-slate-400 mt-1">El escaneo de cumpleaños se ejecutará a las 08:00 AM en tu zona horaria.</p>
+            <p className="text-[11px] text-slate-400 mt-1">{t('settings.scanNotice')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
-                Ventana de Envío por Defecto
+                {t('settings.windowLabel')}
               </label>
               <div className="flex items-center gap-2">
                 <input 
@@ -236,17 +265,17 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-                Tono de IA por Defecto
+                {t('settings.aiToneLabel')}
               </label>
               <select 
                 value={aiTone}
                 onChange={(e) => setAiTone(e.target.value)}
                 className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-violet-500 outline-none"
               >
-                <option value="casual">Casual (cercano y natural)</option>
-                <option value="divertido">Divertido (gracioso y con humor)</option>
-                <option value="emotivo">Emotivo (cariñoso y sentimental)</option>
-                <option value="formal">Formal (respetuoso y profesional)</option>
+                <option value="casual">{t('settings.toneCasual')}</option>
+                <option value="divertido">{t('settings.toneFunny')}</option>
+                <option value="emotivo">{t('settings.toneEmotional')}</option>
+                <option value="formal">{t('settings.toneFormal')}</option>
               </select>
             </div>
           </div>
@@ -255,17 +284,17 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
             <button 
               onClick={handleSaveSettings}
               disabled={isSaving}
-              className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-violet-500/25 flex items-center gap-2 disabled:opacity-50"
+              className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-violet-500/25 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Guardando...
+                  {t('common.saving')}
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  Guardar Ajustes
+                  {t('settings.saveButton')}
                 </>
               )}
             </button>
@@ -273,15 +302,15 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
         </div>
       </div>
 
-      {/* 3. Conexión de WhatsApp */}
+      {/* 4. Conexión de WhatsApp */}
       <div className="bg-white/70 backdrop-blur rounded-3xl border border-white/40 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-100/80 flex items-center gap-3">
           <div className="p-2.5 bg-emerald-100 text-emerald-700 rounded-2xl">
             <MessageCircle className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Conexión de WhatsApp</h2>
-            <p className="text-xs text-slate-500">Estado de tu bot y vinculación QR</p>
+            <h2 className="text-base font-bold text-slate-900">{t('settings.whatsappCardTitle')}</h2>
+            <p className="text-xs text-slate-500">{t('settings.whatsappCardSubtitle')}</p>
           </div>
         </div>
         <div className="p-6">
@@ -293,12 +322,12 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
                   wsStatus === 'connecting' ? 'bg-amber-500' : 'bg-red-500'
                 }`} />
                 <span className="font-bold text-slate-900 text-sm">
-                  {wsStatus === 'connected' ? 'Conectado y Operativo ✅' : 
-                   wsStatus === 'connecting' ? 'Conectando...' : 'Desconectado ⚠️'}
+                  {wsStatus === 'connected' ? t('settings.whatsappConnected') : 
+                   wsStatus === 'connecting' ? t('settings.whatsappConnecting') : t('settings.whatsappDisconnected')}
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                {userProfile.whatsappInstance?.instanceName || 'Sin instancia'}
+                {userProfile.whatsappInstance?.instanceName || t('settings.noInstance')}
                 {userProfile.whatsappInstance?.phoneNumber && ` • +${userProfile.whatsappInstance.phoneNumber}`}
               </p>
             </div>
@@ -306,48 +335,48 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
               href="/whatsapp" 
               className="px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors text-xs font-bold"
             >
-              Gestionar WhatsApp →
+              {t('settings.whatsappManage')}
             </Link>
           </div>
         </div>
       </div>
 
-      {/* 4. Información & Cerrar Sesión */}
+      {/* 5. Información & Cerrar Sesión */}
       <div className="flex items-center justify-between pt-2">
         <button 
           onClick={handleSignOut}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-semibold text-xs shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-semibold text-xs shadow-sm cursor-pointer"
         >
           <LogOut className="w-4 h-4 text-slate-500" />
-          Cerrar Sesión
+          {t('settings.logoutButton')}
         </button>
 
         <span className="text-xs text-slate-400 font-medium">
-          AutoBirthday v1.2.0 • Hecho con ❤️
+          {t('settings.versionFooter')}
         </span>
       </div>
 
-      {/* 5. Zona Peligrosa */}
+      {/* 6. Zona Peligrosa */}
       <div className="bg-red-50/60 backdrop-blur rounded-3xl border border-red-200 shadow-sm overflow-hidden mt-8">
         <div className="p-5 border-b border-red-100 flex items-center gap-3">
           <div className="p-2.5 bg-red-100 text-red-700 rounded-2xl">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-red-900">Zona Peligrosa</h2>
-            <p className="text-xs text-red-700">Eliminación permanente de cuenta</p>
+            <h2 className="text-base font-bold text-red-900">{t('settings.dangerZone')}</h2>
+            <p className="text-xs text-red-700">{t('settings.dangerZoneSubtitle')}</p>
           </div>
         </div>
         <div className="p-6">
           <p className="text-xs text-red-700 mb-4">
-            Eliminar tu cuenta borrará todos tus datos permanentemente (contactos, plantillas, felicitaciones y vinculación). Esta acción no se puede deshacer.
+            {t('settings.dangerZoneWarning')}
           </p>
           <button 
             onClick={handleDeleteAccount}
             disabled={isDeleting}
-            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors text-xs font-bold shadow-md shadow-red-500/20 disabled:opacity-50"
+            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors text-xs font-bold shadow-md shadow-red-500/20 disabled:opacity-50 cursor-pointer"
           >
-            {isDeleting ? 'Eliminando cuenta...' : 'Eliminar mi cuenta'}
+            {isDeleting ? t('settings.deletingAccount') : t('settings.deleteAccount')}
           </button>
         </div>
       </div>

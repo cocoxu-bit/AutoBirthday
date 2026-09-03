@@ -21,6 +21,13 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children, initialLocale = DEFAULT_LOCALE }: LanguageProviderProps) {
   const [locale, setLocaleState] = useState<SupportedLocale>(initialLocale);
 
+  // Sync if initialLocale changes from server
+  useEffect(() => {
+    if (initialLocale && SUPPORTED_LOCALES[initialLocale]) {
+      setLocaleState(initialLocale);
+    }
+  }, [initialLocale]);
+
   // Read cookie on mount if not provided from server
   useEffect(() => {
     const match = document.cookie.match(/(?:^|; )NEXT_LOCALE=([^;]*)/);

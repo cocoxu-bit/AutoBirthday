@@ -9,9 +9,11 @@ import { signOutUser } from "@/lib/firebase/auth";
 import { toast } from "sonner";
 import { WhatsAppInstanceStatus } from "@/types";
 import { VideoGuideModal } from "@/components/onboarding/video-guide-modal";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function Header() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus>('disconnected');
   const [guideOpen, setGuideOpen] = useState(false);
 
@@ -36,10 +38,10 @@ export function Header() {
     try {
       await signOutUser();
       await fetch('/api/auth/session', { method: 'DELETE' });
-      toast.success('Sesión cerrada correctamente');
+      toast.success(t('header.logoutSuccess'));
       router.push('/login');
     } catch (err: any) {
-      toast.error('Error al cerrar sesión');
+      toast.error(t('header.logoutError'));
     }
   };
 
@@ -55,11 +57,11 @@ export function Header() {
         <button
           onClick={() => setGuideOpen(true)}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-all shadow-sm"
-          title="Ver guías y vídeos explicativos"
+          title={t('header.guidesButton')}
         >
           <Play className="w-3 h-3 fill-violet-600 text-violet-600 ml-0.5" />
-          <span className="hidden sm:inline">Guías en Vídeo</span>
-          <span className="sm:hidden">Guías</span>
+          <span className="hidden sm:inline">{t('header.guidesButton')}</span>
+          <span className="sm:hidden">{t('header.guidesButton')}</span>
         </button>
 
         {/* Real-time WhatsApp Status Badge */}

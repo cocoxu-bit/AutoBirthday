@@ -35,19 +35,5 @@ export default async function SettingsPage() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-slate-900 text-white rounded-lg shadow-sm">
-          <Settings className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Ajustes</h1>
-          <p className="text-slate-500 text-sm">Gestiona tu cuenta y preferencias</p>
-        </div>
-      </div>
-
-      <SettingsClient userProfile={userProfile} />
-    </div>
-  );
+  return <SettingsClient userProfile={userProfile} />;
 }

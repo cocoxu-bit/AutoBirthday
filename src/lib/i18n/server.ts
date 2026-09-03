@@ -17,6 +17,22 @@ export async function getServerLocale(): Promise<SupportedLocale> {
       return cookieLocale;
     }
 
+    // If cookie is absent, check if user has a stored locale in their profile
+    const sessionCookie = cookieStore.get('__session')?.value;
+    if (sessionCookie) {
+      try {
+        const { adminAuth, adminDb } = await import('@/lib/firebase/admin');
+        const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
+        if (decoded?.uid) {
+          const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+          const userLocale = userDoc.data()?.locale as SupportedLocale;
+          if (userLocale && SUPPORTED_LOCALES[userLocale]) {
+            return userLocale;
+          }
+        }
+      } catch {}
+    }
+
     const headerStore = await headers();
     const acceptLanguage = headerStore.get('accept-language');
     return matchLocaleFromHeader(acceptLanguage);
