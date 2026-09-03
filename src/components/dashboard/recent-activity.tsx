@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import { CheckCircle2, XCircle, Clock, Send, ArrowRight } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
 
 export interface ActivityWishItem {
   id: string;
@@ -16,18 +15,20 @@ interface RecentActivityProps {
 }
 
 export function RecentActivity({ activity }: RecentActivityProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between">
       <div className="p-5 border-b border-slate-100/80 flex items-center justify-between gap-2">
         <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 min-w-0">
           <Send className="w-4 h-4 text-violet-600 shrink-0" />
-          <span className="truncate">Felicitaciones Recientes</span>
+          <span className="truncate">{t('dashboard.recentActivityTitle')}</span>
         </h3>
         <Link 
           href="/wishes" 
           className="text-xs font-bold text-violet-600 hover:text-violet-700 inline-flex items-center gap-1 shrink-0 whitespace-nowrap"
         >
-          <span>Ver cola</span>
+          <span>{t('wishes.title')}</span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </Link>
       </div>
@@ -58,8 +59,8 @@ export function RecentActivity({ activity }: RecentActivityProps) {
             <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto">
               <Clock className="w-6 h-6" />
             </div>
-            <p className="text-sm font-bold text-slate-800">Sin actividad reciente</p>
-            <p className="text-xs text-slate-500">Las felicitaciones generadas y enviadas aparecerán aquí.</p>
+            <p className="text-sm font-bold text-slate-800">{t('dashboard.noRecentActivity')}</p>
+            <p className="text-xs text-slate-500">{t('dashboard.recentActivitySubtitle')}</p>
           </div>
         )}
       </div>

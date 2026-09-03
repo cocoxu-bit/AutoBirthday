@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { Smartphone, CheckCircle2, AlertTriangle, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 import { WhatsAppInstanceStatus } from '@/types';
 
+import { useTranslation } from '@/lib/i18n/context';
+
 interface ConnectionStatusCardProps {
   initialStatus?: WhatsAppInstanceStatus;
   initialPhone?: string | null;
 }
 
 export function ConnectionStatusCard({ initialStatus = 'disconnected', initialPhone = null }: ConnectionStatusCardProps) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<WhatsAppInstanceStatus>(initialStatus);
   const [phone, setPhone] = useState<string | null>(initialPhone);
   const [loading, setLoading] = useState(false);
@@ -47,9 +50,9 @@ export function ConnectionStatusCard({ initialStatus = 'disconnected', initialPh
             <Loader2 className="w-5 h-5 animate-spin" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-900">Conectando WhatsApp...</h4>
+            <h4 className="text-sm font-bold text-slate-900">{t('settings.whatsappConnecting')}</h4>
             <p className="text-xs text-slate-500 mt-0.5">
-              Sincronizando sesión y credenciales.
+              WhatsApp
             </p>
           </div>
         </div>
@@ -57,7 +60,7 @@ export function ConnectionStatusCard({ initialStatus = 'disconnected', initialPh
           href="/whatsapp"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-100 px-3.5 py-1.5 rounded-xl transition-colors shrink-0"
         >
-          <span>Ver estado</span>
+          <span>{t('dashboard.manageButton')}</span>
         </Link>
       </div>
     );
@@ -72,13 +75,10 @@ export function ConnectionStatusCard({ initialStatus = 'disconnected', initialPh
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h4 className="text-sm sm:text-base font-bold text-slate-900">WhatsApp Desconectado</h4>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-red-700 animate-bounce">
-              Requiere Acción
-            </span>
+            <h4 className="text-sm sm:text-base font-bold text-slate-900">{t('dashboard.whatsappDisconnectedTitle')}</h4>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl">
-            Tu sesión no está activa. Para que AutoBirthday pueda enviar o proponerte felicitaciones, vincula tu WhatsApp en 10 segundos.
+            {t('dashboard.whatsappDisconnectedDesc')}
           </p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export function ConnectionStatusCard({ initialStatus = 'disconnected', initialPh
         className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-red-500/25 transition-all hover:scale-105 shrink-0"
       >
         <Smartphone className="w-4 h-4" />
-        <span>Vincular WhatsApp Ahora</span>
+        <span>{t('dashboard.connectButton')}</span>
       </Link>
     </div>
   );

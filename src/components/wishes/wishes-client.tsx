@@ -7,6 +7,7 @@ import { es } from 'date-fns/locale';
 import { Check, Edit2, X, RotateCcw, Clock, Send, AlertCircle, Save, CheckCheck } from 'lucide-react';
 import { approveWish, editWishMessage, cancelWish, retryWish } from '@/app/(dashboard)/wishes/actions';
 import { ScheduledWish, Contact } from '@/types';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface WishesClientProps {
   wishes: ScheduledWish[];
@@ -14,6 +15,7 @@ interface WishesClientProps {
 }
 
 export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'pending' | 'queued' | 'sent' | 'failed'>('pending');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -74,10 +76,10 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
   };
 
   const tabs = [
-    { id: 'pending', label: 'Pendientes', count: pendingWishes.length },
-    { id: 'queued', label: 'Programados', count: queuedWishes.length },
-    { id: 'sent', label: 'Enviados', count: sentWishes.length },
-    { id: 'failed', label: 'Fallidos', count: failedWishes.length },
+    { id: 'pending', label: t('wishes.tabWaiting'), count: pendingWishes.length },
+    { id: 'queued', label: t('wishes.tabQueued'), count: queuedWishes.length },
+    { id: 'sent', label: t('wishes.tabSent'), count: sentWishes.length },
+    { id: 'failed', label: t('wishes.tabFailed'), count: failedWishes.length },
   ];
 
   return (
@@ -119,8 +121,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
                 <Check className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">No hay felicitaciones pendientes</h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Todo está al día y bajo control.</p>
+              <h3 className="text-base font-bold text-slate-900">{t('wishes.emptyWishes')}</h3>
             </div>
           ) : (
             pendingWishes.map(wish => {
@@ -160,13 +161,13 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                           onClick={() => setEditingId(null)}
                           className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all text-center"
                         >
-                          Cancelar Edición
+                          {t('common.cancel')}
                         </button>
                         <button 
                           onClick={() => handleSaveEdit(wish.id)}
                           className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 transition-all"
                         >
-                          <Save className="w-4 h-4" /> Guardar
+                          <Save className="w-4 h-4" /> {t('common.save')}
                         </button>
                       </>
                     ) : (
@@ -175,19 +176,19 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                           onClick={() => handleCancel(wish.id)}
                           className="w-full sm:w-auto px-4 py-2.5 border border-red-200 bg-red-50/50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100/80 flex items-center justify-center gap-1.5 transition-all"
                         >
-                          <X className="w-4 h-4" /> Cancelar
+                          <X className="w-4 h-4" /> {t('wishes.rejectButton')}
                         </button>
                         <button 
                           onClick={() => startEditing(wish)}
                           className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs"
                         >
-                          <Edit2 className="w-4 h-4" /> Editar
+                          <Edit2 className="w-4 h-4" /> {t('common.edit')}
                         </button>
                         <button 
                           onClick={() => handleApprove(wish.id)}
                           className="w-full sm:w-auto px-4 py-2.5 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 flex items-center justify-center gap-1.5 shadow-md shadow-violet-500/20 transition-all"
                         >
-                          <Check className="w-4 h-4" /> Aprobar y Enviar
+                          <Check className="w-4 h-4" /> {t('wishes.approveButton')}
                         </button>
                       </>
                     )}
@@ -202,8 +203,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
           queuedWishes.length === 0 ? (
             <div className="text-center py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <Clock className="w-12 h-12 text-blue-500 mx-auto mb-4 opacity-50" />
-              <h3 className="text-base font-bold text-slate-900">No hay envíos programados</h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Los cumpleaños próximos aparecerán aquí antes de su envío.</p>
+              <h3 className="text-base font-bold text-slate-900">{t('wishes.emptyWishes')}</h3>
             </div>
           ) : (
             queuedWishes.map(wish => {
@@ -212,14 +212,14 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                 <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-3">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h4 className="font-black text-slate-900 text-base sm:text-lg">Para: {name}</h4>
+                      <h4 className="font-black text-slate-900 text-base sm:text-lg">{name}</h4>
                       {phone && <p className="text-xs text-slate-500 font-medium">{phone}</p>}
                     </div>
                     <button 
                       onClick={() => handleCancel(wish.id)}
                       className="px-3.5 py-1.5 border border-red-200 bg-red-50/60 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-all shrink-0"
                     >
-                      Cancelar
+                      {t('common.cancel')}
                     </button>
                   </div>
 
@@ -228,7 +228,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
                       <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap flex-1">{wish.generatedMessage}</p>
                       <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-800/80 shrink-0 self-end">
                         <Clock className="w-3 h-3 text-emerald-700" />
-                        <span>Programado: {formatWishTime(wish.scheduledFor)}</span>
+                        <span>{formatWishTime(wish.scheduledFor)}</span>
                       </div>
                     </div>
                   </div>
@@ -242,8 +242,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
           sentWishes.length === 0 ? (
             <div className="text-center py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <Send className="w-12 h-12 text-violet-500 mx-auto mb-4 opacity-50" />
-              <h3 className="text-base font-bold text-slate-900">Aún no has enviado ninguna felicitación</h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Los mensajes automáticos enviados con éxito quedarán registrados aquí.</p>
+              <h3 className="text-base font-bold text-slate-900">{t('wishes.emptyWishes')}</h3>
             </div>
           ) : (
             sentWishes.map(wish => {
@@ -251,7 +250,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
               return (
                 <div key={wish.id} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-3">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-black text-slate-900 text-base sm:text-lg">Enviado a {name}</h4>
+                    <h4 className="font-black text-slate-900 text-base sm:text-lg">{name}</h4>
                   </div>
 
                   <div className="bg-[#dcf8c6] border border-emerald-200/60 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 shadow-2xs">
@@ -273,8 +272,7 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
           failedWishes.length === 0 ? (
             <div className="text-center py-16 bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-xs">
               <span className="text-4xl mb-4 block">🎉</span>
-              <h3 className="text-base font-bold text-slate-900">¡Genial! No hay errores</h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Todos los envíos se han realizado correctamente.</p>
+              <h3 className="text-base font-bold text-slate-900">{t('wishes.emptyWishes')}</h3>
             </div>
           ) : (
             failedWishes.map(wish => {
@@ -282,12 +280,12 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
               return (
                 <div key={wish.id} className="bg-red-50/60 backdrop-blur-md rounded-3xl border border-red-200/80 shadow-xs p-4 sm:p-5 space-y-3">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-black text-slate-900 text-base sm:text-lg">Error al enviar a {name}</h4>
+                    <h4 className="font-black text-slate-900 text-base sm:text-lg">{name}</h4>
                     <button 
                       onClick={() => handleRetry(wish.id)}
                       className="px-3.5 py-1.5 bg-red-600 text-white hover:bg-red-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
                     >
-                      <RotateCcw className="w-3 h-3" /> Reintentar
+                      <RotateCcw className="w-3 h-3" /> {t('wishes.retryButton')}
                     </button>
                   </div>
                   <div className="text-xs text-red-700 flex items-start gap-1.5 bg-white/70 p-2.5 rounded-xl border border-red-200">

@@ -15,6 +15,7 @@ import {
 import { getWhatsAppProfilePicAction } from '@/app/(dashboard)/contacts/sync-actions';
 import { InlineTemplateCreator } from '@/components/templates/inline-template-creator';
 import { Template, WhatsAppGroup, WhatsAppChatContact, AiTone } from '@/types';
+import { useTranslation } from '@/lib/i18n/context';
 import { 
   MessageSquare, 
   Users, 
@@ -68,8 +69,11 @@ interface ContactFormProps {
   subtitle?: string;
 }
 
-export function ContactForm({ initialData, templates, title = 'Añadir Cumpleaños', subtitle = 'Añade los datos de la persona a felicitar.' }: ContactFormProps) {
+export function ContactForm({ initialData, templates, title, subtitle }: ContactFormProps) {
   const router = useRouter();
+  const { t, dict } = useTranslation();
+  const formTitle = title || (initialData?.id ? t('contactForm.titleEdit') : t('contactForm.titleNew'));
+  const formSubtitle = subtitle || (initialData?.id ? t('contactForm.subtitleEdit') : t('contactForm.subtitleNew'));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitWarningModal, setShowExitWarningModal] = useState(false);
   const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
@@ -309,16 +313,16 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
       {/* TOP HEADER WITH INTERACTIVE BACK BUTTON */}
       <div className="flex items-center gap-4">
         <button 
-          type="button"
+          type="button" 
           onClick={handleAttemptExit}
           className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-colors shrink-0"
-          title="Volver a contactos"
+          title={t('common.back')}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">{subtitle}</p>
+          <h1 className="text-2xl font-bold text-slate-900">{formTitle}</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">{formSubtitle}</p>
         </div>
       </div>
 
@@ -350,11 +354,11 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             </div>
 
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-3">
-              {contactName || 'Nuevo Cumpleañero'}
+              {contactName || t('contactForm.namePlaceholder')}
             </h3>
 
             <p className="text-xs text-slate-500 mt-1">
-              {form.watch('phone') ? `+${(form.watch('phone') || '').replace('+', '')}` : 'Rellena los datos o búscalo abajo'}
+              {form.watch('phone') ? `+${(form.watch('phone') || '').replace('+', '')}` : t('contactForm.phoneHint')}
             </p>
           </div>
 
@@ -362,14 +366,14 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
           <div ref={contactDropdownRef} className="space-y-1.5 text-left relative">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-              Rellena rápido buscando entre tus contactos de WhatsApp
+              {t('contacts.syncWhatsApp')}
             </label>
 
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input 
-                type="text"
-                placeholder="Escribe un nombre o teléfono (ej. Alicia, Papá)..."
+                type="text" 
+                placeholder={t('contacts.searchPlaceholder')}
                 value={contactSearch}
                 onChange={(e) => {
                   setContactSearch(e.target.value);
@@ -405,13 +409,13 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                         </div>
                       </div>
                       <span className="text-[10px] font-bold text-violet-600 bg-violet-100 px-2.5 py-1 rounded-full group-hover:bg-violet-600 group-hover:text-white transition-colors shrink-0 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Elegir
+                        <Check className="w-3 h-3" /> OK
                       </span>
                     </button>
                   ))
                 ) : contactSearch.trim() ? (
                   <div className="p-3.5 text-center text-xs text-slate-500 space-y-2">
-                    <p>¿No aparece en tus contactos guardados?</p>
+                    <p>{t('contacts.emptyTitle')}</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -422,11 +426,11 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                           form.setValue('name', contactSearch.trim());
                         }
                         setIsContactDropdownOpen(false);
-                        toast.success(`Datos asignados: "${contactSearch.trim()}"`);
+                        toast.success(`OK: "${contactSearch.trim()}"`);
                       }}
                       className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold text-xs transition-colors"
                     >
-                      <span>➕ Usar &ldquo;{contactSearch.trim()}&rdquo; directamente</span>
+                      <span>➕ &ldquo;{contactSearch.trim()}&rdquo;</span>
                     </button>
                   </div>
                 ) : null}
@@ -438,11 +442,11 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
           <div className="space-y-4 text-left">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Nombre Completo</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('contactForm.nameLabel')}</label>
                 <input 
                   {...form.register('name')} 
                   className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium text-slate-900" 
-                  placeholder="Ej. Alicia Pérez"
+                  placeholder={t('contactForm.namePlaceholder')}
                 />
                 {form.formState.errors.name && (
                   <p className="text-red-500 text-xs">{form.formState.errors.name.message}</p>
@@ -450,11 +454,11 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Teléfono WhatsApp</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('contactForm.phoneLabel')}</label>
                 <input 
                   {...form.register('phone')} 
                   className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-mono text-slate-900" 
-                  placeholder="Ej. +34 600123456"
+                  placeholder={t('contactForm.phonePlaceholder')}
                 />
                 {form.formState.errors.phone && (
                   <p className="text-red-500 text-xs">{form.formState.errors.phone.message}</p>
@@ -465,7 +469,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             {/* BIRTHDAY PICKER */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 items-end">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">Día</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">{t('contactForm.dayLabel')}</label>
                 <input 
                   type="number" 
                   {...form.register('birthDay', { valueAsNumber: true })} 
@@ -475,25 +479,25 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">Mes</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">{t('contactForm.monthLabel')}</label>
                 <select 
                   {...form.register('birthMonth', { valueAsNumber: true })} 
                   className="w-full px-2 sm:px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium"
                 >
-                  {MONTH_NAMES.map((m, i) => (
+                  {(dict.contactForm.months || []).map((m, i) => (
                     <option key={i} value={i + 1}>
-                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                      {m}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">Año</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 truncate block">{t('contactForm.yearLabel')}</label>
                 <input 
                   type="number" 
                   {...form.register('birthYear', { valueAsNumber: true })} 
                   className="w-full px-2.5 sm:px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 focus:outline-none font-medium text-center sm:text-left" 
-                  placeholder="Opc."
+                  placeholder={t('contactForm.yearHint')}
                 />
               </div>
             </div>
@@ -505,7 +509,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
           <div className="space-y-2.5 text-left">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
-              ¿Dónde quieres enviar la felicitación?
+              {t('contactForm.targetLabel')}
             </label>
 
             <div className="grid grid-cols-2 gap-2">
@@ -520,8 +524,8 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
               >
                 <User className="w-4 h-4 text-violet-600 shrink-0" />
                 <div>
-                  <p className="text-xs font-black">Chat Privado</p>
-                  <p className="text-[10px] text-slate-500 font-normal">Directo a su WhatsApp</p>
+                  <p className="text-xs font-black">{t('contactForm.targetIndividual')}</p>
+                  <p className="text-[10px] text-slate-500 font-normal">{t('contactForm.targetIndividualDesc')}</p>
                 </div>
               </button>
 
@@ -545,8 +549,8 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
               >
                 <Users className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div>
-                  <p className="text-xs font-black">Grupo de WhatsApp</p>
-                  <p className="text-[10px] text-slate-500 font-normal">Amigos, familia, etc.</p>
+                  <p className="text-xs font-black">{t('contactForm.targetGroup')}</p>
+                  <p className="text-[10px] text-slate-500 font-normal">{t('contactForm.targetGroupDesc')}</p>
                 </div>
               </button>
             </div>
@@ -639,7 +643,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
           <div className="space-y-4 text-left">
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                Configuración del Mensaje:
+                {t('contactForm.modeLabel')}
               </label>
               <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-100 rounded-2xl">
                 
@@ -654,7 +658,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                   }`}
                 >
                   <PenTool className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Mensaje Fijo</span>
+                  <span>{t('contactForm.modeFixed')}</span>
                 </button>
 
                 {/* TAB 2: PLANTILLA */}
@@ -668,7 +672,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Plantilla</span>
+                  <span>{t('contactForm.modeTemplate')}</span>
                 </button>
 
                 {/* TAB 3: IA MÁGICA */}
@@ -682,7 +686,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                  <span>IA Mágica</span>
+                  <span>{t('contactForm.modeAi')}</span>
                 </button>
               </div>
             </div>
@@ -691,7 +695,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             {mode === 'manual' && (
               <div className="space-y-2 bg-emerald-50/40 border border-emerald-100 p-4 rounded-2xl">
                 <label className="text-xs font-bold text-slate-700 uppercase block">
-                  Texto del mensaje:
+                  {t('contactForm.customMessageLabel')}
                 </label>
                 <textarea
                   rows={3}
@@ -708,7 +712,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
               <div className="space-y-2.5 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700 uppercase">
-                    Elige una de tus plantillas:
+                    {t('contactForm.templateSelectLabel')}
                   </label>
                   <button
                     type="button"
@@ -716,11 +720,11 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                     className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 shadow-2xs transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Nueva Plantilla</span>
+                    <span>{t('templates.newTemplate')}</span>
                   </button>
                 </div>
                 {currentTemplates.length === 0 ? (
-                  <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Crea una con el botón superior.</p>
+                  <p className="text-xs text-slate-500">{t('templates.noTemplates')}</p>
                 ) : (
                   <select
                     value={form.watch('templateId') || currentTemplates[0]?.id || ''}
@@ -742,11 +746,12 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
               <div className="space-y-3 bg-violet-50/40 border border-violet-100 p-4 rounded-2xl">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 uppercase">
-                    Tono de la felicitación IA:
+                    {t('contactForm.aiToneLabel')}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {TONES.map(tone => {
                       const isSelected = form.watch('aiTone') === tone.id;
+                      const label = tone.id === 'casual' ? t('ai.casual') : tone.id === 'divertido' ? t('ai.funny') : tone.id === 'emotivo' ? t('ai.emotional') : t('ai.formal');
                       return (
                         <button
                           key={tone.id}
@@ -759,7 +764,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                           }`}
                         >
                           <span>{tone.icon}</span>
-                          <span>{tone.label}</span>
+                          <span>{label}</span>
                         </button>
                       );
                     })}
@@ -769,7 +774,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                 <div className="space-y-1">
                   <input
                     type="text"
-                    placeholder="💡 Notas opcionales para la IA (ej: Le gusta el tenis, cumple 30...)"
+                    placeholder={`💡 ${t('contactForm.aiNotesPlaceholder')}`}
                     {...form.register('aiNotes')}
                     className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
@@ -782,10 +787,10 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
               <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                 <span className="flex items-center gap-1.5 text-slate-700">
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                  Vista previa en WhatsApp
+                  {t('whatsapp.birthdayCard')}
                 </span>
                 <span className="text-[11px] font-normal text-slate-400">
-                  {targetType === 'group' ? `en el grupo "${currentGroupName}"` : `así lo recibirá ${contactFirstName}`}
+                  {targetType === 'group' ? `👥 ${currentGroupName}` : `WhatsApp: ${contactFirstName}`}
                 </span>
               </div>
 
@@ -821,7 +826,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             {/* 5. MOMENTO DE ENVÍO */}
             <div className="pt-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-                Momento de Envío:
+                {t('contactForm.timeWindowLabel')}:
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -834,9 +839,9 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                   }`}
                 >
                   <p className="font-bold text-xs flex items-center gap-1">
-                    🛡️ Pedir Aprobación
+                    🛡️ {t('wishes.tabWaiting')}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Te avisa por WhatsApp el día del cumpleaños para dar el OK.</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{t('contactForm.autoSendDesc')}</p>
                 </button>
 
                 <button
@@ -849,9 +854,9 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                   }`}
                 >
                   <p className="font-bold text-xs flex items-center gap-1">
-                    🚀 Envío Automático
+                    🚀 {t('contactForm.autoSendLabel')}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Se envía solo en la mañana de su cumpleaños.</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{t('dashboard.statusQueued')}</p>
                 </button>
               </div>
             </div>
@@ -868,7 +873,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Cancelar</span>
+            <span>{t('common.cancel')}</span>
           </button>
 
           <button 
@@ -879,10 +884,10 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Guardando...</span>
+                <span>{t('contactForm.savingContact')}</span>
               </>
             ) : (
-              <span>Guardar Cumpleaños 🎉</span>
+              <span>{t('contactForm.saveContact')} 🎉</span>
             )}
           </button>
         </div>
@@ -899,10 +904,10 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
             
             <div className="space-y-1.5">
               <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                ¿Salir sin guardar?
+                {t('common.confirm')}
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Tienes datos sin guardar en este cumpleaños. Si sales ahora se perderán los cambios introducidos.
+                {t('settings.dangerZoneWarning')}
               </p>
             </div>
 
@@ -912,7 +917,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                 onClick={() => setShowExitWarningModal(false)}
                 className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition-all"
               >
-                Seguir editando
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -922,7 +927,7 @@ export function ContactForm({ initialData, templates, title = 'Añadir Cumpleañ
                 }}
                 className="py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-2xl shadow-md shadow-rose-500/20 transition-all active:scale-95"
               >
-                Descartar y salir
+                {t('common.delete')}
               </button>
             </div>
           </div>

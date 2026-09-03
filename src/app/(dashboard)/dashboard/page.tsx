@@ -12,6 +12,7 @@ import { ConnectionStatusCard } from "@/components/dashboard/connection-status-c
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
 import { Smartphone, UserPlus, Users, FileText, Sparkles, Cake, Gift, ArrowRight } from "lucide-react";
+import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = 'force-dynamic';
 
@@ -155,7 +156,7 @@ async function getDashboardData() {
 
 export default async function DashboardPage() {
   const data = await getDashboardData();
-  const currentDate = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
+  const { t } = await getServerTranslations();
 
   return (
     <div className="space-y-6 pb-20 md:pb-6 max-w-7xl mx-auto">
@@ -167,15 +168,15 @@ export default async function DashboardPage() {
               ⚠️
             </div>
             <div>
-              <h4 className="text-sm font-black text-slate-900">WhatsApp Desconectado</h4>
-              <p className="text-xs text-slate-600 font-medium">Conecta tu cuenta de WhatsApp para que las felicitaciones automáticas puedan enviarse.</p>
+              <h4 className="text-sm font-black text-slate-900">{t('dashboard.whatsappDisconnectedTitle')}</h4>
+              <p className="text-xs text-slate-600 font-medium">{t('dashboard.whatsappDisconnectedDesc')}</p>
             </div>
           </div>
           <Link
             href="/whatsapp"
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-600/30 shrink-0 self-end sm:self-center whitespace-nowrap"
           >
-            <span>Conectar WhatsApp</span>
+            <span>{t('dashboard.connectButton')}</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
@@ -190,11 +191,10 @@ export default async function DashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-black text-slate-900">¡WhatsApp Vinculado con Éxito!</h4>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-full">Paso 1 Listo</span>
+                <h4 className="text-sm font-black text-slate-900">{t('whatsapp.connectedSuccess')}</h4>
               </div>
               <p className="text-xs text-slate-600 font-medium mt-0.5">
-                <strong>Siguiente Paso:</strong> Agrega tus cumpleaños desde WhatsApp para activar las felicitaciones automáticas.
+                {t('dashboard.subtitle')}
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
             href="/contacts?sync=whatsapp"
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/25 shrink-0 self-end sm:self-center whitespace-nowrap"
           >
-            <span>Agregar desde WhatsApp</span>
+            <span>{t('dashboard.syncButton')}</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
@@ -248,10 +248,10 @@ export default async function DashboardPage() {
             </div>
             <div>
               <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-violet-700 transition-colors">
-                Mis Cumpleaños
+                {t('contacts.title')}
               </h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                Gestiona y agrega fechas desde WhatsApp o Calendario.
+                {t('contacts.subtitle')}
               </p>
             </div>
           </div>
@@ -270,10 +270,10 @@ export default async function DashboardPage() {
             </div>
             <div>
               <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-rose-700 transition-colors">
-                Felicitaciones
+                {t('wishes.title')}
               </h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                Revisa los mensajes programados y enviados.
+                {t('wishes.subtitle')}
               </p>
             </div>
           </div>
@@ -292,10 +292,10 @@ export default async function DashboardPage() {
             </div>
             <div>
               <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-700 transition-colors">
-                Plantillas de Mensajes
+                {t('templates.title')}
               </h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed mt-0.5">
-                Personaliza estilos con IA o mensajes fijos.
+                {t('templates.subtitle')}
               </p>
             </div>
           </div>

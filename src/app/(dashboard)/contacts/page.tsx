@@ -21,13 +21,16 @@ async function getUserId() {
   }
 }
 
+import { getServerTranslations } from '@/lib/i18n/server';
+
 export default async function ContactsPage() {
   const userId = await getUserId();
   if (!userId) return null; // Handled by middleware
 
-  const [contacts, templates] = await Promise.all([
+  const [contacts, templates, { t }] = await Promise.all([
     getContacts(userId),
     getTemplates(userId),
+    getServerTranslations(),
   ]);
   const activeContactsCount = contacts.filter(c => c.isActive).length;
 
@@ -35,10 +38,10 @@ export default async function ContactsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mis Cumpleaños</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{t('contacts.title')}</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-medium">
             <Users className="w-4 h-4 text-violet-500" />
-            {contacts.length} {contacts.length === 1 ? 'cumpleaños registrado' : 'cumpleaños registrados'} ({activeContactsCount} activos)
+            {contacts.length} {t('contacts.title').toLowerCase()} ({activeContactsCount} {t('contacts.badgeActive').toLowerCase()})
           </p>
         </div>
       </div>

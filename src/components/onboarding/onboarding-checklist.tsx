@@ -18,6 +18,7 @@ import {
   PartyPopper
 } from 'lucide-react';
 import { VideoGuideModal } from './video-guide-modal';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface OnboardingChecklistProps {
   isWhatsAppConnected: boolean;
@@ -30,6 +31,7 @@ export function OnboardingChecklist({
   contactsCount,
   hasReceivedWelcome = false,
 }: OnboardingChecklistProps) {
+  const { t } = useTranslation();
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState<'whatsapp' | 'contacts' | 'assistant'>('whatsapp');
   const [isDismissed, setIsDismissed] = useState(false);
@@ -64,11 +66,6 @@ export function OnboardingChecklist({
     return null;
   }
 
-  const openGuideFor = (tab: 'whatsapp' | 'contacts' | 'assistant') => {
-    setDefaultTab(tab);
-    setVideoModalOpen(true);
-  };
-
   return (
     <>
       <div className="bg-gradient-to-r from-violet-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 border border-violet-500/30 shadow-xl relative overflow-hidden transition-all duration-300">
@@ -81,17 +78,17 @@ export function OnboardingChecklist({
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 text-[11px] font-bold border border-violet-500/30">
               <Sparkles className="w-3 h-3 text-violet-300" />
-              <span>Guía de Activación Rápida</span>
+              <span>{t('onboarding.activationGuide')}</span>
             </div>
 
             <div className="flex items-center gap-2 pt-0.5">
               <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
-                Primeros pasos para automatizar tus cumpleaños
+                {t('onboarding.activationGuideDesc')}
               </h3>
             </div>
             
             <p className="text-xs text-slate-300 max-w-xl font-medium">
-              Completa estos sencillos pasos para que tus felicitaciones se envíen solas.
+              {t('onboarding.activationSubtitle')}
             </p>
           </div>
 
@@ -102,10 +99,10 @@ export function OnboardingChecklist({
                 setVideoModalOpen(true);
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors border border-white/10"
-              title="Ver guías y vídeos explicativos"
+              title={t('onboarding.watchVideo')}
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span className="hidden md:inline">Ver Guía en Vídeo</span>
+              <span className="hidden md:inline">{t('onboarding.watchVideo')}</span>
             </button>
 
             <button
@@ -119,7 +116,7 @@ export function OnboardingChecklist({
             <button
               onClick={handleDismiss}
               className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
-              title="Ocultar guía"
+              title="Ocultar"
             >
               <X className="w-4 h-4" />
             </button>
@@ -129,9 +126,9 @@ export function OnboardingChecklist({
         {/* PROGRESS BAR */}
         <div className="mt-4 pt-3 border-t border-white/10 relative z-10 space-y-1.5">
           <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-slate-300">Progreso de tu cuenta:</span>
+            <span className="text-slate-300">{t('onboarding.accountProgress')}</span>
             <span className={allCompleted ? 'text-emerald-400' : 'text-violet-300'}>
-              {completedSteps} de 3 pasos ({percentage}%)
+              {t('onboarding.stepOf').replace('{completed}', completedSteps.toString()).replace('{total}', '3').replace('{percent}', percentage.toString())}
             </span>
           </div>
           <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden border border-white/10 p-0.5">
@@ -159,24 +156,18 @@ export function OnboardingChecklist({
                   ) : (
                     <Circle className="w-5 h-5 text-slate-400 shrink-0" />
                   )}
-                  <span className="text-xs font-bold text-white">1. Vincular WhatsApp</span>
+                  <span className="text-xs font-bold text-white">{t('onboarding.step1Title')}</span>
                 </div>
-                <button 
-                  onClick={() => openGuideFor('whatsapp')}
-                  className="text-[10px] text-violet-300 hover:text-white underline"
-                >
-                  Ver vídeo
-                </button>
               </div>
               <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                {step1 ? 'WhatsApp conectado correctamente.' : 'Conéctalo con QR o código de 8 dígitos.'}
+                {step1 ? t('onboarding.step1DescDone') : t('onboarding.step1DescPending')}
               </p>
               {!step1 && (
                 <Link
                   href="/whatsapp"
                   className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300"
                 >
-                  <span>Vincular ahora</span>
+                  <span>{t('onboarding.step1Cta')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               )}
@@ -195,24 +186,18 @@ export function OnboardingChecklist({
                   ) : (
                     <Circle className="w-5 h-5 text-slate-400 shrink-0" />
                   )}
-                  <span className="text-xs font-bold text-white">2. Añadir Cumpleañeros</span>
+                  <span className="text-xs font-bold text-white">{t('onboarding.step2Title')}</span>
                 </div>
-                <button 
-                  onClick={() => openGuideFor('contacts')}
-                  className="text-[10px] text-violet-300 hover:text-white underline"
-                >
-                  Ver vídeo
-                </button>
               </div>
               <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                {step2 ? `¡Genial! Tienes ${contactsCount} contacto(s) activo(s).` : 'Añade a tu madre, pareja o mejores amigos.'}
+                {step2 ? t('onboarding.step2DescDone').replace('{count}', contactsCount.toString()) : t('onboarding.step2DescPending')}
               </p>
               {!step2 && (
                 <Link
                   href="/contacts/new"
                   className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-violet-300 hover:text-white"
                 >
-                  <span>Añadir contacto</span>
+                  <span>{t('onboarding.step2Cta')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               )}
@@ -231,27 +216,12 @@ export function OnboardingChecklist({
                   ) : (
                     <Circle className="w-5 h-5 text-slate-400 shrink-0" />
                   )}
-                  <span className="text-xs font-bold text-white">3. Guardar Asistente</span>
+                  <span className="text-xs font-bold text-white">{t('onboarding.step3Title')}</span>
                 </div>
-                <button 
-                  onClick={() => openGuideFor('assistant')}
-                  className="text-[10px] text-violet-300 hover:text-white underline"
-                >
-                  Ver vídeo
-                </button>
               </div>
               <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                Guarda el <strong>+34 926 31 24 36</strong> para aprobar con un simple "SÍ".
+                {t('onboarding.step3Desc')}
               </p>
-              <a
-                href="https://wa.me/34926312436?text=Hola%20AutoBirthday"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300"
-              >
-                <span>Abrir chat del Asistente</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
             </div>
 
           </div>

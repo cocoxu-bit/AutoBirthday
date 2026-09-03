@@ -5,12 +5,15 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Sparkles, Smartphone, CheckCircle2, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
 import Link from 'next/link';
 
+import { useTranslation } from '@/lib/i18n/context';
+
 interface WelcomeModalProps {
   displayName?: string;
   isWhatsAppConnected?: boolean;
 }
 
 export function WelcomeModal({ displayName = 'Bienvenido', isWhatsAppConnected = false }: WelcomeModalProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -38,10 +41,10 @@ export function WelcomeModal({ displayName = 'Bienvenido', isWhatsAppConnected =
           </div>
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              ¡Bienvenido a AutoBirthday, {displayName}! 🎉
+              {t('onboarding.welcomeTitle').replace('{name}', displayName)}
             </h2>
             <p className="text-xs sm:text-sm text-violet-100 max-w-sm mx-auto font-medium">
-              Nunca más volverás a olvidar el cumpleaños de las personas que más te importan.
+              {t('onboarding.welcomeDesc')}
             </p>
           </div>
         </div>
@@ -55,9 +58,9 @@ export function WelcomeModal({ displayName = 'Bienvenido', isWhatsAppConnected =
                 1
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900">Vincula tu WhatsApp en 10 segundos</h4>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('onboarding.welcomeStep1Title')}</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Las felicitaciones se enviarán desde tu propio número y chat personal de forma 100% natural.
+                  {t('onboarding.welcomeStep1Desc')}
                 </p>
               </div>
             </div>
@@ -67,9 +70,9 @@ export function WelcomeModal({ displayName = 'Bienvenido', isWhatsAppConnected =
                 2
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900">Añade a tus amigos o grupos</h4>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('onboarding.welcomeStep2Title')}</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Elige si quieres que la IA de Gemini redacte felicitaciones únicas o usa plantillas divertidas.
+                  {t('onboarding.welcomeStep2Desc')}
                 </p>
               </div>
             </div>
@@ -79,9 +82,9 @@ export function WelcomeModal({ displayName = 'Bienvenido', isWhatsAppConnected =
                 3
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900">Aprueba con un simple "SÍ" por WhatsApp</h4>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('onboarding.welcomeStep3Title')}</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Nuestro Asistente Oficial (+34 926 31 24 36) te avisará por la mañana para que tengas el control total.
+                  {t('onboarding.welcomeStep3Desc')}
                 </p>
               </div>
             </div>
@@ -94,7 +97,7 @@ export function WelcomeModal({ displayName = 'Bienvenido', isWhatsAppConnected =
               onClick={handleClose}
               className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-violet-500/25 transition-all"
             >
-              <span>Empezar Configuración</span>
+              <span>{t('onboarding.getStarted')}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

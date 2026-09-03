@@ -22,13 +22,16 @@ async function getUserId() {
   }
 }
 
+import { getServerTranslations } from '@/lib/i18n/server';
+
 export default async function WishesPage() {
   const userId = await getUserId();
   if (!userId) return null;
 
-  const [wishes, contacts] = await Promise.all([
+  const [wishes, contacts, { t }] = await Promise.all([
     getWishes(userId),
-    getContacts(userId)
+    getContacts(userId),
+    getServerTranslations(),
   ]);
 
   // Create a map of contacts for easy lookup in the client component
@@ -48,10 +51,10 @@ export default async function WishesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Felicitaciones</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{t('wishes.title')}</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-medium">
             <Cake className="w-4 h-4 text-rose-500" />
-            Gestiona los mensajes generados y los envíos
+            {t('wishes.subtitle')}
           </p>
         </div>
       </div>

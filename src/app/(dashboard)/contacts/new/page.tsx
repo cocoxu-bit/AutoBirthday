@@ -30,11 +30,7 @@ export default async function NewContactPage() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <ContactForm 
-        templates={templates} 
-        title="Añadir Cumpleaños"
-        subtitle="Añade los datos de la persona a felicitar."
-      />
+      <ContactForm templates={templates} />
     </div>
   );
 }

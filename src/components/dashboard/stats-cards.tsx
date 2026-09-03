@@ -1,7 +1,6 @@
-"use client";
-
 import { Users, Cake, Clock, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface StatsCardsProps {
   stats: {
@@ -14,41 +13,44 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
+  const { t } = useTranslation();
+
+  const getNextBirthdayText = () => {
+    if (stats.nextBirthdayDays === null) return "-";
+    if (stats.nextBirthdayDays === 0) return `${t('dashboard.today')} 🎉`;
+    if (stats.nextBirthdayDays === 1) return t('dashboard.tomorrow');
+    return t('dashboard.inDays').replace('{days}', stats.nextBirthdayDays.toString());
+  };
+
   const items = [
     {
-      label: "Cumpleaños Activos",
+      label: t('dashboard.totalBirthdays'),
       value: stats.activeContacts.toString(),
-      trend: stats.activeContacts > 0 ? "Listos para felicitar" : "Añade cumpleaños",
+      trend: stats.activeContacts > 0 ? t('dashboard.totalBirthdaysDesc') : t('dashboard.addContact'),
       icon: Users,
       color: "text-violet-600",
       bgColor: "bg-violet-100",
     },
     {
-      label: "Felicitaciones",
+      label: t('dashboard.sentTitle'),
       value: stats.sentTotal.toString(),
-      trend: "Total enviadas",
+      trend: t('dashboard.sentDesc'),
       icon: Cake,
       color: "text-emerald-600",
       bgColor: "bg-emerald-100",
     },
     {
-      label: "Pendientes",
+      label: t('dashboard.pendingTitle'),
       value: stats.pendingApproval.toString(),
-      trend: stats.pendingApproval > 0 ? "Por revisar" : "Todo al día ✅",
+      trend: stats.pendingApproval > 0 ? t('dashboard.pendingDesc') : "OK ✅",
       icon: Clock,
       color: "text-amber-600",
       bgColor: "bg-amber-100",
     },
     {
-      label: "Próximo Cumple",
-      value: stats.nextBirthdayDays !== null 
-        ? stats.nextBirthdayDays === 0 
-          ? "¡Hoy! 🎉" 
-          : stats.nextBirthdayDays === 1 
-          ? "Mañana" 
-          : `En ${stats.nextBirthdayDays} días`
-        : "-",
-      trend: stats.nextBirthdayName || "Sin cumpleaños",
+      label: t('dashboard.upcomingTitle'),
+      value: getNextBirthdayText(),
+      trend: stats.nextBirthdayName || t('dashboard.noUpcoming'),
       icon: Calendar,
       color: "text-rose-600",
       bgColor: "bg-rose-100",

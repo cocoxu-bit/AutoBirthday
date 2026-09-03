@@ -29,9 +29,11 @@ import { QRScanner } from '@/components/whatsapp/qr-scanner';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { toast } from 'sonner';
 import { WhatsAppInstanceStatus } from '@/types';
+import { useTranslation } from '@/lib/i18n/context';
 
 export default function WhatsAppPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [status, setStatus] = useState<WhatsAppInstanceStatus>('disconnected');
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [testPhone, setTestPhone] = useState<string>('');
@@ -206,12 +208,12 @@ export default function WhatsAppPage() {
             <span>WhatsApp</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {status === 'connected' ? 'WhatsApp Vinculado' : 'Conecta tu Cuenta'}
+            {status === 'connected' ? t('whatsapp.statusConnected') : t('whatsapp.title')}
           </h1>
           <p className="text-xs text-slate-500 max-w-xs mx-auto font-medium">
             {status === 'connected'
-              ? 'Tu cuenta está lista para enviar felicitaciones automáticas.'
-              : 'Selecciona cómo prefieres conectar tu número:'}
+              ? t('whatsapp.connectedSuccess')
+              : t('whatsapp.subtitle')}
           </p>
         </div>
 
@@ -231,7 +233,7 @@ export default function WhatsAppPage() {
                 }`}
               >
                 <Smartphone className="w-4 h-4" />
-                <span>En este móvil</span>
+                <span>{t('whatsapp.tabCode')}</span>
               </button>
 
               <button
@@ -244,7 +246,7 @@ export default function WhatsAppPage() {
                 }`}
               >
                 <QrCode className="w-4 h-4" />
-                <span>Código QR</span>
+                <span>{t('whatsapp.tabQr')}</span>
               </button>
             </div>
 
@@ -253,7 +255,7 @@ export default function WhatsAppPage() {
               <form onSubmit={handleConnectPairingCode} className="space-y-3 pt-1">
                 <div className="bg-violet-50/60 border border-violet-100 rounded-2xl p-3.5 space-y-2">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Número de WhatsApp
+                    {t('whatsapp.phoneInputLabel')}
                   </label>
                   
                   <div className="relative">
@@ -262,7 +264,7 @@ export default function WhatsAppPage() {
                       type="tel"
                       value={inputPhone}
                       onChange={(e) => setInputPhone(e.target.value)}
-                      placeholder="34612345678"
+                      placeholder={t('whatsapp.phoneInputPlaceholder')}
                       className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none font-mono font-bold placeholder:font-normal placeholder:text-slate-400"
                       autoComplete="tel"
                       inputMode="numeric"
@@ -270,7 +272,7 @@ export default function WhatsAppPage() {
                   </div>
 
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Incluye prefijo de país sin signos (ej: <strong>34</strong> para España).
+                    {t('contactForm.phoneHint')}
                   </p>
                 </div>
 
@@ -280,7 +282,7 @@ export default function WhatsAppPage() {
                   className="w-full min-h-[48px] bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-2xl shadow-md shadow-violet-500/20 text-sm flex items-center justify-center gap-2"
                   isLoading={actionLoading}
                 >
-                  <span>Generar Código</span>
+                  <span>{t('whatsapp.getCodeButton')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </form>
@@ -290,7 +292,7 @@ export default function WhatsAppPage() {
             {connectMethod === 'qr' && (
               <div className="space-y-3 pt-1 text-center">
                 <p className="text-xs text-slate-500 font-medium px-2">
-                  Escanea el código QR desde <strong>WhatsApp &gt; Dispositivos vinculados</strong>.
+                  {t('whatsapp.step4Qr')}
                 </p>
                 <Button
                   type="button"
@@ -300,7 +302,7 @@ export default function WhatsAppPage() {
                   isLoading={actionLoading}
                 >
                   <QrCode className="w-4 h-4" />
-                  <span>Mostrar Código QR</span>
+                  <span>{t('whatsapp.tabQr')}</span>
                 </Button>
               </div>
             )}
@@ -334,12 +336,12 @@ export default function WhatsAppPage() {
                   {copied ? (
                     <>
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="text-emerald-700">¡Código copiado al portapapeles!</span>
+                      <span className="text-emerald-700">{t('whatsapp.copied')}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span>Copiar Código</span>
+                      <span>{t('whatsapp.copyCode')}</span>
                     </>
                   )}
                 </button>
@@ -349,58 +351,35 @@ export default function WhatsAppPage() {
             {/* Radar en vivo */}
             <div className="flex items-center justify-center gap-2.5 py-2 px-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 shrink-0" />
-              <span>Esperando que pegues el código en WhatsApp...</span>
+              <span>{t('settings.whatsappConnecting')}</span>
             </div>
 
             {/* 3 Pasos rápidos para llegar a Dispositivos Vinculados */}
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                  Dónde pegarlo al abrir WhatsApp:
+                  WhatsApp:
                 </p>
-                <span className="text-[10px] bg-violet-100 text-violet-800 font-bold px-2 py-0.5 rounded-full">
-                  Ruta directa
-                </span>
               </div>
 
               <ol className="space-y-2 text-xs text-slate-700 font-medium">
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <span>En WhatsApp ve a <strong>Ajustes / Configuración</strong> (abajo a la derecha en iPhone, o menú ⋮ arriba en Android).</span>
+                  <span>{t('whatsapp.step1')}</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <span>Toca <strong>Dispositivos vinculados</strong> ➔ <strong>Vincular dispositivo</strong>.</span>
+                  <span>{t('whatsapp.step2')}</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <span>Toca abajo en <strong>&ldquo;Vincular con el número de teléfono&rdquo;</strong> y pega tu código: <strong className="font-mono text-violet-700 font-bold">{pairingCode}</strong>.</span>
+                  <span>{t('whatsapp.step3')}</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">4</span>
+                  <span>{t('whatsapp.step4Code')} <strong className="font-mono text-violet-700 font-bold">{pairingCode}</strong></span>
                 </li>
               </ol>
-            </div>
-
-            {/* Banner alternativo si el código falla */}
-            <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-left space-y-2">
-              <div className="flex items-center gap-1.5 text-amber-900 font-black text-xs">
-                <QrCode className="w-4 h-4 text-amber-700 shrink-0" />
-                <span>¿WhatsApp te dice que el código ha caducado o da error?</span>
-              </div>
-              <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
-                WhatsApp limita los intentos de código por seguridad. Puedes vincular escaneando el <strong>Código QR</strong> directamente con la cámara de WhatsApp en 1 segundo:
-              </p>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConnectMethod('qr');
-                    handleConnectQR();
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-950 bg-white border border-amber-300/80 px-3.5 py-1.5 rounded-xl shadow-xs hover:bg-amber-100/50 transition-all active:scale-95"
-                >
-                  <QrCode className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Probar con Código QR</span>
-                </button>
-              </div>
             </div>
 
             <button
@@ -408,7 +387,7 @@ export default function WhatsAppPage() {
               onClick={handleResetConnection}
               className="text-xs text-slate-400 hover:text-slate-700 underline transition-colors"
             >
-              Cambiar de número o volver
+              {t('common.cancel')}
             </button>
 
           </div>
@@ -423,7 +402,7 @@ export default function WhatsAppPage() {
 
             <div className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-800 text-xs font-bold max-w-sm mx-auto">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
-              <span>Apunta la cámara de WhatsApp a este código</span>
+              <span>{t('whatsapp.step4Qr')}</span>
             </div>
 
             <button
@@ -431,7 +410,7 @@ export default function WhatsAppPage() {
               onClick={handleResetConnection}
               className="text-xs text-slate-400 hover:text-slate-700 underline"
             >
-              Cancelar o usar código de teléfono
+              {t('common.cancel')}
             </button>
           </div>
         )}
@@ -446,7 +425,7 @@ export default function WhatsAppPage() {
 
             <div className="space-y-1">
               <h3 className="text-xl font-black text-slate-900">
-                ¡WhatsApp Conectado! 🎉
+                {t('whatsapp.connectedSuccess')}
               </h3>
               {phoneNumber && (
                 <p className="text-xs font-bold text-emerald-700 font-mono bg-emerald-50 inline-block px-3 py-0.5 rounded-full border border-emerald-200/80">
@@ -458,14 +437,11 @@ export default function WhatsAppPage() {
             {/* Siguiente paso */}
             <div className="bg-gradient-to-br from-violet-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-5 text-left space-y-3 relative overflow-hidden shadow-lg">
               <div className="space-y-0.5">
-                <div className="text-[11px] font-bold text-violet-300 uppercase tracking-wider">
-                  Siguiente Paso
-                </div>
                 <h4 className="text-base font-black text-white">
-                  Agrega tus Cumpleaños
+                  {t('contacts.title')}
                 </h4>
                 <p className="text-xs text-slate-300 font-medium">
-                  Detecta tus chats para programar felicitaciones automáticas.
+                  {t('dashboard.subtitle')}
                 </p>
               </div>
 
@@ -475,7 +451,7 @@ export default function WhatsAppPage() {
                   className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-900/30 transition-all whitespace-nowrap"
                 >
                   <Users className="w-4 h-4 shrink-0" />
-                  <span>Agregar cumpleaños desde WhatsApp</span>
+                  <span>{t('contacts.syncWhatsApp')}</span>
                   <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </Link>
 
@@ -483,7 +459,7 @@ export default function WhatsAppPage() {
                   href="/dashboard"
                   className="inline-flex items-center justify-center py-2.5 px-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-colors whitespace-nowrap"
                 >
-                  <span>Inicio</span>
+                  <span>{t('nav.dashboard')}</span>
                 </Link>
               </div>
             </div>
@@ -494,7 +470,7 @@ export default function WhatsAppPage() {
                 onClick={handleDisconnect}
                 className="text-xs text-slate-400 hover:text-rose-600 transition-colors underline"
               >
-                Desconectar número
+                {t('whatsapp.disconnectButton')}
               </button>
             </div>
 

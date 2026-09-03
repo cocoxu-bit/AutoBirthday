@@ -45,8 +45,6 @@ export default async function EditContactPage({
       <ContactForm 
         initialData={contact} 
         templates={templates} 
-        title="Editar Cumpleaños"
-        subtitle={`Modificando los datos de ${contact.name}.`}
       />
     </div>
   );

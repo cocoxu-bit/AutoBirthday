@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import { Cake, ArrowRight, UserPlus, Users } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
 
 export interface UpcomingBirthdayItem {
   id: string;
@@ -20,18 +19,20 @@ interface UpcomingBirthdaysProps {
 }
 
 export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between">
       <div className="p-5 border-b border-slate-100/80 flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <Cake className="w-5 h-5 text-rose-500" />
-          Próximos Cumpleaños 🎂
+          {t('dashboard.upcomingCardTitle')} 🎂
         </h3>
         <Link 
           href="/contacts" 
           className="text-xs font-bold text-violet-600 hover:text-violet-700 flex items-center gap-1"
         >
-          <span>Ver todos</span>
+          <span>{t('contacts.title')}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -75,10 +76,10 @@ export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
                         : 'bg-violet-100 text-violet-700'
                   }`}>
                     {bday.daysRemaining === 0 
-                      ? '¡Hoy! 🎉' 
+                      ? `${t('dashboard.today')} 🎉` 
                       : bday.daysRemaining === 1 
-                        ? 'Mañana' 
-                        : `En ${bday.daysRemaining} días`}
+                        ? t('dashboard.tomorrow') 
+                        : t('dashboard.inDays').replace('{days}', bday.daysRemaining.toString())}
                   </span>
                 </div>
               </div>
@@ -90,15 +91,15 @@ export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
               <Cake className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800">No hay cumpleaños próximos en 30 días</p>
-              <p className="text-xs text-slate-500 mt-0.5">Añade contactos o importa tu calendario para verlos aquí.</p>
+              <p className="text-sm font-bold text-slate-800">{t('dashboard.noUpcoming')}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{t('contacts.emptyDesc')}</p>
             </div>
             <Link 
               href="/contacts/new"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 transition-colors shadow-sm"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>Añadir Cumpleaños</span>
+              <span>{t('contacts.newContact')}</span>
             </Link>
           </div>
         )}

@@ -10,6 +10,7 @@ import { Contact, Template } from '@/types';
 import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { WhatsAppSyncDialog } from '@/components/contacts/whatsapp-sync-dialog';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
+import { useTranslation } from '@/lib/i18n/context';
 import { 
   Search, 
   UserPlus, 
@@ -21,11 +22,6 @@ import {
   Sparkles
 } from 'lucide-react';
 
-const MONTH_NAMES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-];
-
 interface ContactsTableProps {
   contacts: Contact[];
   templates?: Template[];
@@ -34,6 +30,7 @@ interface ContactsTableProps {
 export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, dict } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -53,18 +50,19 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
 
   async function handleDelete(e: React.MouseEvent, id: string, name: string) {
     e.stopPropagation();
-    if (!confirm(`¿Estás seguro de eliminar a "${name}"?`)) return;
+    if (!confirm(t('contacts.confirmDelete'))) return;
     setDeletingId(id);
     const res = await deleteContact(id);
     setDeletingId(null);
-    if (res.success) toast.success('Cumpleaños eliminado');
-    else toast.error('Error al eliminar cumpleaños');
+    if (res.success) toast.success(t('common.success'));
+    else toast.error(t('common.error'));
   }
 
   const formatBirthday = (day?: number, month?: number) => {
     if (!day || !month) return null;
-    const monthName = MONTH_NAMES[month - 1];
-    return `🎂 ${day} de ${monthName}`;
+    const months = dict.contactForm.months || [];
+    const monthName = months[month - 1] || month.toString();
+    return `🎂 ${day} ${monthName}`;
   };
 
   return (
@@ -84,7 +82,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             title="Importar cumpleaños desde WhatsApp"
           >
             <WhatsAppIcon className="w-4 h-4 shrink-0" size={18} />
-            <span>Agregar cumpleaños desde WhatsApp</span>
+            <span>{t('contacts.syncWhatsApp')}</span>
           </button>
 
           {/* Line 2: Agregar cumpleaños desde Calendario */}
@@ -92,7 +90,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             type="button"
             onClick={() => setIsImportOpen(true)}
             className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold active:scale-[0.99]"
-            title="Importar cumpleaños desde Google Calendar o Apple Calendar"
+            title={t('contacts.importContacts')}
           >
             <div className="flex items-center gap-1.5 shrink-0">
               <Image 
@@ -110,7 +108,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain" 
               />
             </div>
-            <span>Agregar cumpleaños desde Calendario</span>
+            <span>{t('contacts.importContacts')}</span>
           </button>
 
           {/* Line 3: Añadir Cumpleaños */}
@@ -119,7 +117,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#285953] to-emerald-600 hover:from-[#1f4742] hover:to-emerald-700 text-white rounded-2xl transition-all shadow-md shadow-emerald-500/20 text-xs sm:text-sm font-bold active:scale-[0.99]"
           >
             <UserPlus className="w-4 h-4 shrink-0" />
-            <span>Añadir Cumpleaños</span>
+            <span>{t('contacts.newContact')}</span>
           </Link>
         </div>
 
@@ -128,7 +126,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
             type="text" 
-            placeholder="Buscar cumpleaños..." 
+            placeholder={t('contacts.searchPlaceholder')} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-slate-200/80 rounded-2xl shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm placeholder:text-slate-400"
@@ -144,12 +142,12 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 mb-1">
-              {searchTerm ? 'No se encontraron cumpleaños' : 'No tienes cumpleaños añadidos todavía'}
+              {searchTerm ? t('contacts.emptyTitle') : t('contacts.emptyDesc')}
             </h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto font-medium">
               {searchTerm 
-                ? 'Prueba a buscar con otro nombre.'
-                : 'Añade o agrega cumpleaños para empezar a automatizar tus felicitaciones.'}
+                ? t('contacts.emptyDesc')
+                : t('dashboard.subtitle')}
             </p>
           </div>
           {!searchTerm && (
@@ -160,7 +158,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-sm shadow-emerald-600/20"
               >
                 <WhatsAppIcon className="w-4 h-4" size={18} />
-                <span>Agregar desde WhatsApp</span>
+                <span>{t('contacts.syncWhatsApp')}</span>
               </button>
 
               <button
@@ -169,7 +167,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-all shadow-xs"
               >
                 <Calendar className="w-3.5 h-3.5 text-violet-600" />
-                <span>Agregar desde Calendario</span>
+                <span>{t('contacts.importContacts')}</span>
               </button>
 
               <Link 
@@ -177,7 +175,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-bold transition-all shadow-xs"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                <span>Añadir Manualmente</span>
+                <span>{t('contacts.newContact')}</span>
               </Link>
             </div>
           )}
@@ -248,7 +246,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-violet-600 text-slate-700 hover:text-white text-xs font-bold transition-all shadow-sm group-hover:bg-violet-600 group-hover:text-white"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    <span>Editar</span>
+                    <span>{t('contacts.edit')}</span>
                   </Link>
 
                   {/* Delete Button */}
@@ -256,7 +254,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                     onClick={(e) => contact.id && handleDelete(e, contact.id, contact.name)}
                     disabled={deletingId === contact.id}
                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                    title="Eliminar contacto"
+                    title={t('contacts.delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
