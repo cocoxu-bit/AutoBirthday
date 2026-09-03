@@ -22,6 +22,7 @@ import {
   Users
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface VideoGuideModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ interface VideoGuideModalProps {
 }
 
 export function VideoGuideModal({ isOpen, onClose, defaultTab = 'whatsapp' }: VideoGuideModalProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'whatsapp' | 'contacts' | 'assistant'>(defaultTab);
 
   return (
@@ -101,50 +103,57 @@ export function VideoGuideModal({ isOpen, onClose, defaultTab = 'whatsapp' }: Vi
           {/* TAB 1: CÓMO VINCULAR WHATSAPP */}
           {activeTab === 'whatsapp' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 
-                {/* Visual iPhone Mockup Animation */}
-                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 relative overflow-hidden shadow-inner">
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pb-2 border-b border-slate-800">
-                    <span className="font-bold text-slate-300">WhatsApp en tu móvil</span>
-                    <span className="text-emerald-400">Paso a paso</span>
+                {/* Visual iPhone Mockup with Real Video */}
+                <div className="md:col-span-5 flex flex-col items-center">
+                  <div className="relative w-full max-w-[220px] sm:max-w-[240px] aspect-[9/16] bg-slate-950 rounded-[2.5rem] p-2.5 shadow-2xl border-4 border-slate-800 ring-1 ring-violet-500/20 overflow-hidden">
+                    <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-16 h-3.5 bg-slate-950 rounded-full z-20" />
+                    <video
+                      src="/videos/whatsapp-connection-guide.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      controls
+                      className="w-full h-full object-cover rounded-[2rem]"
+                    />
                   </div>
-
-                  <div className="space-y-2.5 text-xs">
-                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-xs">1</div>
-                      <span className="text-slate-300">Abre <strong>Ajustes</strong> o los 3 puntos (⋮)</span>
-                    </div>
-
-                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-xs">2</div>
-                      <span className="text-slate-300">Toca en <strong>Dispositivos vinculados</strong></span>
-                    </div>
-
-                    <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/30 flex items-center gap-3 text-emerald-300 font-bold animate-pulse">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">3</div>
-                      <span>Toca "Vincular dispositivo" y escanea el QR</span>
-                    </div>
-                  </div>
+                  <span className="text-[11px] text-slate-400 mt-2 font-medium">
+                    {t('onboarding.videoHelpBadge')}
+                  </span>
                 </div>
 
                 {/* Text explanation and action */}
-                <div className="space-y-4">
+                <div className="md:col-span-7 space-y-4">
                   <div className="space-y-1.5">
-                    <h3 className="text-lg font-extrabold text-white">Vinculación rápida en 10 segundos</h3>
+                    <h3 className="text-lg font-extrabold text-white">{t('onboarding.welcomeStep1Title')}</h3>
                     <p className="text-xs text-slate-300 leading-relaxed">
                       AutoBirthday se conecta de forma segura a tu WhatsApp igual que cuando abres WhatsApp Web en tu ordenador.
                     </p>
                   </div>
 
-                  <ul className="space-y-2 text-xs text-slate-300">
+                  <div className="space-y-2 text-xs">
+                    <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-[11px]">1</div>
+                      <span className="text-slate-300">Abre <strong>WhatsApp</strong> &gt; <strong>Ajustes</strong> o los 3 puntos (⋮)</span>
+                    </div>
+
+                    <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-[11px]">2</div>
+                      <span className="text-slate-300">Toca en <strong>Dispositivos vinculados</strong></span>
+                    </div>
+
+                    <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-[11px]">3</div>
+                      <span className="text-slate-300">Toca <strong>Vincular con número de teléfono</strong> y escribe el código</span>
+                    </div>
+                  </div>
+
+                  <ul className="space-y-1.5 text-xs text-slate-300 pt-1">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Las felicitaciones saldrán desde tu propio número.</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Tus amigos verán tu foto y tu chat de siempre.</span>
+                      <span>{t('onboarding.welcomeStep1Desc')}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -155,10 +164,10 @@ export function VideoGuideModal({ isOpen, onClose, defaultTab = 'whatsapp' }: Vi
                   <Link
                     href="/whatsapp"
                     onClick={onClose}
-                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition-all"
+                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition-all"
                   >
                     <QrCode className="w-4 h-4" />
-                    <span>Ir a Vincular mi WhatsApp ahora</span>
+                    <span>{t('onboarding.step1Cta')}</span>
                   </Link>
                 </div>
 

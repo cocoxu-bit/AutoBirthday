@@ -1,0 +1,1869 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1350" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+        background: #020617;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        user-select: none;
+      }
+
+      /* 4:5 DRAWER CANVAS (1080 x 1350) */
+      .drawer-viewport {
+        position: relative;
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+        background: #020617;
+      }
+
+      /* ========================================================
+         SYSTEM WALLPAPER (VISIBLE DURING MULTITASK / APP SWITCHER)
+         ======================================================== */
+      .system-wallpaper {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 60%, #020617 100%);
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      .wallpaper-glow-1 {
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 70%);
+        filter: blur(40px);
+      }
+
+      .wallpaper-glow-2 {
+        position: absolute;
+        bottom: 25%;
+        right: 15%;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0) 70%);
+        filter: blur(40px);
+      }
+
+      /* ========================================================
+         APP CARDS IN MULTITASK CAROUSEL
+         ======================================================== */
+      .app-card-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1080px;
+        height: 1350px;
+        transform-origin: 50% 50%;
+        will-change: transform, border-radius, box-shadow;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      .app-switcher-badge {
+        position: absolute;
+        top: 48px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(15, 23, 42, 0.88);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        padding: 10px 28px;
+        border-radius: 9999px;
+        color: #ffffff;
+        font-size: 21px;
+        font-weight: 800;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      /* FULL APP SCREENS */
+      .app-screen {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+      }
+
+      /* ========================================================
+         SYSTEM 3-BUTTON NAVIGATION BAR AT THE BOTTOM (ANDROID)
+         ======================================================== */
+      .system-nav-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 58px;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(16px);
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 120px;
+        z-index: 1500;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .nav-btn {
+        width: 76px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        color: #FFFFFF;
+        opacity: 0.85;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.15s ease;
+      }
+
+      .nav-btn.active-press {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(0.92);
+        opacity: 1;
+      }
+
+      /* ========================================================
+         APP 1: AUTOBIRTHDAY COMPLETE REAL UI
+         ======================================================== */
+      #appAutoBirthday {
+        background: #f4f8f6;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .ab-header {
+        height: 96px;
+        padding: 0 40px;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid #dbe7e3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+
+      .ab-brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .ab-logo-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+      }
+
+      .ab-brand-title {
+        font-size: 28px;
+        font-weight: 900;
+        color: #142825;
+        letter-spacing: -0.5px;
+      }
+
+      .ab-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        font-size: 16px;
+        font-weight: 800;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      .ab-status-disconnected {
+        background: #FEE2E2;
+        color: #B91C1C;
+      }
+      .ab-status-connected {
+        background: #D1FAE5;
+        color: #047857;
+      }
+
+      .ab-main-scroll {
+        flex: 1;
+        padding: 16px 40px 10px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow: hidden;
+      }
+
+      .ab-card-main {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(16px);
+        border-radius: 32px;
+        border: 1px solid #dbe7e3;
+        box-shadow: 0 16px 45px rgba(20, 40, 37, 0.06);
+        padding: 26px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .ab-card-header {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .ab-pill-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 16px;
+        border-radius: 9999px;
+        background: #DEF0EA;
+        color: #204B46;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .ab-card-title {
+        font-size: 30px;
+        font-weight: 900;
+        color: #142825;
+        letter-spacing: -0.5px;
+      }
+
+      .ab-card-subtitle {
+        font-size: 17px;
+        color: #4E6E69;
+        font-weight: 500;
+      }
+
+      .ab-tabs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 5px;
+        background: #EDF4F1;
+        border-radius: 20px;
+        gap: 6px;
+      }
+
+      .ab-tab-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #4E6E69;
+      }
+      .ab-tab-button.active {
+        background: #ffffff;
+        color: #204B46;
+        font-weight: 900;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+      }
+
+      .ab-code-block {
+        background: linear-gradient(135deg, #285953 0%, #16322F 100%);
+        border-radius: 28px;
+        padding: 24px 22px;
+        color: #ffffff;
+        box-shadow: 0 12px 32px rgba(40, 89, 83, 0.22);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .ab-code-digits {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        padding: 12px 32px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        font-family: monospace;
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 6px;
+        color: #ffffff;
+      }
+
+      .ab-copy-button {
+        width: 100%;
+        height: 60px;
+        background: #ffffff;
+        color: #16322F;
+        font-size: 20px;
+        font-weight: 900;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .ab-radar-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 18px;
+        background: #DEF0EA;
+        border: 1px solid #BDE2D6;
+        border-radius: 18px;
+        color: #1B3D39;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .ab-steps-card {
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 22px;
+        padding: 18px 22px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .ab-steps-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .ab-steps-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: #0F172A;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      .ab-steps-badge {
+        font-size: 12px;
+        background: #DEF0EA;
+        color: #204B46;
+        font-weight: 800;
+        padding: 3px 12px;
+        border-radius: 9999px;
+      }
+
+      .ab-steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .ab-step-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 15px;
+        color: #334155;
+        font-weight: 500;
+        line-height: 1.35;
+      }
+
+      .ab-step-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #285953;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      .ab-mobile-nav {
+        height: 88px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid #dbe7e3;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        align-items: center;
+        flex-shrink: 0;
+        margin-bottom: 58px; /* space for system nav bar */
+      }
+
+      .ab-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: #64748B;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .ab-nav-item.active {
+        color: #204B46;
+        font-weight: 900;
+      }
+      .ab-nav-icon {
+        font-size: 22px;
+      }
+
+      .ab-success-hero {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        text-align: center;
+        padding: 10px 0;
+      }
+
+      .ab-check-icon {
+        width: 86px;
+        height: 86px;
+        border-radius: 28px;
+        background: #D1FAE5;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 46px;
+        font-weight: 900;
+      }
+
+      .ab-phone-pill {
+        font-family: monospace;
+        font-size: 26px;
+        font-weight: 900;
+        color: #047857;
+        background: #D1FAE5;
+        padding: 6px 24px;
+        border-radius: 9999px;
+        border: 1px solid #A7F3D0;
+      }
+
+      .ab-cta-card {
+        width: 100%;
+        background: linear-gradient(135deg, #16322F 0%, #204B46 50%, #0F172A 100%);
+        border-radius: 26px;
+        padding: 26px 24px;
+        color: #ffffff;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 14px 34px rgba(22, 50, 47, 0.25);
+      }
+
+      .ab-btn-cta-panel {
+        width: 100%;
+        height: 60px;
+        background: #047857;
+        color: #ffffff;
+        font-size: 19px;
+        font-weight: 900;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-shadow: 0 8px 22px rgba(4, 120, 87, 0.4);
+      }
+
+      .ab-toast-popover {
+        position: absolute;
+        bottom: 160px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #142825;
+        color: #ffffff;
+        padding: 16px 36px;
+        border-radius: 9999px;
+        font-size: 18px;
+        font-weight: 800;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 500;
+      }
+
+      /* ========================================================
+         APP 2: NATIVE WHATSAPP ANDROID
+         ======================================================== */
+      #appWhatsApp {
+        background: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .wa-top-bar {
+        height: 108px;
+        padding: 0 40px;
+        background: #FFFFFF;
+        border-bottom: 1px solid #E9EDEF;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+
+      .wa-brand-logo {
+        font-size: 34px;
+        font-weight: 900;
+        color: #0F7A3E;
+        letter-spacing: -0.5px;
+      }
+
+      .wa-actions-row {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        font-size: 28px;
+        color: #111B21;
+      }
+
+      .wa-dots-button {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        cursor: pointer;
+      }
+
+      .wa-main-area {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #waScreenChats {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .wa-chats-scroll-body {
+        flex: 1;
+        padding: 14px 36px 156px 36px; /* space for wa-bottom-nav + system bar */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .wa-search-pill {
+        height: 52px;
+        background: #F0F2F5;
+        border-radius: 9999px;
+        padding: 0 24px;
+        font-size: 19px;
+        color: #52525B;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+      }
+
+      .wa-filter-pills-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .wa-filter-pill {
+        padding: 6px 18px;
+        border-radius: 9999px;
+        font-size: 15px;
+        font-weight: 700;
+        background: #FFFFFF;
+        color: #52525B;
+        border: 1px solid #E9EDEF;
+        white-space: nowrap;
+      }
+      .wa-filter-pill.active {
+        background: #D8FDD2;
+        color: #0F7A3E;
+        border-color: #D8FDD2;
+        font-weight: 800;
+      }
+
+      .wa-archived-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 4px 10px 4px;
+        border-bottom: 1px solid #F0F2F5;
+        flex-shrink: 0;
+      }
+
+      .wa-chat-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 9px 0;
+        border-bottom: 1px solid #F0F2F5;
+        flex-shrink: 0;
+      }
+
+      .wa-avatar-box {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .wa-fabs-stack {
+        position: absolute;
+        right: 32px;
+        bottom: 170px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        z-index: 50;
+      }
+
+      .wa-fab-meta {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #FFFFFF;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .wa-fab-new-chat {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        background: #0F7A3E;
+        box-shadow: 0 6px 18px rgba(15, 122, 62, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #FFFFFF;
+      }
+
+      .wa-bottom-nav {
+        position: absolute;
+        bottom: 58px; /* sits right above system nav bar */
+        left: 0;
+        right: 0;
+        height: 94px;
+        background: #FFFFFF;
+        border-top: 1px solid #E9EDEF;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        align-items: center;
+        z-index: 60;
+        padding: 0 8px;
+      }
+
+      .wa-nav-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+
+      .wa-nav-tab-pill {
+        width: 68px;
+        height: 34px;
+        border-radius: 17px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .wa-nav-tab.active .wa-nav-tab-pill {
+        background: #D8FDD2;
+      }
+
+      .wa-nav-tab-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #111B21;
+      }
+
+      .wa-nav-tab.active .wa-nav-tab-label {
+        font-weight: 900;
+        color: #111B21;
+      }
+
+      .wa-dropdown-menu {
+        position: absolute;
+        top: 80px;
+        right: 36px;
+        width: 460px;
+        background: #FFFFFF;
+        border-radius: 22px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+        border: 1px solid #E2E8F0;
+        padding: 8px 0;
+        z-index: 100;
+        display: none;
+        flex-direction: column;
+      }
+
+      .wa-menu-item {
+        height: 54px;
+        padding: 0 28px;
+        font-size: 21px;
+        font-weight: 600;
+        color: #111B21;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .wa-menu-item.active-tap {
+        background: #E9EDEF;
+        font-weight: 800;
+      }
+
+      .wa-orange-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #F59E0B;
+      }
+
+      #waScreenDevices {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        display: none;
+        flex-direction: column;
+        padding: 30px 44px;
+        text-align: center;
+      }
+
+      .wa-nav-header {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      .wa-btn-vincular {
+        width: 100%;
+        height: 66px;
+        background: #0F7A3E;
+        color: #FFFFFF;
+        font-size: 23px;
+        font-weight: 800;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(15, 122, 62, 0.3);
+        margin-top: 20px;
+      }
+
+      .wa-sessions-divider {
+        height: 1px;
+        background: #E9EDEF;
+        margin: 28px 0 20px 0;
+      }
+
+      .wa-session-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 12px 0;
+        text-align: left;
+      }
+
+      #waScreenScanner {
+        position: absolute;
+        inset: 0;
+        background: #0B1014;
+        display: none;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .wa-scanner-top-white {
+        background: #FFFFFF;
+        padding: 24px 36px 30px 36px;
+        border-bottom: 1px solid #E2E8F0;
+      }
+
+      .wa-scanner-viewfinder-zone {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .wa-scanner-square {
+        width: 520px;
+        height: 520px;
+        border-radius: 36px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .wa-scanner-corner {
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        border-color: #1EA855;
+        border-style: solid;
+      }
+      .corner-tl { top: -2px; left: -2px; border-width: 5px 0 0 5px; border-top-left-radius: 20px; }
+      .corner-tr { top: -2px; right: -2px; border-width: 5px 5px 0 0; border-top-right-radius: 20px; }
+      .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 5px 5px; border-bottom-left-radius: 20px; }
+      .corner-br { bottom: -2px; right: -2px; border-width: 0 5px 5px 0; border-bottom-right-radius: 20px; }
+
+      .wa-laser-bar {
+        position: absolute;
+        width: 86%;
+        height: 3px;
+        background: #1EA855;
+        box-shadow: 0 0 16px #1EA855;
+      }
+
+      .wa-scanner-bottom-bar {
+        height: 80px;
+        background: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-bottom: 58px; /* above system nav bar */
+      }
+
+      .wa-link-phone-white {
+        font-size: 22px;
+        font-weight: 800;
+        color: #FFFFFF;
+        text-align: center;
+        padding: 12px;
+      }
+
+      #waScreenCode {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        display: none;
+        flex-direction: column;
+        padding: 30px 44px;
+        text-align: center;
+      }
+
+      .wa-eight-cells {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 40px 0 28px 0;
+      }
+
+      .wa-cell {
+        width: 76px;
+        height: 106px;
+        background: #F0F2F5;
+        border: 2px solid transparent;
+        border-radius: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        font-size: 46px;
+        font-weight: 900;
+        color: #111B21;
+      }
+      .wa-cell.focused-green {
+        border-color: #0F7A3E;
+        background: #FFFFFF;
+      }
+
+      .wa-popover-paste {
+        position: absolute;
+        top: 290px;
+        left: 430px;
+        width: 220px;
+        height: 60px;
+        background: #111B21;
+        color: #FFFFFF;
+        border-radius: 20px;
+        font-size: 22px;
+        font-weight: 800;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+        z-index: 80;
+      }
+
+      .wa-success-badge {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: #0F7A3E;
+        font-size: 24px;
+        font-weight: 800;
+        margin-top: 24px;
+      }
+
+      /* ========================================================
+         TRANSLUCENT TOUCH POINT CURSOR (SIMULATES FINGER TOUCH)
+         Centered exactly at (x, y) with 50% 50% origin
+         ======================================================== */
+      .touch-point-cursor {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 48px;
+        height: 48px;
+        margin-left: -24px;
+        margin-top: -24px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.45);
+        border: 2.5px solid rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(4px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.7);
+        pointer-events: none;
+        z-index: 2000;
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: 50% 50%;
+      }
+
+      .touch-point-core {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+      }
+
+      .touch-tap-wave {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        margin-left: -28px;
+        margin-top: -28px;
+        border-radius: 50%;
+        border: 2.5px solid rgba(16, 185, 129, 0.95);
+        background: rgba(16, 185, 129, 0.22);
+        pointer-events: none;
+        z-index: 1999;
+        opacity: 0;
+        transform-origin: 50% 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      class="clip"
+      data-composition-id="screencast-switcher-17s"
+      data-start="0"
+      data-duration="17"
+      data-width="1080"
+      data-height="1350"
+    >
+      <div class="drawer-viewport">
+        <!-- SYSTEM WALLPAPER IN BACKGROUND -->
+        <div class="system-wallpaper">
+          <div class="wallpaper-glow-1"></div>
+          <div class="wallpaper-glow-2"></div>
+        </div>
+
+        <!-- TRANSLUCENT TOUCH POINT (SIMULATES FINGER TOUCH) -->
+        <div id="touchPoint" class="touch-point-cursor" data-layout-allow-overflow="true" data-layout-allow-overlap="true">
+          <div class="touch-point-core"></div>
+        </div>
+        <div id="tapWave" class="touch-tap-wave"></div>
+
+        <!-- ========================================================
+             APP CARD 1: AUTOBIRTHDAY WRAPPER
+             ======================================================== -->
+        <div id="cardAutoBirthday" class="app-card-wrapper" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true" style="z-index: 10;">
+          <!-- Switcher Badge -->
+          <div id="badgeAutoBirthday" class="app-switcher-badge" data-layout-allow-overflow="true">
+            <span style="font-size: 22px;">🎂</span>
+            <span>AutoBirthday</span>
+          </div>
+
+          <!-- App AutoBirthday Content -->
+          <div id="appAutoBirthday" class="app-screen" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+            <header class="ab-header">
+              <div class="ab-brand">
+                <div class="ab-logo-icon">🎂</div>
+                <h1 class="ab-brand-title">AutoBirthday</h1>
+              </div>
+
+              <div id="abStatusPill" class="ab-status-badge ab-status-disconnected">
+                <div id="abStatusDot" style="width: 10px; height: 10px; border-radius: 50%; background: #EF4444;"></div>
+                <span id="abStatusText">Desconectado</span>
+              </div>
+            </header>
+
+            <main class="ab-main-scroll">
+              <div class="ab-card-main">
+                <div class="ab-card-header">
+                  <div class="ab-pill-tag">
+                    <span>📱</span>
+                    <span>WhatsApp</span>
+                  </div>
+                  <h2 id="abCardTitle" class="ab-card-title">Conecta tu Cuenta</h2>
+                  <p id="abCardSubtitle" class="ab-card-subtitle">Selecciona cómo prefieres conectar tu número:</p>
+                </div>
+
+                <div id="abTabsContainer" class="ab-tabs-grid">
+                  <div class="ab-tab-button active">
+                    <span>📱</span>
+                    <span>En este móvil</span>
+                  </div>
+                  <div class="ab-tab-button">
+                    <span>📷</span>
+                    <span>Código QR</span>
+                  </div>
+                </div>
+
+                <!-- ESCENA 1: CONTENIDO PENDIENTE -->
+                <div id="abPendingView" data-layout-allow-overlap="true" style="display: flex; flex-direction: column; gap: 14px;">
+                  <div class="ab-code-block">
+                    <p style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #93CEBE;">
+                      Tu Código de Vinculación
+                    </p>
+
+                    <div class="ab-code-digits">
+                      7K4B - 9X2M
+                    </div>
+
+                    <!-- Botón 1: Copiar Código (Center: X=540, Y=512) -->
+                    <div id="btnCopyPwa" class="ab-copy-button">
+                      <span id="copyPwaIcon">📋</span>
+                      <span id="copyPwaText">Copiar Código</span>
+                    </div>
+                  </div>
+
+                  <div class="ab-radar-row">
+                    <span style="font-size: 18px;">⏳</span>
+                    <span>Esperando que pegues el código en WhatsApp...</span>
+                  </div>
+
+                  <div class="ab-steps-card">
+                    <div class="ab-steps-header">
+                      <span class="ab-steps-title">Dónde pegarlo al abrir WhatsApp:</span>
+                      <span class="ab-steps-badge">Ruta directa</span>
+                    </div>
+
+                    <div class="ab-steps-list">
+                      <div class="ab-step-item">
+                        <div class="ab-step-num">1</div>
+                        <span>En WhatsApp ve a <strong>Ajustes / Configuración</strong> (menú ⋮ arriba en Android).</span>
+                      </div>
+                      <div class="ab-step-item">
+                        <div class="ab-step-num">2</div>
+                        <span>Toca <strong>Dispositivos vinculados</strong> ➔ <strong>Vincular dispositivo</strong>.</span>
+                      </div>
+                      <div class="ab-step-item">
+                        <div class="ab-step-num">3</div>
+                        <span>Toca abajo en <strong>&ldquo;Vincular con número&rdquo;</strong> y pega tu código: <strong style="color: #285953; font-family: monospace;">7K4B - 9X2M</strong>.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ESCENA 5: CONTENIDO VINCULADO -->
+                <div id="abSuccessHero" class="ab-success-hero" data-layout-allow-overlap="true">
+                  <div class="ab-check-icon">✓</div>
+
+                  <div>
+                    <h3 style="font-size: 32px; font-weight: 900; color: #142825;">¡WhatsApp Conectado! 🎉</h3>
+                    <div style="margin-top: 10px;">
+                      <span class="ab-phone-pill">+34 612 34 56 78</span>
+                    </div>
+                  </div>
+
+                  <div class="ab-cta-card">
+                    <div>
+                      <div style="font-size: 13px; font-weight: 800; color: #93CEBE; text-transform: uppercase; letter-spacing: 1.5px;">Siguiente Paso</div>
+                      <h4 style="font-size: 24px; font-weight: 900; color: #ffffff; margin-top: 2px;">Agrega tus Cumpleaños</h4>
+                      <p style="font-size: 16px; color: #DEF0EA; margin-top: 4px;">Detecta tus chats para programar felicitaciones automáticas.</p>
+                    </div>
+
+                    <!-- Botón 7: Center: X=540, Y=615 -->
+                    <div id="btnPanelFinalCta" class="ab-btn-cta-panel">
+                      <span style="color: #ffffff;">👥</span>
+                      <span style="color: #ffffff;">Agregar cumpleaños desde WhatsApp</span>
+                      <span style="color: #ffffff;">➔</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </main>
+
+            <!-- Toast notification -->
+            <div id="toastCopied" class="ab-toast-popover" data-layout-allow-overlap="true">
+              <span style="color: #10B981; font-weight: 900;">✓</span>
+              <span>Código copiado al portapapeles</span>
+            </div>
+
+            <nav class="ab-mobile-nav">
+              <div class="ab-nav-item"><span class="ab-nav-icon">🏠</span><span>Inicio</span></div>
+              <div class="ab-nav-item"><span class="ab-nav-icon">🎂</span><span>Cumpleaños</span></div>
+              <div class="ab-nav-item"><span class="ab-nav-icon">✨</span><span>Felicitaciones</span></div>
+              <div class="ab-nav-item active"><span class="ab-nav-icon">📱</span><span>WhatsApp</span></div>
+              <div class="ab-nav-item"><span class="ab-nav-icon">⚙️</span><span>Ajustes</span></div>
+            </nav>
+          </div>
+        </div>
+
+        <!-- ========================================================
+             APP CARD 2: WHATSAPP WRAPPER
+             ======================================================== -->
+        <div id="cardWhatsApp" class="app-card-wrapper" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true" style="z-index: 20; opacity: 0;">
+          <!-- Switcher Badge -->
+          <div id="badgeWhatsApp" class="app-switcher-badge" data-layout-allow-overflow="true">
+            <span style="font-size: 22px;">💬</span>
+            <span>WhatsApp</span>
+          </div>
+
+          <!-- App WhatsApp Content -->
+          <div id="appWhatsApp" class="app-screen" data-layout-allow-overflow="true" data-layout-allow-occlusion="true" data-layout-allow-overlap="true">
+            <header class="wa-top-bar">
+              <h2 id="waHeaderTitle" class="wa-brand-logo">WhatsApp</h2>
+              <div id="waHeaderActions" class="wa-actions-row">
+                <span>📷</span>
+                <span>🔍</span>
+                <!-- Botón 2: 3 Puntos (Center: X=1015, Y=54) -->
+                <div id="waDotsBtn" class="wa-dots-button">⋮</div>
+              </div>
+            </header>
+
+            <div class="wa-main-area" data-layout-allow-overlap="true">
+              <!-- 1. CHATS LIST (13 conversaciones realistas) -->
+              <div id="waScreenChats" data-layout-allow-overlap="true">
+                <div class="wa-chats-scroll-body">
+                  <div class="wa-search-pill">
+                    <span>🔍</span>
+                    <span>Preguntar a Meta AI o buscar</span>
+                  </div>
+
+                  <div class="wa-filter-pills-row">
+                    <div class="wa-filter-pill active">Todos</div>
+                    <div class="wa-filter-pill">No leídos</div>
+                    <div class="wa-filter-pill">Favoritos</div>
+                    <div class="wa-filter-pill">Grupos</div>
+                    <div class="wa-filter-pill">+</div>
+                  </div>
+
+                  <div class="wa-archived-row">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                      <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#52525B"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+                      </div>
+                      <span style="font-size: 19px; font-weight: 700; color: #111B21;">Archivados</span>
+                    </div>
+                    <span style="font-size: 16px; font-weight: 800; color: #0F7A3E;">2</span>
+                  </div>
+
+                  <!-- 1. Familia Ramos ❤️ -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #059669;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Familia Ramos ❤️</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Mamá: ¿Quién viene a comer el domingo?</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                      <span style="font-size: 14px; color: #52525B;">19:42</span>
+                      <span style="font-size: 14px; color: #64748B;">📌</span>
+                    </div>
+                  </div>
+
+                  <!-- 2. Carlos Martínez -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #6366F1;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Carlos Martínez</div>
+                      <div style="font-size: 16px; color: #0F7A3E; font-weight: 700; margin-top: 2px;">escribiendo...</div>
+                    </div>
+                    <span style="font-size: 14px; color: #0F7A3E; font-weight: 700;">19:35</span>
+                  </div>
+
+                  <!-- 3. Pádel Los Galácticos 🎾 -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #00A884;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Pádel Los Galácticos 🎾</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Dani: Reservada pista 4 a las 20:00</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">18:50</span>
+                  </div>
+
+                  <!-- 4. Laura Sánchez -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #D97706;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Laura Sánchez</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">¡Muchísimas gracias por todo! 🎉</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">18:15</span>
+                  </div>
+
+                  <!-- 5. Equipo Marketing 🚀 -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #0284C7;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Equipo Marketing 🚀</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Sofía: Documento final enviado al cliente</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">17:40</span>
+                  </div>
+
+                  <!-- 6. David Hermano -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #9333EA;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">David Hermano</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">✓ Tú: Te paso el enlace luego</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">16:55</span>
+                  </div>
+
+                  <!-- 7. Viaje Roma 2026 ✈️ -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #F43F5E;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Viaje Roma 2026 ✈️</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Marcos: Mirad estos vuelos de oferta 🇮🇹</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">16:10</span>
+                  </div>
+
+                  <!-- 8. Marta Diseñadora -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #EA580C;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Marta Diseñadora</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Revisados los últimos mockups de la app</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">15:20</span>
+                  </div>
+
+                  <!-- 9. CrossFit Mañanas 💪 -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #84CC16;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><circle cx="12" cy="12" r="9"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">CrossFit Mañanas 💪</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Entrenador: Mañana clase a las 08:00 h</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">14:05</span>
+                  </div>
+
+                  <!-- 10. Javier Gómez -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #475569;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Javier Gómez</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">✓✓ ¿Quedamos mañana para tomar algo?</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">Ayer</span>
+                  </div>
+
+                  <!-- 11. Comunidad Vecinos 🏢 -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #115E59;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Comunidad Vecinos 🏢</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Presidente: Aviso de revisión de ascensores</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">Ayer</span>
+                  </div>
+
+                  <!-- 12. Elena Universidad -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #DB2777;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Elena Universidad</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Te mandé los apuntes del tema 4</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">28/08</span>
+                  </div>
+
+                  <!-- 13. Taller Mecánico Auto -->
+                  <div class="wa-chat-row">
+                    <div class="wa-avatar-box" style="background: #1D4ED8;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 21px; font-weight: 800; color: #111B21;">Taller Mecánico Auto</div>
+                      <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Su vehículo ya está listo para recoger</div>
+                    </div>
+                    <span style="font-size: 14px; color: #52525B;">27/08</span>
+                  </div>
+                </div>
+
+                <div class="wa-fabs-stack" data-layout-allow-overlap="true">
+                  <div class="wa-fab-meta">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="9" stroke="url(#metaGleam)" stroke-width="2.5" stroke-dasharray="8 4"/>
+                      <circle cx="12" cy="12" r="4.5" fill="url(#metaGleam)"/>
+                      <defs>
+                        <linearGradient id="metaGleam" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#3B82F6"/>
+                          <stop offset="0.5" stop-color="#8B5CF6"/>
+                          <stop offset="1" stop-color="#EC4899"/>
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+
+                  <div class="wa-fab-new-chat">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 9h-5v5h-2v-5H6V9h5V4h2v5h5v2z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <nav class="wa-bottom-nav" data-layout-allow-overlap="true">
+                  <div class="wa-nav-tab active">
+                    <div class="wa-nav-tab-pill">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#0F7A3E">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6v-2h12v2zm0-3H6V7h12v2z"/>
+                      </svg>
+                    </div>
+                    <span class="wa-nav-tab-label">Chats</span>
+                  </div>
+
+                  <div class="wa-nav-tab">
+                    <div class="wa-nav-tab-pill" style="position: relative;">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111B21" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9" stroke-dasharray="14 4"/>
+                      </svg>
+                      <span style="position: absolute; top: 4px; right: 20px; width: 9px; height: 9px; border-radius: 50%; background: #0F7A3E; border: 2px solid #FFFFFF;"></span>
+                    </div>
+                    <span class="wa-nav-tab-label">Novedades</span>
+                  </div>
+
+                  <div class="wa-nav-tab">
+                    <div class="wa-nav-tab-pill">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#111B21">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                      </svg>
+                    </div>
+                    <span class="wa-nav-tab-label">Comunidades</span>
+                  </div>
+
+                  <div class="wa-nav-tab">
+                    <div class="wa-nav-tab-pill">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="#111B21">
+                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                      </svg>
+                    </div>
+                    <span class="wa-nav-tab-label">Llamadas</span>
+                  </div>
+                </nav>
+
+                <div id="waDropdownMenu" class="wa-dropdown-menu">
+                  <div class="wa-menu-item"><span>Nuevo grupo</span></div>
+                  <div class="wa-menu-item"><span>Nueva difusión</span></div>
+                  <div id="waItemDevices" class="wa-menu-item">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <span class="wa-orange-dot"></span>
+                      <span>Dispositivos vinculados</span>
+                    </div>
+                  </div>
+                  <div class="wa-menu-item"><span>Destacado</span></div>
+                  <div class="wa-menu-item"><span>Marcar todos como leídos</span></div>
+                  <div class="wa-menu-item"><span>Ajustes</span></div>
+                </div>
+              </div>
+
+              <!-- 2. DISPOSITIVOS VINCULADOS -->
+              <div id="waScreenDevices" data-layout-allow-overlap="true">
+                <div class="wa-nav-header">
+                  <span style="font-size: 32px; font-weight: 700; color: #111B21;">←</span>
+                  <span style="font-size: 28px; font-weight: 800; color: #111B21;">Dispositivos vinculados</span>
+                </div>
+
+                <div style="width: 100%; height: 210px; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
+                  <svg width="220" height="150" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="30" width="60" height="95" rx="12" fill="#D1FAE5" stroke="#111B21" stroke-width="4"/>
+                    <rect x="35" y="45" width="30" height="40" rx="4" fill="#ffffff" stroke="#111B21" stroke-width="3"/>
+                    <path d="M100 20L180 20L195 95L90 95Z" fill="#1EA855" stroke="#111B21" stroke-width="4"/>
+                    <path d="M75 95L210 95L200 125L65 125Z" fill="#10B981" stroke="#111B21" stroke-width="4"/>
+                    <rect x="110" y="35" width="65" height="45" rx="4" fill="#D1FAE5"/>
+                    <circle cx="142" cy="58" r="10" fill="#1EA855"/>
+                  </svg>
+                </div>
+
+                <p style="font-size: 20px; color: #52525B; line-height: 1.4; margin-bottom: 8px;">
+                  Puedes vincular otros dispositivos a esta cuenta. <span style="color: #027EB5; font-weight: 800;">Más información</span>
+                </p>
+
+                <!-- Botón 4: Center: X=540, Y=515 -->
+                <div id="btnVincularDispositivo" class="wa-btn-vincular">
+                  Vincular un dispositivo
+                </div>
+
+                <div class="wa-sessions-divider"></div>
+
+                <div style="text-align: left;">
+                  <div style="font-size: 15px; font-weight: 800; color: #52525B; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
+                    Estado del dispositivo
+                  </div>
+                  <div style="font-size: 15px; color: #52525B; margin-bottom: 12px;">
+                    Toca un dispositivo para cambiar su nombre o cerrar sesión.
+                  </div>
+
+                  <div class="wa-session-row">
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: #F0F2F5; display: flex; align-items: center; justify-content: center; font-size: 26px;">
+                      🌐
+                    </div>
+                    <div>
+                      <div style="font-size: 19px; font-weight: 800; color: #111B21;">Google Chrome (Mac OS)</div>
+                      <div style="font-size: 14px; color: #52525B; margin-top: 2px;">Última vez activo hoy a las 19:32</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. ESCANEA EL CÓDIGO QR / CÁMARA -->
+              <div id="waScreenScanner" data-layout-allow-overlap="true">
+                <div class="wa-scanner-top-white">
+                  <div class="wa-nav-header" style="margin-bottom: 14px;">
+                    <span style="font-size: 32px; font-weight: 700; color: #111B21;">←</span>
+                    <span style="font-size: 28px; font-weight: 800; color: #111B21;">Escanea el código QR</span>
+                  </div>
+                  <p style="font-size: 18px; color: #52525B; line-height: 1.4; text-align: center;">
+                    Abre web.whatsapp.com, la aplicación de escritorio u otros dispositivos.
+                  </p>
+                </div>
+
+                <div class="wa-scanner-viewfinder-zone">
+                  <div class="wa-scanner-square">
+                    <div class="wa-scanner-corner corner-tl"></div>
+                    <div class="wa-scanner-corner corner-tr"></div>
+                    <div class="wa-scanner-corner corner-bl"></div>
+                    <div class="wa-scanner-corner corner-br"></div>
+                    <div class="wa-laser-bar"></div>
+                  </div>
+                </div>
+
+                <!-- Botón 5: Vincular con número de teléfono (Center: X=540, Y=1252) -->
+                <div id="btnLinkWithPhone" class="wa-scanner-bottom-bar">
+                  <span class="wa-link-phone-white">Vincular con el número de teléfono</span>
+                </div>
+              </div>
+
+              <!-- 4. INGRESA EL CÓDIGO -->
+              <div id="waScreenCode" data-layout-allow-overlap="true">
+                <div class="wa-nav-header">
+                  <span style="font-size: 32px; font-weight: 700; color: #111B21;">←</span>
+                  <span style="font-size: 28px; font-weight: 800; color: #111B21;">Ingresa el código</span>
+                </div>
+
+                <p style="font-size: 20px; color: #111B21; text-align: left; line-height: 1.5; margin-bottom: 26px;">
+                  Para obtener tu código, haz lo siguiente: abre WhatsApp en la web u otro dispositivo y haz clic en <strong>Vincular con el número de teléfono</strong>. <span style="color: #027EB5; font-weight: 800;">Más información</span>
+                </p>
+
+                <!-- Botón 6: Popover Pegar (Center: X=540, Y=448) -->
+                <div id="waPopoverPaste" class="wa-popover-paste" data-layout-allow-overlap="true">
+                  <span data-layout-allow-overlap="true">📋</span>
+                  <span data-layout-allow-overlap="true">Pegar</span>
+                </div>
+
+                <div class="wa-eight-cells">
+                  <div id="c1" data-layout-allow-overlap="true" class="wa-cell focused-green">-</div>
+                  <div id="c2" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                  <div id="c3" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                  <div id="c4" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                  <span data-layout-allow-overlap="true" style="font-size: 34px; font-weight: 900; color: #111B21; margin: 0 4px;">-</span>
+                  <div id="c5" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                  <div id="c6" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                  <div id="c7" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                  <div id="c8" data-layout-allow-overlap="true" class="wa-cell">-</div>
+                </div>
+
+                <p style="font-size: 16px; color: #52525B;">
+                  Nunca ingreses un código si no lo solicitaste.
+                </p>
+
+                <div id="waSuccessRow" class="wa-success-badge">
+                  <span style="font-size: 30px;">✓</span>
+                  <span>¡Dispositivo vinculado con éxito!</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================
+             BOTTOM SYSTEM 3-BUTTON NAVIGATION BAR
+             Center of Recents (|||): X=240, Y=1321
+             ======================================================== -->
+        <nav class="system-nav-bar" data-layout-allow-overlap="true">
+          <!-- Button Recents / Multitask (|||) (X: 240, Y: 1321) -->
+          <div id="btnNavRecents" class="nav-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round">
+              <line x1="6" y1="4" x2="6" y2="20"></line>
+              <line x1="12" y1="4" x2="12" y2="20"></line>
+              <line x1="18" y1="4" x2="18" y2="20"></line>
+            </svg>
+          </div>
+
+          <!-- Button Home (⬚) (X: 540, Y: 1321) -->
+          <div id="btnNavHome" class="nav-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="5"></rect>
+            </svg>
+          </div>
+
+          <!-- Button Back (◀) (X: 840, Y: 1321) -->
+          <div id="btnNavBack" class="nav-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </div>
+        </nav>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      // Initial card setups
+      gsap.set("#cardAutoBirthday", { scale: 1.0, x: 0, y: 0, borderRadius: 0, opacity: 1, zIndex: 10 });
+      gsap.set("#cardWhatsApp", { scale: 0.72, x: 900, y: -20, borderRadius: 40, opacity: 0, zIndex: 20 });
+      gsap.set("#badgeAutoBirthday", { opacity: 0 });
+      gsap.set("#badgeWhatsApp", { opacity: 0 });
+      gsap.set("#touchPoint", { x: 540, y: 512, opacity: 0 });
+
+      const tl = gsap.timeline({ paused: true });
+
+      // Translucent Touch Point Tap Animation (Simulates finger touch with elastic tactile impulse & soft expanding wave)
+      function performTap(x, y, atTime) {
+        tl.set("#touchPoint", { x: x, y: y, opacity: 1 }, atTime);
+        tl.set("#tapWave", { x: x, y: y, opacity: 0.9, scale: 0.4 }, atTime);
+        tl.to("#touchPoint", {
+          scale: 0.82,
+          duration: 0.1,
+          yoyo: true,
+          repeat: 1,
+          ease: "power2.inOut"
+        }, atTime);
+        tl.to("#tapWave", {
+          scale: 2.3,
+          opacity: 0,
+          duration: 0.45,
+          ease: "power2.out"
+        }, atTime + 0.03);
+      }
+
+      // ========================================================
+      // 1. ESCENA 1: COPIAR CÓDIGO EN AUTOBIRTHDAY (00:00 - 00:02.4)
+      // ========================================================
+      // Touch point glides to Button 1: [ 📋 Copiar Código ] (X: 540, Y: 512)
+      tl.to("#touchPoint", { opacity: 1, duration: 0.35 }, 0.4);
+      tl.to("#touchPoint", { x: 540, y: 512, duration: 0.5, ease: "power2.out" }, 0.5);
+
+      // CLICK 1 (00:01.0): Copiar Código
+      performTap(540, 512, 1.0);
+
+      // Feedback botón verde + toast
+      tl.to("#btnCopyPwa", { backgroundColor: "#059669", color: "#ffffff", duration: 0.15 }, 1.12);
+      tl.to("#copyPwaText", { textContent: "¡Copiado!", duration: 0.05 }, 1.12);
+      tl.to("#copyPwaIcon", { textContent: "✓", duration: 0.05 }, 1.12);
+
+      tl.to("#toastCopied", { opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.7)" }, 1.25);
+
+      // ========================================================
+      // 2. TRANSICIÓN 1: CAMBIO DE APP POR BOTÓN DE NAVEGACIÓN (00:02.0 - 00:04.6)
+      // ========================================================
+      // Touch point moves down to the Recent Apps button ||| (X: 240, Y: 1321)
+      tl.to("#touchPoint", { x: 240, y: 1321, duration: 0.55, ease: "power2.out" }, 1.8);
+
+      // CLICK NAV 1 (00:02.4): Tap en el botón ||| de navegación reciente
+      performTap(240, 1321, 2.4);
+      tl.set("#btnNavRecents", { className: "nav-btn active-press" }, 2.4);
+      tl.to("#btnNavRecents", { className: "nav-btn", duration: 0.2 }, 2.55);
+
+      // AutoBirthday card scales down into multitask switcher view
+      tl.to("#cardAutoBirthday", {
+        scale: 0.72,
+        y: -20,
+        borderRadius: 40,
+        boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)",
+        duration: 0.5,
+        ease: "power3.out"
+      }, 2.5);
+      tl.to("#badgeAutoBirthday", { opacity: 1, duration: 0.3 }, 2.65);
+
+      // Multitask Swipe: AutoBirthday slides left, WhatsApp slides to center
+      tl.to("#cardAutoBirthday", { x: -900, duration: 0.6, ease: "power3.inOut" }, 3.1);
+      tl.set("#cardWhatsApp", { opacity: 1 }, 3.0);
+      tl.fromTo("#cardWhatsApp", 
+        { x: 900, scale: 0.72, y: -20, borderRadius: 40, boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)" },
+        { x: 0, duration: 0.6, ease: "power3.inOut" },
+        3.1
+      );
+      tl.to("#badgeWhatsApp", { opacity: 1, duration: 0.3 }, 3.35);
+
+      // Touch point moves to center of WhatsApp app card in switcher (X: 540, Y: 620)
+      tl.to("#touchPoint", { x: 540, y: 620, duration: 0.45, ease: "power2.out" }, 3.6);
+
+      // CLICK SELECT 1 (00:04.1): Tap en la tarjeta de WhatsApp para abrirla
+      performTap(540, 620, 4.1);
+
+      // WhatsApp card zooms up to fullscreen!
+      tl.to("#cardWhatsApp", {
+        scale: 1.0,
+        y: 0,
+        borderRadius: 0,
+        boxShadow: "none",
+        duration: 0.45,
+        ease: "power3.out"
+      }, 4.2);
+      tl.to("#badgeWhatsApp", { opacity: 0, duration: 0.2 }, 4.2);
+
+      // ========================================================
+      // 3. ESCENA 2: WHATSAPP - 3 PUNTOS Y MENÚ (00:04.6 - 00:06.6)
+      // ========================================================
+      // Touch point moves to 3 dots button (X: 1015, Y: 54)
+      tl.to("#touchPoint", { x: 1015, y: 54, duration: 0.45, ease: "power2.out" }, 4.7);
+
+      // CLICK 2 (00:05.2): 3 puntos verticales
+      performTap(1015, 54, 5.2);
+
+      // Menu appears
+      tl.set("#waDropdownMenu", { display: "flex" }, 5.4);
+      tl.fromTo("#waDropdownMenu", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.5)" }, 5.4);
+
+      // Touch point moves to Dispositivos vinculados (X: 814, Y: 335)
+      tl.to("#touchPoint", { x: 814, y: 335, duration: 0.4, ease: "power2.out" }, 5.55);
+
+      // CLICK 3 (00:06.0): Dispositivos vinculados
+      performTap(814, 335, 6.0);
+      tl.set("#waItemDevices", { className: "wa-menu-item active-tap" }, 6.0);
+
+      // ========================================================
+      // 4. ESCENA 3: PANTALLA DISPOSITIVOS VINCULADOS (00:06.6 - 00:08.4)
+      // ========================================================
+      tl.set("#waScreenChats", { display: "none" }, 6.4);
+      tl.set("#waScreenDevices", { display: "flex" }, 6.4);
+
+      // Touch point moves to green button Vincular un dispositivo (X: 540, Y: 515)
+      tl.to("#touchPoint", { x: 540, y: 515, duration: 0.55, ease: "power2.inOut" }, 6.6);
+
+      // CLICK 4 (00:07.4): Vincular un dispositivo
+      performTap(540, 515, 7.4);
+      tl.to("#btnVincularDispositivo", { scale: 0.96, duration: 0.1, yoyo: true, repeat: 1 }, 7.4);
+
+      // ========================================================
+      // 5. ESCENA 4: ESCANEA QR / CÁMARA (00:08.4 - 00:10.2)
+      // ========================================================
+      tl.set("#waScreenDevices", { display: "none" }, 8.2);
+      tl.set("#waScreenScanner", { display: "flex" }, 8.2);
+
+      // Laser animation
+      tl.fromTo(".wa-laser-bar", { y: -220 }, { y: 220, duration: 1.1, repeat: 1, yoyo: true, ease: "sine.inOut" }, 8.2);
+
+      // Touch point moves to bottom bar Vincular con número (X: 540, Y: 1252)
+      tl.to("#touchPoint", { x: 540, y: 1252, duration: 0.6, ease: "power2.inOut" }, 8.5);
+
+      // CLICK 5 (00:09.3): Vincular con número de teléfono
+      performTap(540, 1252, 9.3);
+      tl.to("#btnLinkWithPhone", { backgroundColor: "#1E293B", duration: 0.1, yoyo: true, repeat: 1 }, 9.3);
+
+      // ========================================================
+      // 6. ESCENA 5: INGRESA EL CÓDIGO (00:10.2 - 00:12.6)
+      // ========================================================
+      tl.set("#waScreenScanner", { display: "none" }, 10.0);
+      tl.set("#waScreenCode", { display: "flex" }, 10.0);
+
+      // Popover Pegar
+      tl.set("#waPopoverPaste", { display: "flex" }, 10.2);
+      tl.fromTo("#waPopoverPaste", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1.0, duration: 0.2, ease: "back.out(1.6)" }, 10.2);
+
+      tl.to("#touchPoint", { x: 540, y: 448, duration: 0.35, ease: "power2.out" }, 10.3);
+
+      // CLICK 6 (00:10.7): Pegar
+      performTap(540, 448, 10.7);
+      tl.set("#waPopoverPaste", { display: "none" }, 10.85);
+
+      // Digits elastic fill: [ 7 ][ K ][ 4 ][ B ] - [ 9 ][ X ][ 2 ][ M ]
+      const chars = ["7", "K", "4", "B", "9", "X", "2", "M"];
+      chars.forEach((c, idx) => {
+        const id = `#c${idx + 1}`;
+        const time = 10.95 + idx * 0.035;
+        tl.to(id, { textContent: c, borderColor: "#0F7A3E", color: "#0F7A3E", backgroundColor: "#D1FAE5", duration: 0.05 }, time);
+        tl.fromTo(id, { scale: 1.16 }, { scale: 1.0, duration: 0.14, ease: "back.out(2)" }, time);
+      });
+
+      // Check verde de éxito
+      tl.set("#waSuccessRow", { display: "flex" }, 11.5);
+      tl.fromTo("#waSuccessRow", { scale: 0.8, opacity: 0 }, { scale: 1.0, opacity: 1, duration: 0.25, ease: "back.out(1.7)" }, 11.5);
+
+      // ========================================================
+      // 7. TRANSICIÓN 2: CAMBIO DE APP DE VUELTA A AUTOBIRTHDAY (00:12.4 - 00:15.0)
+      // ========================================================
+      // Touch point moves down to the Recent Apps button ||| (X: 240, Y: 1321)
+      tl.to("#touchPoint", { x: 240, y: 1321, duration: 0.55, ease: "power2.out" }, 12.2);
+
+      // CLICK NAV 2 (00:12.8): Tap en el botón ||| de navegación reciente
+      performTap(240, 1321, 12.8);
+      tl.set("#btnNavRecents", { className: "nav-btn active-press" }, 12.8);
+      tl.to("#btnNavRecents", { className: "nav-btn", duration: 0.2 }, 12.95);
+
+      // Prepare AutoBirthday connected state while minimized
+      tl.set("#abPendingView", { display: "none" }, 12.8);
+      tl.set("#abTabsContainer", { display: "none" }, 12.8);
+      tl.set("#toastCopied", { display: "none" }, 12.8);
+      tl.set("#abCardTitle", { textContent: "WhatsApp Vinculado" }, 12.8);
+      tl.set("#abCardSubtitle", { textContent: "Tu cuenta está lista para enviar felicitaciones automáticas." }, 12.8);
+      tl.set("#abStatusPill", { className: "ab-status-badge ab-status-connected" }, 12.8);
+      tl.set("#abStatusDot", { backgroundColor: "#10B981" }, 12.8);
+      tl.set("#abStatusText", { textContent: "Conectado" }, 12.8);
+      tl.set("#abSuccessHero", { display: "flex" }, 12.8);
+
+      // WhatsApp card scales down into multitask switcher
+      tl.to("#cardWhatsApp", {
+        scale: 0.72,
+        y: -20,
+        borderRadius: 40,
+        boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)",
+        duration: 0.5,
+        ease: "power3.out"
+      }, 12.9);
+      tl.to("#badgeWhatsApp", { opacity: 1, duration: 0.3 }, 13.05);
+
+      // Multitask Swipe: WhatsApp slides right, AutoBirthday slides to center
+      tl.to("#cardWhatsApp", { x: 900, duration: 0.6, ease: "power3.inOut" }, 13.5);
+      tl.fromTo("#cardAutoBirthday",
+        { x: -900, scale: 0.72, y: -20, borderRadius: 40, boxShadow: "0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.15)" },
+        { x: 0, duration: 0.6, ease: "power3.inOut" },
+        13.5
+      );
+      tl.to("#badgeAutoBirthday", { opacity: 1, duration: 0.3 }, 13.75);
+
+      // Touch point moves to center of AutoBirthday card in switcher (X: 540, Y: 620)
+      tl.to("#touchPoint", { x: 540, y: 620, duration: 0.45, ease: "power2.out" }, 14.0);
+
+      // CLICK SELECT 2 (00:14.5): Tap en la tarjeta de AutoBirthday para abrirla
+      performTap(540, 620, 14.5);
+
+      // AutoBirthday card zooms up to fullscreen!
+      tl.to("#cardAutoBirthday", {
+        scale: 1.0,
+        y: 0,
+        borderRadius: 0,
+        boxShadow: "none",
+        duration: 0.45,
+        ease: "power3.out"
+      }, 14.6);
+      tl.to("#badgeAutoBirthday", { opacity: 0, duration: 0.2 }, 14.6);
+
+      // ========================================================
+      // 8. ESCENA 6: AUTOBIRTHDAY VINCULADO Y CTA (00:15.0 - 00:17.0)
+      // ========================================================
+      // Touch point moves to Button 7: [ Agregar cumpleaños desde WhatsApp → ] (X: 540, Y: 615)
+      tl.to("#touchPoint", { x: 540, y: 615, duration: 0.55, ease: "power2.out" }, 15.1);
+
+      // CLICK 7 (00:15.8): CTA final
+      performTap(540, 615, 15.8);
+
+      tl.to("#btnPanelFinalCta", {
+        scale: 0.96,
+        duration: 0.1,
+        yoyo: true,
+        repeat: 1,
+        boxShadow: "0 12px 30px rgba(4, 120, 87, 0.6)"
+      }, 15.8);
+
+      // Smooth settling freeze until 17.0s
+
+      window.__timelines["screencast-switcher-17s"] = tl;
+    </script>
+  </body>
+</html>

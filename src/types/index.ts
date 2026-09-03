@@ -81,6 +81,7 @@ export interface UserProfile<T = Timestamp> {
   email: string;
   timezone: string;
   locale?: 'es' | 'en' | 'pt' | 'de';
+  hasCompletedOnboarding?: boolean;
   createdAt: T;
   whatsappInstance?: WhatsAppInstance;
 }

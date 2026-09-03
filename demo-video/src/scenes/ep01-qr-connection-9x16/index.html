@@ -482,7 +482,8 @@
       }
 
       /* ----------------------------------------------------
-         WA SCREEN 1: CHATS LIST (Capturas 1 y 2 oficiales)
+         WA SCREEN 1: CHATS LIST (Completamente ficticia y realista)
+         13 conversaciones llenando todo el alto hasta el menú inferior
          ---------------------------------------------------- */
       #waScreenChats {
         position: absolute;
@@ -514,7 +515,7 @@
         flex-shrink: 0;
       }
 
-      /* Filter pills row from Screenshot 1 */
+      /* Filter pills row */
       .wa-filter-pills-row {
         display: flex;
         align-items: center;
@@ -541,7 +542,7 @@
         font-weight: 800;
       }
 
-      /* Archived row from Screenshot 1 */
+      /* Archived row */
       .wa-archived-row {
         display: flex;
         align-items: center;
@@ -555,14 +556,14 @@
         display: flex;
         align-items: center;
         gap: 18px;
-        padding: 10px 0;
+        padding: 9px 0;
         border-bottom: 1px solid #F0F2F5;
         flex-shrink: 0;
       }
 
       .wa-avatar-box {
-        width: 56px;
-        height: 56px;
+        width: 54px;
+        height: 54px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -655,7 +656,7 @@
         color: #111B21;
       }
 
-      /* Dropdown Menu (Captura 2: Exact Measured Center: X=814, Y=335) */
+      /* Dropdown Menu (Exact Measured Center: X=814, Y=335) */
       .wa-dropdown-menu {
         position: absolute;
         top: 80px;
@@ -949,9 +950,9 @@
     <div
       id="root"
       class="clip"
-      data-composition-id="screencast-drawer-16s"
+      data-composition-id="screencast-drawer-15s"
       data-start="0"
-      data-duration="16"
+      data-duration="15"
       data-width="1080"
       data-height="1350"
     >
@@ -1114,8 +1115,7 @@
 
           <div class="wa-main-area" data-layout-allow-overlap="true">
             <!-- ----------------------------------------------------
-                 1. CHATS LIST (Captura 1 y 2 con Bottom Nav oficial)
-                 Con lista completa de chats que llena toda la pantalla
+                 1. CHATS LIST (13 conversaciones 100% ficticias y realistas)
                  ---------------------------------------------------- -->
             <div id="waScreenChats" data-layout-allow-overlap="true">
               <div class="wa-chats-scroll-body">
@@ -1125,7 +1125,7 @@
                   <span>Preguntar a Meta AI o buscar</span>
                 </div>
 
-                <!-- Filter pills row from Screenshot 1 -->
+                <!-- Filter pills row -->
                 <div class="wa-filter-pills-row">
                   <div class="wa-filter-pill active">Todos</div>
                   <div class="wa-filter-pill">No leídos</div>
@@ -1134,7 +1134,7 @@
                   <div class="wa-filter-pill">+</div>
                 </div>
 
-                <!-- Archived row from Screenshot 1 -->
+                <!-- Archived row -->
                 <div class="wa-archived-row">
                   <div style="display: flex; align-items: center; gap: 16px;">
                     <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
@@ -1142,83 +1142,125 @@
                     </div>
                     <span style="font-size: 19px; font-weight: 700; color: #111B21;">Archivados</span>
                   </div>
-                  <span style="font-size: 16px; font-weight: 800; color: #0F7A3E;">1</span>
+                  <span style="font-size: 16px; font-weight: 800; color: #0F7A3E;">2</span>
                 </div>
 
-                <!-- Chat 1: NOTAS (Captura 1) -->
+                <!-- Chat 1: Familia Ramos ❤️ -->
                 <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #00A884;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <div class="wa-avatar-box" style="background: #059669;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
                       <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">NOTAS 🤠✌️</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">✓ Tú: 📷 Foto</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Familia Ramos ❤️</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Mamá: ¿Quién viene a comer el domingo?</div>
                   </div>
                   <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                    <span style="font-size: 14px; color: #52525B;">Ayer</span>
+                    <span style="font-size: 14px; color: #52525B;">19:42</span>
                     <span style="font-size: 14px; color: #64748B;">📌</span>
                   </div>
                 </div>
 
-                <!-- Chat 2: Papa (Captura 1) -->
+                <!-- Chat 2: Carlos Martínez -->
                 <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #EA580C;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <div class="wa-avatar-box" style="background: #6366F1;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
                       <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Papa</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Carlos Martínez</div>
                     <div style="font-size: 16px; color: #0F7A3E; font-weight: 700; margin-top: 2px;">escribiendo...</div>
                   </div>
-                  <span style="font-size: 14px; color: #0F7A3E; font-weight: 700;">19:36</span>
+                  <span style="font-size: 14px; color: #0F7A3E; font-weight: 700;">19:35</span>
                 </div>
 
-                <!-- Chat 3: Josephine ✨ (Captura 1) -->
+                <!-- Chat 3: Pádel Los Galácticos 🎾 -->
+                <div class="wa-chat-row">
+                  <div class="wa-avatar-box" style="background: #00A884;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Pádel Los Galácticos 🎾</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Dani: Reservada pista 4 a las 20:00</div>
+                  </div>
+                  <span style="font-size: 14px; color: #52525B;">18:50</span>
+                </div>
+
+                <!-- Chat 4: Laura Sánchez -->
                 <div class="wa-chat-row">
                   <div class="wa-avatar-box" style="background: #D97706;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
                       <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Josephine ✨</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Pero si dale otra</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Laura Sánchez</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">¡Muchísimas gracias por todo! 🎉</div>
                   </div>
-                  <span style="font-size: 14px; color: #52525B;">18:55</span>
+                  <span style="font-size: 14px; color: #52525B;">18:15</span>
                 </div>
 
-                <!-- Chat 4: Pádel (modo parejitas y tal) (Captura 1) -->
+                <!-- Chat 5: Equipo Marketing 🚀 -->
                 <div class="wa-chat-row">
                   <div class="wa-avatar-box" style="background: #0284C7;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
-                      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Pádel (modo parejitas y tal)</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Josephine ✨: 😅😂😂</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Equipo Marketing 🚀</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Sofía: Documento final enviado al cliente</div>
                   </div>
-                  <span style="font-size: 14px; color: #52525B;">18:26</span>
+                  <span style="font-size: 14px; color: #52525B;">17:40</span>
                 </div>
 
-                <!-- Chat 5: Familia 🤫 (Captura 1) -->
+                <!-- Chat 6: David Hermano -->
                 <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #059669;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <div class="wa-avatar-box" style="background: #9333EA;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">David Hermano</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">✓ Tú: Te paso el enlace luego</div>
+                  </div>
+                  <span style="font-size: 14px; color: #52525B;">16:55</span>
+                </div>
+
+                <!-- Chat 7: Viaje Roma 2026 ✈️ -->
+                <div class="wa-chat-row">
+                  <div class="wa-avatar-box" style="background: #F43F5E;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
                       <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Familia 🤫</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Alicia: Muy bien entonces</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Viaje Roma 2026 ✈️</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Marcos: Mirad estos vuelos de oferta 🇮🇹</div>
                   </div>
-                  <span style="font-size: 14px; color: #52525B;">16:30</span>
+                  <span style="font-size: 14px; color: #52525B;">16:10</span>
                 </div>
 
-                <!-- Chat 6: Clases Pádel 🎾 (Captura 1) -->
+                <!-- Chat 8: Marta Diseñadora -->
+                <div class="wa-chat-row">
+                  <div class="wa-avatar-box" style="background: #EA580C;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Marta Diseñadora</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Revisados los últimos mockups de la app</div>
+                  </div>
+                  <span style="font-size: 14px; color: #52525B;">15:20</span>
+                </div>
+
+                <!-- Chat 9: CrossFit Mañanas 💪 -->
                 <div class="wa-chat-row">
                   <div class="wa-avatar-box" style="background: #84CC16;">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
@@ -1226,70 +1268,70 @@
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">🎾 Clases Pádel 🎾</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">¡Entrenamiento confirmado!</div>
-                  </div>
-                  <span style="font-size: 14px; color: #52525B;">16:16</span>
-                </div>
-
-                <!-- Chat 7: Carlos (Nuevos chats llenando hasta abajo) -->
-                <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #6366F1;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                  </div>
-                  <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Carlos Trabajo</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">¿Viste los archivos de la reunión?</div>
-                  </div>
-                  <span style="font-size: 14px; color: #52525B;">15:42</span>
-                </div>
-
-                <!-- Chat 8: Laura -->
-                <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #EC4899;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                  </div>
-                  <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Laura</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">¡Nos vemos el fin de semana! 🎉</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">CrossFit Mañanas 💪</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Entrenador: Mañana clase a las 08:00 h</div>
                   </div>
                   <span style="font-size: 14px; color: #52525B;">14:05</span>
                 </div>
 
-                <!-- Chat 9: Los Galácticos FC -->
+                <!-- Chat 10: Javier Gómez -->
                 <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #2563EB;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
-                      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  <div class="wa-avatar-box" style="background: #475569;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Los Galácticos FC</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Falta uno para completar el partido</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Javier Gómez</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">✓✓ ¿Quedamos mañana para tomar algo?</div>
                   </div>
                   <span style="font-size: 14px; color: #52525B;">Ayer</span>
                 </div>
 
-                <!-- Chat 10: Oficina Central -->
+                <!-- Chat 11: Comunidad Vecinos 🏢 -->
                 <div class="wa-chat-row">
-                  <div class="wa-avatar-box" style="background: #475569;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF">
-                      <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+                  <div class="wa-avatar-box" style="background: #115E59;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                     </svg>
                   </div>
                   <div style="flex: 1;">
-                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Oficina Central</div>
-                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">✓✓ Documentos revisados y listos</div>
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Comunidad Vecinos 🏢</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Presidente: Aviso de revisión de ascensores</div>
+                  </div>
+                  <span style="font-size: 14px; color: #52525B;">Ayer</span>
+                </div>
+
+                <!-- Chat 12: Elena Universidad -->
+                <div class="wa-chat-row">
+                  <div class="wa-avatar-box" style="background: #DB2777;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Elena Universidad</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Te mandé los apuntes del tema 4</div>
                   </div>
                   <span style="font-size: 14px; color: #52525B;">28/08</span>
                 </div>
+
+                <!-- Chat 13: Taller Mecánico Auto -->
+                <div class="wa-chat-row">
+                  <div class="wa-avatar-box" style="background: #1D4ED8;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF">
+                      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                    </svg>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 21px; font-weight: 800; color: #111B21;">Taller Mecánico Auto</div>
+                    <div style="font-size: 16px; color: #52525B; margin-top: 2px;">Su vehículo ya está listo para recoger</div>
+                  </div>
+                  <span style="font-size: 14px; color: #52525B;">27/08</span>
+                </div>
               </div>
 
-              <!-- Floating Buttons Stack (Meta AI + New Chat FAB) from Screenshot 1 -->
+              <!-- Floating Buttons Stack (Meta AI + New Chat FAB) -->
               <div class="wa-fabs-stack" data-layout-allow-overlap="true">
                 <div class="wa-fab-meta">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
@@ -1356,7 +1398,7 @@
                 </div>
               </nav>
 
-              <!-- Dropdown Menu (Captura 2: Exact Measured Center: X=814, Y=335) -->
+              <!-- Dropdown Menu (Exact Measured Center: X=814, Y=335) -->
               <div id="waDropdownMenu" class="wa-dropdown-menu">
                 <div class="wa-menu-item"><span>Nuevo grupo</span></div>
                 <div class="wa-menu-item"><span>Nueva difusión</span></div>
@@ -1666,7 +1708,8 @@
       tl.to("#touchPoint", { opacity: 0, duration: 0.3 }, 11.9);
 
       // ========================================================
-      // 6. ESCENA 6: REGRESO A AUTOBIRTHDAY VINCULADO (00:12.4 - 00:16.0)
+      // 6. ESCENA 6: REGRESO A AUTOBIRTHDAY VINCULADO (00:12.4 - 00:15.0)
+      // Recortado el último segundo a exactamente 15.0s totales
       // ========================================================
       // Prepare AutoBirthday success state
       tl.set("#abPendingView", { display: "none" }, 12.25);
@@ -1686,11 +1729,11 @@
       tl.to("#appAutoBirthday", { opacity: 1, duration: 0.2 }, 12.4);
 
       // Touch point glides to Button 7: [ Agregar cumpleaños desde WhatsApp → ] (Exact Center: X=540, Y=615)
-      tl.to("#touchPoint", { x: 540, y: 615, duration: 0.65, ease: "power2.out" }, 13.0);
-      tl.to("#touchPoint", { opacity: 1, duration: 0.2 }, 13.1);
+      tl.to("#touchPoint", { x: 540, y: 615, duration: 0.65, ease: "power2.out" }, 12.8);
+      tl.to("#touchPoint", { opacity: 1, duration: 0.2 }, 12.9);
 
-      // CLICK 7 (00:14.0): Exact center of [ Agregar cumpleaños desde WhatsApp → ] (X: 540, Y=615)
-      performTap(540, 615, 14.0);
+      // CLICK 7 (00:13.8): Exact center of [ Agregar cumpleaños desde WhatsApp → ] (X: 540, Y: 615)
+      performTap(540, 615, 13.8);
 
       tl.to("#btnPanelFinalCta", {
         scale: 0.96,
@@ -1698,11 +1741,11 @@
         yoyo: true,
         repeat: 1,
         boxShadow: "0 12px 30px rgba(4, 120, 87, 0.6)"
-      }, 14.0);
+      }, 13.8);
 
-      // Freeze final limpio hasta 16.0s
+      // Smooth settling finish at 15.0s
 
-      window.__timelines["screencast-drawer-16s"] = tl;
+      window.__timelines["screencast-drawer-15s"] = tl;
     </script>
   </body>
 </html>

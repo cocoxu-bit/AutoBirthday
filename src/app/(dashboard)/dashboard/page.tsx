@@ -10,7 +10,6 @@ import { UpcomingBirthdays, UpcomingBirthdayItem } from "@/components/dashboard/
 import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-activity";
 import { ConnectionStatusCard } from "@/components/dashboard/connection-status-card";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
-import { WelcomeModal } from "@/components/onboarding/welcome-modal";
 import { Smartphone, UserPlus, Users, FileText, Sparkles, Cake, Gift, ArrowRight } from "lucide-react";
 import { getServerTranslations } from "@/lib/i18n/server";
 
@@ -221,12 +220,6 @@ export default async function DashboardPage() {
         isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
         contactsCount={data?.stats?.activeContacts || 0}
         hasReceivedWelcome={Boolean(data?.hasReceivedWelcomeMessage)}
-      />
-
-      {/* First-time Welcome Modal */}
-      <WelcomeModal
-        displayName={data?.displayName}
-        isWhatsAppConnected={Boolean(data?.isWhatsAppConnected)}
       />
 
       {/* WhatsApp Connection Health Monitor (Only appears if disconnected/connecting) */}
