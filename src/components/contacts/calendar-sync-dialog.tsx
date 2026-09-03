@@ -37,20 +37,9 @@ import {
   Smartphone,
   Plus
 } from 'lucide-react';
-
-const MONTH_NAMES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-];
+import { useTranslation } from '@/lib/i18n/context';
 
 const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
-
-const TONES: Array<{ id: AiTone; label: string; icon: string }> = [
-  { id: 'casual', label: 'Casual', icon: '😊' },
-  { id: 'divertido', label: 'Divertido', icon: '🎉' },
-  { id: 'emotivo', label: 'Emotivo', icon: '❤️' },
-  { id: 'formal', label: 'Formal', icon: '🤝' },
-];
 
 const AI_TONE_EXAMPLES: Record<AiTone, string> = {
   casual: '¡Muchas felicidades {nombre}! 🎉🎂 Que tengas un día genial rodeado de los tuyos. ¡Un abrazo grande!',
@@ -90,6 +79,7 @@ interface CalendarSyncDialogProps {
 }
 
 export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDialogProps) {
+  const { t, dict } = useTranslation();
   const [activeTab, setActiveTab] = useState<'google' | 'apple'>('google');
   const [step, setStep] = useState<'connect' | 'deck' | 'completed'>('connect');
   const [loading, setLoading] = useState(false);
@@ -384,14 +374,14 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                  {step === 'connect' ? 'Agregar cumpleaños desde Calendario' : step === 'deck' ? 'Revisar Cumpleaños' : '¡Cumpleaños Agregados!'}
+                  {step === 'connect' ? t('sync.titleCalendar') : step === 'deck' ? t('sync.reviewTitle') : t('sync.completedTitle')}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
                   {step === 'connect' 
-                    ? 'Importa automáticamente desde Google o Apple sin archivos' 
+                    ? t('sync.subtitleCalendar')
                     : step === 'deck' 
-                    ? `Cumpleaños ${currentIndex + 1} de ${cards.length}`
-                    : 'Cumpleaños añadidos a tu agenda'}
+                    ? t('sync.cardCounter').replace('{current}', (currentIndex + 1).toString()).replace('{total}', cards.length.toString())
+                    : t('sync.completedSubtitle')}
                 </p>
               </div>
             </div>
@@ -401,14 +391,12 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                 <button
                   type="button"
                   onClick={() => {
-                    if (savedCount > 0) {
-                      toast.success(`Guardado: ${savedCount} contactos añadidos a tu agenda. Podrás continuar cuando quieras.`);
-                    }
                     onClose();
                   }}
                   className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-2xs transition-colors"
+                  title={t('sync.saveAndExit')}
                 >
-                  Guardar y seguir luego
+                  {t('sync.saveAndExit')}
                 </button>
               )}
 
@@ -425,14 +413,16 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
           {step === 'deck' && (
             <div className="space-y-1.5 pt-0.5">
               <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-                <span className="text-violet-900 font-black">Contacto {currentIndex + 1} de {cards.length}</span>
+                <span className="text-violet-900 font-black">
+                  {t('sync.cardCounter').replace('{current}', (currentIndex + 1).toString()).replace('{total}', cards.length.toString())}
+                </span>
                 <div className="flex items-center gap-2">
                   <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-black text-[11px]">
-                    ✨ {savedCount} guardados
+                    {t('sync.savedCount').replace('{count}', savedCount.toString())}
                   </span>
                   {skippedCount > 0 && (
                     <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold text-[11px]">
-                      ⏭️ {skippedCount} omitidos
+                      {t('sync.skippedCount').replace('{count}', skippedCount.toString())}
                     </span>
                   )}
                 </div>
@@ -625,16 +615,16 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       type="text"
                       value={currentCard.matchedName || currentCard.name}
                       onChange={e => updateCurrentCard({ matchedName: e.target.value, name: e.target.value })}
-                      placeholder="Nombre del contacto"
+                      placeholder={t('sync.namePlaceholder')}
                       className="w-full text-center text-xl sm:text-2xl font-black text-slate-900 tracking-tight bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-violet-500 rounded-2xl py-1 pl-6 pr-7 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all cursor-text"
-                      title="Editar nombre"
+                      title={t('sync.namePlaceholder')}
                     />
                     <Edit3 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-violet-600 transition-colors pointer-events-none" />
                   </div>
 
                   <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-50 border border-amber-200/80 text-amber-900 rounded-full font-black text-xs shadow-sm">
-                      🎂 {currentCard.birthDay} de {MONTH_NAMES[currentCard.birthMonth - 1]}
+                      🎂 {currentCard.birthDay} {dict.contactForm.months[currentCard.birthMonth - 1]}
                     </span>
 
                     {currentCard.matchedPhone && currentCard.matchScore > 0 ? (
@@ -674,7 +664,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                 <div className="space-y-2.5 text-left">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
-                    ¿Dónde quieres enviar la felicitación?
+                    {t('sync.targetTitle')}
                   </label>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -689,8 +679,8 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     >
                       <User className="w-4 h-4 text-violet-600 shrink-0" />
                       <div>
-                        <p className="text-xs font-black">Chat Privado</p>
-                        <p className="text-[10px] text-slate-500 font-normal">Directo a su WhatsApp</p>
+                        <p className="text-xs font-black">{t('contactForm.targetDirect')}</p>
+                        <p className="text-[10px] text-slate-500 font-normal">{t('contactForm.targetDirectDesc')}</p>
                       </div>
                     </button>
 
@@ -717,8 +707,8 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     >
                       <Users className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div>
-                        <p className="text-xs font-black">Grupo de WhatsApp</p>
-                        <p className="text-[10px] text-slate-500 font-normal">Amigos, familia, etc.</p>
+                        <p className="text-xs font-black">{t('contactForm.targetGroup')}</p>
+                        <p className="text-[10px] text-slate-500 font-normal">{t('contactForm.targetGroupDescShort')}</p>
                       </div>
                     </button>
                   </div>
@@ -736,17 +726,17 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
                             <label className="text-[11px] font-bold text-emerald-900 uppercase">
-                              Selecciona el Grupo de WhatsApp:
+                              {t('contactForm.selectGroupPlaceholder')}:
                             </label>
                             {hasCommonGroups && (
                               <span className="text-[10px] bg-emerald-200/80 text-emerald-900 font-extrabold px-2 py-0.5 rounded-md">
-                                ✨ {commonGroups.length} en común
+                                {t('contactForm.groupCommon').replace('{count}', commonGroups.length.toString())}
                               </span>
                             )}
                           </div>
 
                           {availableGroups.length === 0 ? (
-                            <p className="text-xs text-emerald-700">No se detectaron grupos en tu cuenta de WhatsApp.</p>
+                            <p className="text-xs text-emerald-700">{t('contactForm.groupNoneDetected')}</p>
                           ) : hasCommonGroups ? (
                             <select
                               value={currentCard.groupId || commonGroups[0]?.id || ''}
@@ -887,7 +877,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     <div className="space-y-2.5 bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold text-slate-700 uppercase">
-                          Elige una de tus plantillas:
+                          {t('contactForm.selectTemplateLabel')}
                         </label>
                         <button
                           type="button"
@@ -895,12 +885,12 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                           className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 shadow-2xs transition-colors"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Nueva Plantilla</span>
+                          <span>{t('templates.newTemplate')}</span>
                         </button>
                       </div>
 
                       {currentTemplates.length === 0 ? (
-                        <p className="text-xs text-slate-500">No tienes plantillas creadas todavía. Crea una con el botón superior.</p>
+                        <p className="text-xs text-slate-500">{t('templates.noTemplates')}</p>
                       ) : (
                         <select
                           value={currentCard.templateId || currentTemplates[0]?.id || ''}
@@ -922,10 +912,15 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     <div className="space-y-3 bg-violet-50/40 border border-violet-100 p-4 rounded-2xl">
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-700 uppercase">
-                          Tono de la felicitación IA:
+                          {t('contactForm.aiToneLabel')}:
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                          {TONES.map(tone => {
+                          {([
+                            { id: 'casual' as const, label: t('settings.toneCasual') },
+                            { id: 'divertido' as const, label: t('settings.toneFunny') },
+                            { id: 'emotivo' as const, label: t('settings.toneEmotional') },
+                            { id: 'formal' as const, label: t('settings.toneFormal') },
+                          ]).map(tone => {
                             const isSelected = currentCard.aiTone === tone.id;
                             return (
                               <button
@@ -938,7 +933,6 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                                 }`}
                               >
-                                <span>{tone.icon}</span>
                                 <span>{tone.label}</span>
                               </button>
                             );
@@ -949,7 +943,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       <div className="space-y-1">
                         <input
                           type="text"
-                          placeholder="💡 Notas opcionales para la IA (ej: Le gusta el tenis, cumple 30...)"
+                          placeholder={t('contactForm.aiNotesPlaceholder')}
                           value={currentCard.aiNotes || ''}
                           onChange={e => updateCurrentCard({ aiNotes: e.target.value })}
                           className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -963,10 +957,12 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                     <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                       <span className="flex items-center gap-1.5 text-slate-700">
                         <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                        Vista previa en WhatsApp
+                        {t('contactForm.previewBalloon')}
                       </span>
                       <span className="text-[11px] font-normal text-slate-400">
-                        {currentCard.targetType === 'group' ? `en el grupo "${currentGroupName}"` : `así lo recibirá ${contactFirstName}`}
+                        {currentCard.targetType === 'group' 
+                          ? t('contactForm.previewForGroup').replace('{group}', currentGroupName)
+                          : t('contactForm.previewForDirect').replace('{name}', contactFirstName)}
                       </span>
                     </div>
 
@@ -977,7 +973,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                       {currentCard.targetType === 'group' && (
                         <div className="flex items-center justify-center pb-2">
                           <span className="bg-slate-800/60 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-xs">
-                            👥 Grupo: {currentGroupName}
+                            {currentGroupName}
                           </span>
                         </div>
                       )}
@@ -1006,7 +1002,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                   {/* 5. SEND MODE TOGGLE */}
                   <div className="pt-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-                      Momento de Envío:
+                      {t('contactForm.deliveryTimingLabel')}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
@@ -1019,9 +1015,11 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
-                          🛡️ Pedir Aprobación
+                          {t('contactForm.deliveryAskApproval')}
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Te avisa por WhatsApp el día del cumpleaños para dar el OK.</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                          {t('contactForm.deliveryAskApprovalDesc')}
+                        </p>
                       </button>
 
                       <button
@@ -1034,9 +1032,11 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                         }`}
                       >
                         <p className="font-bold text-xs flex items-center gap-1">
-                          🚀 Envío Automático
+                          {t('contactForm.deliveryAuto')}
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Se envía solo en la mañana de su cumpleaños.</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                          {t('contactForm.deliveryAutoDesc')}
+                        </p>
                       </button>
                     </div>
                   </div>
@@ -1056,10 +1056,10 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
 
               <div className="space-y-2">
                 <h3 className="text-2xl font-black text-slate-900">
-                  ¡Sincronización Completada!
+                  {t('sync.completedTitle')}
                 </h3>
                 <p className="text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                  Has configurado y añadido <strong className="text-emerald-700 font-bold">{savedCount} contactos</strong> listos para recibir felicitaciones personalizadas en su cumpleaños.
+                  {t('sync.completedSubtitle')}
                 </p>
               </div>
 
@@ -1068,7 +1068,7 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
                 onClick={onClose}
                 className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700 transition-all text-sm"
               >
-                Ver mis Contactos
+                {t('sync.goToContacts')}
               </button>
             </div>
           )}
@@ -1084,10 +1084,10 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               onClick={handlePrevious}
               disabled={currentIndex === 0 || isSavingCurrent}
               className="flex-1 min-h-[48px] py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm border border-slate-200 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed active:scale-[0.98]"
-              title="Volver al contacto anterior"
+              title={t('common.back')}
             >
               <ChevronLeft className="w-4 h-4 shrink-0" />
-              <span>Anterior</span>
+              <span>{t('common.back')}</span>
             </button>
 
             {/* Skip Button (Soft light-red background) */}
@@ -1096,10 +1096,10 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               onClick={handleSkipCurrent}
               disabled={isSavingCurrent}
               className="flex-1 min-h-[48px] py-2.5 px-3 bg-red-50 hover:bg-red-100/90 text-rose-700 hover:text-rose-800 font-bold text-xs sm:text-sm border border-red-200/90 shadow-xs rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50"
-              title="Omitir este contacto y pasar al siguiente"
+              title={t('sync.skip')}
             >
               <X className="w-4 h-4 shrink-0 text-rose-500" />
-              <span>Omitir</span>
+              <span>{t('sync.skip')}</span>
             </button>
 
             {/* Save & Next Button */}
@@ -1112,12 +1112,12 @@ export function CalendarSyncDialog({ onClose, templates = [] }: CalendarSyncDial
               {isSavingCurrent ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                  <span>Guardando...</span>
+                  <span>{t('common.saving')}</span>
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4 shrink-0" />
-                  <span>Guardar</span>
+                  <span>{t('common.save')}</span>
                 </>
               )}
             </button>

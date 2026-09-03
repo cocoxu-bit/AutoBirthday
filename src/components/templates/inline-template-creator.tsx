@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { createTemplate } from '@/app/(dashboard)/templates/actions';
 import { Template } from '@/types';
 import { X, Plus, Loader2, Sparkles, FileText } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface InlineTemplateCreatorProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface InlineTemplateCreatorProps {
 }
 
 export function InlineTemplateCreator({ isOpen, onClose, onCreated }: InlineTemplateCreatorProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('¡Muchas felicidades {nombre}! 🎂🥳 Que disfrutes muchísimo de tu día.');
   const [isSaving, setIsSaving] = useState(false);
@@ -67,8 +69,7 @@ export function InlineTemplateCreator({ isOpen, onClose, onCreated }: InlineTemp
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-black text-slate-900 text-sm sm:text-base">Crear Nueva Plantilla</h4>
-              <p className="text-[11px] text-slate-500 font-medium">Se guardará en tus plantillas y se seleccionará ahora</p>
+              <h4 className="font-black text-slate-900 text-sm sm:text-base">{t('templates.newTemplate')}</h4>
             </div>
           </div>
           <button
@@ -83,7 +84,7 @@ export function InlineTemplateCreator({ isOpen, onClose, onCreated }: InlineTemp
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1">
             <label className="block text-xs font-bold text-slate-700 uppercase">
-              Nombre de la Plantilla:
+              {t('templates.templateTitle')}:
             </label>
             <input
               type="text"
@@ -98,14 +99,14 @@ export function InlineTemplateCreator({ isOpen, onClose, onCreated }: InlineTemp
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-700 uppercase">
-                Mensaje:
+                {t('templates.templateContent')}:
               </label>
               <button
                 type="button"
                 onClick={() => addTag('{nombre}')}
                 className="text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-lg transition-colors"
               >
-                + Añadir &ldquo;{'{nombre}'}&rdquo;
+                + &ldquo;{'{nombre}'}&rdquo;
               </button>
             </div>
             <textarea
@@ -123,7 +124,7 @@ export function InlineTemplateCreator({ isOpen, onClose, onCreated }: InlineTemp
               onClick={onClose}
               className="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -133,12 +134,12 @@ export function InlineTemplateCreator({ isOpen, onClose, onCreated }: InlineTemp
               {isSaving ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Guardando...</span>
+                  <span>{t('common.saving')}</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Guardar Plantilla</span>
+                  <span>{t('templates.saveTemplate')}</span>
                 </>
               )}
             </button>
