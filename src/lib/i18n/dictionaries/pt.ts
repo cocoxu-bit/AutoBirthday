@@ -80,8 +80,8 @@ export const pt: Dictionary = {
   contacts: {
     title: "Aniversários",
     subtitle: "Gerencie as datas de aniversário de amigos, familiares e clientes.",
-    syncWhatsApp: "Sincronizar WhatsApp",
-    importContacts: "Importar",
+    syncWhatsApp: "Importar Aniversários do WhatsApp (Recomendado)",
+    importContacts: "Importar Aniversários do Calendário",
     newContact: "Novo Aniversário",
     searchPlaceholder: "Buscar por nome, telefone ou grupo...",
     filterAll: "Todos",
@@ -105,6 +105,7 @@ export const pt: Dictionary = {
     confirmDelete: "Tem certeza de que deseja excluir este contato?",
   },
   contactForm: {
+    searchAutofill: "Buscar contato do WhatsApp para preenchimento automático",
     titleNew: "Novo Aniversário",
     subtitleNew: "Adicione alguém especial para nunca mais esquecer de parabenizar.",
     titleEdit: "Editar Aniversário",

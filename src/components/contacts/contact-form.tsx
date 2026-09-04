@@ -366,7 +366,7 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
           <div ref={contactDropdownRef} className="space-y-1.5 text-left relative">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-              {t('contacts.syncWhatsApp')}
+              {t('contactForm.searchAutofill')}
             </label>
 
             <div className="relative">

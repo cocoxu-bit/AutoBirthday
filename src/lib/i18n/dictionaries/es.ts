@@ -78,8 +78,8 @@ export const es = {
   contacts: {
     title: "Cumpleaños",
     subtitle: "Gestiona las fechas de cumpleaños de tus amigos, familiares o clientes.",
-    syncWhatsApp: "Sincronizar WhatsApp",
-    importContacts: "Importar",
+    syncWhatsApp: "Importar Cumpleaños desde WhatsApp (recomendado)",
+    importContacts: "Importar Cumpleaños desde Calendario",
     newContact: "Nuevo Cumpleaños",
     searchPlaceholder: "Buscar por nombre, teléfono o grupo...",
     filterAll: "Todos",
@@ -103,6 +103,7 @@ export const es = {
     confirmDelete: "¿Seguro que deseas eliminar este contacto?",
   },
   contactForm: {
+    searchAutofill: "Buscar contacto de WhatsApp para autorrellenar",
     titleNew: "Nuevo Cumpleaños",
     subtitleNew: "Añade a alguien especial para no olvidar felicitarle jamás.",
     titleEdit: "Editar Cumpleaños",
