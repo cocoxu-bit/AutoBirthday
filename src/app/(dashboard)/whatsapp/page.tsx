@@ -522,13 +522,13 @@ export default function WhatsAppPage() {
             </button>
           </div>
 
-          {/* Contenido expandido: Vídeo 100% completo a su resolución nativa (sin recortes) + pasos explicativos */}
+          {/* Contenido expandido: Vídeo 100% completo, más grande y sin tanto margen a los lados */}
           {!isGuideCollapsed && (
-            <div className="flex flex-col md:flex-row items-center gap-6 mt-5 pt-5 border-t border-slate-800/80 animate-in fade-in duration-200">
+            <div className="space-y-4 mt-4 pt-4 border-t border-slate-800/80 animate-in fade-in duration-200">
               
-              {/* VÍDEO EN BUCLE A RESOLUCIÓN COMPLETA (4:5 NATIVO, SIN CORTES) */}
-              <div className="w-full max-w-[260px] sm:max-w-[280px] shrink-0 mx-auto">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
+              {/* VÍDEO EN BUCLE A RESOLUCIÓN COMPLETA (4:5 NATIVO, MÁS GRANDE Y SIN TANTO MARGEN) */}
+              <div className="w-full max-w-[420px] sm:max-w-[460px] mx-auto">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-800">
                   <video
                     src="/videos/WA.mp4"
                     autoPlay
@@ -542,20 +542,20 @@ export default function WhatsAppPage() {
                   <button
                     type="button"
                     onClick={() => setIsMuted(!isMuted)}
-                    className="absolute bottom-3 right-3 z-10 w-7 h-7 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-95"
+                    className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-black/75 hover:bg-black text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-95 shadow-md"
                     title={isMuted ? "Activar audio" : "Silenciar"}
                   >
-                    {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-300" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                    {isMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2 font-medium text-center">
+                <p className="text-[11px] text-slate-400 mt-2 font-medium text-center">
                   Vídeo en bucle continuo
                 </p>
               </div>
 
               {/* PASOS EXPLICATIVOS EN TEXTO */}
-              <div className="flex-1 space-y-3 w-full">
-                <p className="text-xs text-slate-300 leading-relaxed font-medium">
+              <div className="space-y-2.5 max-w-[460px] mx-auto w-full pt-1">
+                <p className="text-xs text-slate-300 leading-relaxed font-medium text-center sm:text-left">
                   Sigue estos 3 pasos en tu aplicación de <strong>WhatsApp</strong>:
                 </p>
 
