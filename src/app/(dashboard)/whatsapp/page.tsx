@@ -376,9 +376,9 @@ export default function WhatsAppPage() {
                   <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">2</span>
                   <span>Toca <strong>Dispositivos vinculados</strong> → <strong>Vincular un dispositivo</strong></span>
                 </div>
-                <div className="flex items-center gap-2.5 text-amber-900 bg-amber-100/70 px-2 py-1 rounded-xl border border-amber-200/80 font-medium">
-                  <span className="w-5 h-5 rounded-full bg-amber-500 text-white font-black text-[11px] flex items-center justify-center shrink-0">3</span>
-                  <span>Toca abajo: <strong>"Vincular con el número de teléfono"</strong></span>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">3</span>
+                  <span>Toca abajo en <strong className="text-amber-700 font-bold">"Vincular con el número de teléfono"</strong></span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">4</span>
@@ -562,12 +562,12 @@ export default function WhatsAppPage() {
                     <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-sm">3</span>
                     <span>Toca <strong>Dispositivos vinculados</strong> → <strong>Vincular un dispositivo</strong></span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-amber-300 bg-amber-500/10 px-2 py-1 rounded-xl border border-amber-500/25 font-medium">
-                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-[11px] flex items-center justify-center shrink-0 shadow-sm">4</span>
-                    <span>Toca abajo: <strong>"Vincular con el número de teléfono"</strong></span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-sm">4</span>
+                    <span>Toca abajo en <strong className="text-amber-300 font-bold">"Vincular con el número de teléfono"</strong></span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-emerald-300">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 font-black text-[11px] flex items-center justify-center shrink-0 shadow-sm">5</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-sm">5</span>
                     <span><strong>Pega tu código</strong> y se vinculará al instante</span>
                   </div>
                 </div>
