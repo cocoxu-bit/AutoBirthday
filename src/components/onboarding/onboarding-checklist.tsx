@@ -5,22 +5,13 @@ import Link from 'next/link';
 import { 
   CheckCircle2, 
   Circle, 
-  Smartphone, 
-  UserPlus, 
-  Bot, 
   Sparkles, 
-  Play, 
   ChevronRight, 
   ChevronDown, 
   ChevronUp, 
   X, 
-  ExternalLink,
-  PartyPopper
+  ExternalLink 
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { WhatsAppVideoDrawer } from '@/components/whatsapp/whatsapp-video-drawer';
-import { WhatsAppSyncDialog } from '@/components/contacts/whatsapp-sync-dialog';
-import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { useTranslation } from '@/lib/i18n/context';
 
 interface OnboardingChecklistProps {
@@ -34,11 +25,7 @@ export function OnboardingChecklist({
   contactsCount,
   hasReceivedWelcome = false,
 }: OnboardingChecklistProps) {
-  const router = useRouter();
   const { t } = useTranslation();
-  const [videoModalOpen, setVideoModalOpen] = useState(false);
-  const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
-  const [isCalendarSyncOpen, setIsCalendarSyncOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -99,15 +86,6 @@ export function OnboardingChecklist({
 
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => setVideoModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors border border-white/10"
-              title={t('onboarding.watchVideo')}
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span className="hidden md:inline">{t('onboarding.watchVideo')}</span>
-            </button>
-
-            <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
               title={isCollapsed ? "Expandir" : "Plegar"}
@@ -165,7 +143,7 @@ export function OnboardingChecklist({
                 {step1 ? t('onboarding.step1DescDone') : t('onboarding.step1DescPending')}
               </p>
               {!step1 && (
-                <div className="mt-3 flex items-center gap-3">
+                <div className="mt-3">
                   <Link
                     href="/whatsapp"
                     className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300"
@@ -173,20 +151,11 @@ export function OnboardingChecklist({
                     <span>{t('onboarding.step1Cta')}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
-                  <span className="text-slate-600 text-xs">&bull;</span>
-                  <button
-                    type="button"
-                    onClick={() => setVideoModalOpen(true)}
-                    className="text-xs font-medium text-slate-300 hover:text-white inline-flex items-center gap-1"
-                  >
-                    <Play className="w-3 h-3 fill-current text-violet-400" />
-                    <span>Ver vídeo (15s)</span>
-                  </button>
                 </div>
               )}
             </div>
 
-            {/* STEP 2: CREAR PRIMER CONTACTO */}
+            {/* STEP 2: IR A CUMPLEAÑOS */}
             <div className={`p-4 rounded-2xl border transition-all ${
               step2 
                 ? 'bg-emerald-950/40 border-emerald-500/30' 
@@ -206,33 +175,19 @@ export function OnboardingChecklist({
                 {step2 ? t('onboarding.step2DescDone').replace('{count}', contactsCount.toString()) : t('onboarding.step2DescPending')}
               </p>
               {!step2 && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsWhatsAppSyncOpen(true)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition-colors"
-                  >
-                    <span>Sincronizar WhatsApp</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsCalendarSyncOpen(true)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 text-xs font-bold transition-colors"
-                  >
-                    <span>Calendario</span>
-                  </button>
+                <div className="mt-3">
                   <Link
-                    href="/contacts/new"
-                    className="inline-flex items-center gap-0.5 text-xs text-slate-400 hover:text-white font-medium pl-1"
+                    href="/contacts"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-violet-300 hover:text-white"
                   >
-                    <span>Manual</span>
-                    <ChevronRight className="w-3 h-3" />
+                    <span>Ir a Cumpleaños</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               )}
             </div>
 
-            {/* STEP 3: CONOCER AL ASISTENTE */}
+            {/* STEP 3: GUARDAR ASISTENTE EN CONTACTOS */}
             <div className={`p-4 rounded-2xl border transition-all ${
               step3 
                 ? 'bg-emerald-950/40 border-emerald-500/30' 
@@ -245,44 +200,29 @@ export function OnboardingChecklist({
                   ) : (
                     <Circle className="w-5 h-5 text-slate-400 shrink-0" />
                   )}
-                  <span className="text-xs font-bold text-white">{t('onboarding.step3Title')}</span>
+                  <span className="text-xs font-bold text-white">3. Guardar Asistente</span>
                 </div>
               </div>
               <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                {t('onboarding.step3Desc')}
+                Guarda el <strong>+34 926 31 24 36</strong> para recibir avisos y aprobar felicitaciones.
               </p>
+              <div className="mt-3">
+                <a
+                  href="https://wa.me/34926312436?text=Hola%20AutoBirthday"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300"
+                >
+                  <span>Abrir chat del Asistente</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
 
           </div>
         )}
 
       </div>
-
-      {/* VIDEO BOTTOM SHEET DRAWER */}
-      <WhatsAppVideoDrawer
-        isOpen={videoModalOpen}
-        onClose={() => setVideoModalOpen(false)}
-      />
-
-      {/* WHATSAPP SYNC REVIEW DIALOG */}
-      {isWhatsAppSyncOpen && (
-        <WhatsAppSyncDialog
-          onClose={() => {
-            setIsWhatsAppSyncOpen(false);
-            router.refresh();
-          }}
-        />
-      )}
-
-      {/* CALENDAR SYNC REVIEW DIALOG */}
-      {isCalendarSyncOpen && (
-        <CalendarSyncDialog
-          onClose={() => {
-            setIsCalendarSyncOpen(false);
-            router.refresh();
-          }}
-        />
-      )}
     </>
   );
 }
