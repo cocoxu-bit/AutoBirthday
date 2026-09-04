@@ -362,30 +362,31 @@ export default function WhatsAppPage() {
               <span>{t('settings.whatsappConnecting')}</span>
             </div>
 
-            {/* 3 Pasos rápidos para llegar a Dispositivos Vinculados */}
+            {/* Pasos exactos en tu móvil para vincular el código */}
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                  WhatsApp:
+                  Pasos en tu WhatsApp:
                 </p>
+                <span className="text-[11px] text-violet-700 font-bold">Ruta directa</span>
               </div>
 
-              <ol className="space-y-2 text-xs text-slate-700 font-medium">
+              <ol className="space-y-2.5 text-xs text-slate-700 font-medium">
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <span>{t('whatsapp.step1')}</span>
+                  <span>Abre <strong>WhatsApp</strong> en tu teléfono y entra en <strong>Ajustes</strong> (en iPhone) o en el menú <strong>⋮</strong> (en Android).</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <span>{t('whatsapp.step2')}</span>
+                  <span>Toca en <strong>Dispositivos vinculados</strong> y pulsa el botón verde <strong>"Vincular un dispositivo"</strong>.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <span>{t('whatsapp.step3')}</span>
+                  <span className="w-5 h-5 rounded-full bg-amber-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                  <span>Se abrirá la cámara QR. <strong>Mira abajo del todo</strong> y pulsa en <strong>"Vincular con el número de teléfono"</strong>.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">4</span>
-                  <span>{t('whatsapp.step4Code')} <strong className="font-mono text-violet-700 font-bold">{pairingCode}</strong></span>
+                  <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">4</span>
+                  <span>Pega o introduce tu código: <strong className="font-mono text-violet-700 font-bold text-sm bg-violet-50 px-1.5 py-0.5 rounded border border-violet-200">{pairingCode}</strong></span>
                 </li>
               </ol>
             </div>
@@ -553,36 +554,94 @@ export default function WhatsAppPage() {
                 </p>
               </div>
 
-              {/* PASOS EXPLICATIVOS EN TEXTO */}
-              <div className="space-y-2.5 max-w-[460px] mx-auto w-full pt-1">
-                <p className="text-xs text-slate-300 leading-relaxed font-medium text-center sm:text-left">
-                  Sigue estos 3 pasos en tu aplicación de <strong>WhatsApp</strong>:
-                </p>
+              {/* PASOS EXPLICATIVOS DETALLADOS (5 PASOS COMPLETOS SIN SALTARSE NADA) */}
+              <div className="space-y-3 max-w-[500px] mx-auto w-full pt-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black text-slate-200 uppercase tracking-wider">
+                    Paso a paso exacto en tu teléfono:
+                  </p>
+                  <span className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Solo 15 segundos
+                  </span>
+                </div>
 
-                <div className="space-y-2 text-xs">
-                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">1</span>
-                    <div>
-                      <p className="font-bold text-white">Abre WhatsApp en tu teléfono</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Ve a <strong>Ajustes</strong> (en iPhone) o al menú <strong>⋮</strong> (en Android).</p>
+                <div className="space-y-2.5 text-xs">
+                  {/* PASO 1 */}
+                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      1
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white text-xs sm:text-sm">Genera y copia tu código de vinculación</p>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        Arriba, introduce tu número de WhatsApp y pulsa <strong>"Obtener código"</strong>. Una vez generado, pulsa el botón blanco <strong>"Copiar Código"</strong>.
+                      </p>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">2</span>
-                    <div>
-                      <p className="font-bold text-white">Dispositivos vinculados</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Pulsa en <strong>Vincular un dispositivo</strong>.</p>
+                  {/* PASO 2 */}
+                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      2
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white text-xs sm:text-sm">Abre WhatsApp en tu teléfono</p>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        Entra en tu app de WhatsApp y accede a:
+                      </p>
+                      <ul className="text-[11px] text-slate-400 list-disc list-inside space-y-0.5 pt-0.5 font-medium">
+                        <li><strong>En iPhone:</strong> Pestaña <strong>Configuración / Ajustes</strong> (abajo a la derecha).</li>
+                        <li><strong>En Android:</strong> Menú de tres puntos <strong>⋮</strong> (arriba a la derecha).</li>
+                      </ul>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-emerald-950/30 rounded-2xl border border-emerald-500/30 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">3</span>
-                    <div>
-                      <p className="font-bold text-emerald-300">Vincular con número o código QR</p>
-                      <p className="text-[11px] text-slate-300 mt-0.5">Pulsa en <strong>Vincular con el número de teléfono</strong> e introduce el código que generas arriba.</p>
+                  {/* PASO 3 */}
+                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-violet-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      3
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white text-xs sm:text-sm">Toca en Dispositivos vinculados</p>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        Pulsa el botón verde grande <strong>"Vincular un dispositivo"</strong>. <em>(Si tu móvil te pide seguridad con huella, Face ID o PIN, desbloquéalo)</em>.
+                      </p>
                     </div>
                   </div>
+
+                  {/* PASO 4 */}
+                  <div className="p-3 bg-amber-950/30 rounded-2xl border border-amber-500/40 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      4
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-amber-300 text-xs sm:text-sm">
+                        Toca abajo en: "Vincular con el número de teléfono"
+                      </p>
+                      <p className="text-[11px] text-slate-200 leading-relaxed">
+                        WhatsApp abrirá la cámara esperando un código QR. <strong>No escanees la pantalla:</strong> mira en la parte inferior de tu móvil y toca en el texto que dice <strong>"Vincular con el número de teléfono"</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* PASO 5 */}
+                  <div className="p-3 bg-emerald-950/30 rounded-2xl border border-emerald-500/40 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      5
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-emerald-300 text-xs sm:text-sm">Pega o escribe el código de 8 dígitos</p>
+                      <p className="text-[11px] text-slate-200 leading-relaxed">
+                        Se abrirán las 8 casillas. Mantén pulsado y toca en <strong>Pegar</strong> (o escribe los caracteres uno a uno). Verás el mensaje <em>"¡Dispositivo vinculado con éxito!"</em> y tu pantalla cambiará a conectado automáticamente.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nota para código QR */}
+                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 flex items-start gap-2">
+                  <span className="text-base shrink-0 leading-none">💡</span>
+                  <span><strong>¿Prefieres código QR?</strong> Si estás en ordenador o tablet, selecciona la pestaña <strong>"Escanear QR"</strong> arriba y en el Paso 4 simplemente apunta la cámara de WhatsApp al código QR de la pantalla.</span>
                 </div>
               </div>
 
