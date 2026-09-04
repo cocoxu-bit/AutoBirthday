@@ -77,8 +77,8 @@ export function WhatsAppVideoDrawer({ isOpen, onClose }: WhatsAppVideoDrawerProp
         {/* Body (Scrollable if needed, centered video) */}
         <div className="p-4 sm:p-5 overflow-y-auto flex flex-col items-center space-y-4">
           
-          {/* Vertical Video 9:16 in a Sleek Phone Mockup */}
-          <div className="relative w-full max-w-[240px] sm:max-w-[260px] aspect-[9/16] max-h-[52vh] bg-black rounded-[2rem] p-2 shadow-2xl border-4 border-slate-800 ring-1 ring-emerald-500/30 overflow-hidden shrink-0">
+          {/* Video en formato nativo 4:5 completo sin recortes */}
+          <div className="relative w-full max-w-[260px] sm:max-w-[280px] rounded-2xl overflow-hidden shadow-2xl bg-black shrink-0">
             <video
               ref={videoRef}
               src="/videos/WA.mp4"
@@ -86,7 +86,7 @@ export function WhatsAppVideoDrawer({ isOpen, onClose }: WhatsAppVideoDrawerProp
               loop
               playsInline
               controls
-              className="w-full h-full object-cover rounded-[1.5rem]"
+              className="w-full h-auto max-h-[55vh] object-contain block mx-auto"
             />
           </div>
 

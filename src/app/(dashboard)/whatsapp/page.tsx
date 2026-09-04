@@ -522,20 +522,20 @@ export default function WhatsAppPage() {
             </button>
           </div>
 
-          {/* Contenido expandido: Grid con vídeo vertical 9:16 sin marcos ficticios + pasos explicativos */}
+          {/* Contenido expandido: Vídeo 100% completo a su resolución nativa (sin recortes) + pasos explicativos */}
           {!isGuideCollapsed && (
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center mt-5 pt-5 border-t border-slate-800/80 animate-in fade-in duration-200">
+            <div className="flex flex-col md:flex-row items-center gap-6 mt-5 pt-5 border-t border-slate-800/80 animate-in fade-in duration-200">
               
-              {/* VÍDEO EN BUCLE (9:16 SIN MARCO DE MÓVIL, SOLO EL VÍDEO TAL CUAL) */}
-              <div className="sm:col-span-5 flex flex-col items-center">
-                <div className="relative w-full max-w-[200px] sm:max-w-[220px] aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl bg-black group">
+              {/* VÍDEO EN BUCLE A RESOLUCIÓN COMPLETA (4:5 NATIVO, SIN CORTES) */}
+              <div className="w-full max-w-[260px] sm:max-w-[280px] shrink-0 mx-auto">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black">
                   <video
                     src="/videos/WA.mp4"
                     autoPlay
                     loop
                     muted={isMuted}
                     playsInline
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto block object-contain"
                   />
 
                   {/* Mute/Unmute audio button */}
@@ -554,7 +554,7 @@ export default function WhatsAppPage() {
               </div>
 
               {/* PASOS EXPLICATIVOS EN TEXTO */}
-              <div className="sm:col-span-7 space-y-2.5">
+              <div className="flex-1 space-y-3 w-full">
                 <p className="text-xs text-slate-300 leading-relaxed font-medium">
                   Sigue estos 3 pasos en tu aplicación de <strong>WhatsApp</strong>:
                 </p>
