@@ -204,113 +204,9 @@ export default function WhatsAppPage() {
   const showConnectionForm = status === 'disconnected' || (status === 'connecting' && !pairingCode && !qrCode);
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-5">
+    <div className="w-full max-w-xl mx-auto space-y-5">
       
-      {/* GUÍA INTEGRADA CON VÍDEO EN BUCLE (COLLAPSIBLE) */}
-      {status !== 'connected' && (
-        <div className="bg-slate-900 text-white rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-xl overflow-hidden transition-all duration-300">
-          {/* Cabecera de la guía con botón para comprimir/expandir */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                <Play className="w-4 h-4 fill-current ml-0.5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
-                    Guía de Vinculación en 15 segundos
-                  </h3>
-                  <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
-                    Vídeo en bucle
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  Sigue estos pasos en tu móvil para conectar tu WhatsApp
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsGuideCollapsed(!isGuideCollapsed)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold transition-all border border-white/10 shrink-0"
-              title={isGuideCollapsed ? "Mostrar vídeo y pasos" : "Comprimir guía"}
-            >
-              <span>{isGuideCollapsed ? 'Mostrar vídeo' : 'Comprimir guía'}</span>
-              {isGuideCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-
-          {/* Contenido expandido: Grid con vídeo vertical 9:16 + pasos explicativos */}
-          {!isGuideCollapsed && (
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center mt-5 pt-5 border-t border-slate-800/80 animate-in fade-in duration-200">
-              
-              {/* VÍDEO EN BUCLE (9:16) */}
-              <div className="sm:col-span-5 flex flex-col items-center">
-                <div className="relative w-full max-w-[190px] sm:max-w-[210px] aspect-[9/16] bg-black rounded-[2rem] p-2 shadow-2xl border-4 border-slate-800 ring-1 ring-emerald-500/30 overflow-hidden group">
-                  <video
-                    src="/videos/WA.mp4"
-                    autoPlay
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    className="w-full h-full object-cover rounded-[1.4rem]"
-                  />
-
-                  {/* Mute/Unmute audio button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="absolute bottom-4 right-4 z-10 w-7 h-7 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-95"
-                    title={isMuted ? "Activar audio" : "Silenciar"}
-                  >
-                    {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-300" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-2 font-medium text-center">
-                  Se reproduce en bucle continuo
-                </p>
-              </div>
-
-              {/* PASOS EXPLICATIVOS EN TEXTO */}
-              <div className="sm:col-span-7 space-y-2.5">
-                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  Conexión segura oficial mediante <strong>Dispositivos Vinculados</strong>:
-                </p>
-
-                <div className="space-y-2 text-xs">
-                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">1</span>
-                    <div>
-                      <p className="font-bold text-white">Abre WhatsApp en tu teléfono</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Ve a <strong>Ajustes</strong> (iOS) o al menú de tres puntos <strong>⋮</strong> (Android).</p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">2</span>
-                    <div>
-                      <p className="font-bold text-white">Dispositivos vinculados</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Toca en <strong>Vincular un dispositivo</strong>.</p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-emerald-950/30 rounded-2xl border border-emerald-500/30 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">3</span>
-                    <div>
-                      <p className="font-bold text-emerald-300">Vincular con número o código QR</p>
-                      <p className="text-[11px] text-slate-300 mt-0.5">Pulsa en <strong>Vincular con el número de teléfono</strong> e introduce el código que generas abajo.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* CARD PRINCIPAL */}
+      {/* CARD PRINCIPAL (LO PRINCIPAL: FORMULARIO DE VINCULACIÓN) */}
       <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-900/5 p-5 sm:p-7 space-y-6">
         
         {/* CABECERA */}
@@ -590,6 +486,110 @@ export default function WhatsAppPage() {
         )}
 
       </div>
+
+      {/* GUÍA INTEGRADA DEBAJO CON VÍDEO EN BUCLE (COLLAPSIBLE) */}
+      {status !== 'connected' && (
+        <div className="bg-slate-900 text-white rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-xl overflow-hidden transition-all duration-300">
+          {/* Cabecera de la guía con botón para comprimir/expandir */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+                <Play className="w-4 h-4 fill-current ml-0.5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
+                    ¿Cómo se vincula? Guía paso a paso
+                  </h3>
+                  <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                    15s
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Mira el vídeo y sigue los pasos en tu aplicación de WhatsApp
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsGuideCollapsed(!isGuideCollapsed)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold transition-all border border-white/10 shrink-0"
+              title={isGuideCollapsed ? "Mostrar vídeo y pasos" : "Comprimir guía"}
+            >
+              <span>{isGuideCollapsed ? 'Mostrar vídeo' : 'Comprimir'}</span>
+              {isGuideCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+
+          {/* Contenido expandido: Grid con vídeo vertical 9:16 sin marcos ficticios + pasos explicativos */}
+          {!isGuideCollapsed && (
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center mt-5 pt-5 border-t border-slate-800/80 animate-in fade-in duration-200">
+              
+              {/* VÍDEO EN BUCLE (9:16 SIN MARCO DE MÓVIL, SOLO EL VÍDEO TAL CUAL) */}
+              <div className="sm:col-span-5 flex flex-col items-center">
+                <div className="relative w-full max-w-[200px] sm:max-w-[220px] aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl bg-black group">
+                  <video
+                    src="/videos/WA.mp4"
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Mute/Unmute audio button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="absolute bottom-3 right-3 z-10 w-7 h-7 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-95"
+                    title={isMuted ? "Activar audio" : "Silenciar"}
+                  >
+                    {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-300" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium text-center">
+                  Vídeo en bucle continuo
+                </p>
+              </div>
+
+              {/* PASOS EXPLICATIVOS EN TEXTO */}
+              <div className="sm:col-span-7 space-y-2.5">
+                <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                  Sigue estos 3 pasos en tu aplicación de <strong>WhatsApp</strong>:
+                </p>
+
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">1</span>
+                    <div>
+                      <p className="font-bold text-white">Abre WhatsApp en tu teléfono</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Ve a <strong>Ajustes</strong> (en iPhone) o al menú <strong>⋮</strong> (en Android).</p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">2</span>
+                    <div>
+                      <p className="font-bold text-white">Dispositivos vinculados</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Pulsa en <strong>Vincular un dispositivo</strong>.</p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-emerald-950/30 rounded-2xl border border-emerald-500/30 flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">3</span>
+                    <div>
+                      <p className="font-bold text-emerald-300">Vincular con número o código QR</p>
+                      <p className="text-[11px] text-slate-300 mt-0.5">Pulsa en <strong>Vincular con el número de teléfono</strong> e introduce el código que generas arriba.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );
