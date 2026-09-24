@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ContactSource } from "@/types";
 
 export const contactFormSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
@@ -25,7 +26,7 @@ export const contactFormSchema = z.object({
   sendTimeStart: z.string().default('09:30'),
   sendTimeEnd: z.string().default('11:45'),
   isActive: z.boolean().default(true),
-  source: z.enum(['manual', 'csv', 'calendar_ics', 'vcard_vcf', 'google_calendar', 'apple_calendar']).default('manual').optional(),
+  source: z.enum(['manual', 'csv', 'calendar_ics', 'vcard_vcf', 'google_calendar', 'apple_calendar', 'public_collector']).default('manual').optional(),
 }).superRefine((data, ctx) => {
   // Individual chats require a valid phone number
   if (data.targetType === 'individual' && (!data.phone || data.phone.trim().length < 6)) {
@@ -82,5 +83,5 @@ export type ContactFormData = {
   sendTimeStart: string;
   sendTimeEnd: string;
   isActive: boolean;
-  source?: 'manual' | 'csv' | 'calendar_ics' | 'vcard_vcf' | 'google_calendar' | 'apple_calendar';
+  source?: ContactSource;
 };

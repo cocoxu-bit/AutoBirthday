@@ -9,9 +9,11 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { UpcomingBirthdays, UpcomingBirthdayItem } from "@/components/dashboard/upcoming-birthdays";
 import { RecentActivity, ActivityWishItem } from "@/components/dashboard/recent-activity";
 import { ConnectionStatusCard } from "@/components/dashboard/connection-status-card";
+import { GrowthCollectorCard } from "@/components/dashboard/growth-collector-card";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { Smartphone, UserPlus, Users, FileText, Sparkles, Cake, Gift, ArrowRight } from "lucide-react";
 import { getServerTranslations } from "@/lib/i18n/server";
+import { getOrCreateUserUsername } from "@/lib/user/slug";
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +38,12 @@ async function getDashboardData() {
 
     const userData = userDoc.data();
     const displayName = userData?.displayName || decodedClaims.name || decodedClaims.email?.split('@')[0] || 'Usuario';
+    
+    // Get or create unique username for public collector & viral loop
+    let username = userData?.username;
+    if (!username) {
+      username = await getOrCreateUserUsername(userId);
+    }
     
     let isWhatsAppConnected = userData?.whatsappInstance?.status === 'connected';
     if (!isWhatsAppConnected) {
@@ -130,6 +138,7 @@ async function getDashboardData() {
       return {
         id: w.id,
         contactName,
+        phone: contact?.phone || (w as any).targetPhone || undefined,
         message: w.generatedMessage || 'Felicitación programada',
         status: w.status,
         timeStr,
@@ -138,6 +147,7 @@ async function getDashboardData() {
 
     return {
       displayName,
+      username,
       isWhatsAppConnected,
       hasReceivedWelcomeMessage: Boolean(userData?.hasReceivedWelcomeMessage),
       stats: {
@@ -211,6 +221,11 @@ export default async function DashboardPage() {
         }} 
       />
 
+      {/* Growth & Viral Collector Card */}
+      {data?.username && (
+        <GrowthCollectorCard username={data.username} />
+      )}
+
       {/* Quick Action Cards: 3 Columns on Desktop, Stacked on Mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
         <Link
@@ -283,7 +298,7 @@ export default async function DashboardPage() {
       {/* Main Grid: Upcoming Birthdays + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <UpcomingBirthdays birthdays={data?.upcomingList || []} />
-        <RecentActivity activity={data?.activityList || []} />
+        <RecentActivity activity={data?.activityList || []} username={data?.username || ''} />
       </div>
     </div>
   );

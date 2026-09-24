@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Clock, Send, ArrowRight } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Send, ArrowRight, MessageCircle } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
+import { ViralResponseModal } from "./viral-response-modal";
 
 export interface ActivityWishItem {
   id: string;
   contactName: string;
+  phone?: string;
   message: string;
   status: string;
   timeStr: string;
@@ -14,10 +17,12 @@ export interface ActivityWishItem {
 
 interface RecentActivityProps {
   activity: ActivityWishItem[];
+  username?: string;
 }
 
-export function RecentActivity({ activity }: RecentActivityProps) {
+export function RecentActivity({ activity, username }: RecentActivityProps) {
   const { t } = useTranslation();
+  const [selectedWishForViral, setSelectedWishForViral] = useState<ActivityWishItem | null>(null);
 
   return (
     <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between">
@@ -52,6 +57,18 @@ export function RecentActivity({ activity }: RecentActivityProps) {
                     <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">{item.timeStr}</span>
                   </div>
                   <p className="text-xs text-slate-600 truncate mt-0.5 font-medium">{item.message}</p>
+                  {item.status === "sent" && username && (
+                    <div className="pt-1.5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedWishForViral(item)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/60 px-2.5 py-1 rounded-full transition-all active:scale-[0.98]"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        <span>¿Te ha dado las gracias? Responder</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -66,6 +83,16 @@ export function RecentActivity({ activity }: RecentActivityProps) {
           </div>
         )}
       </div>
+
+      {selectedWishForViral && username && (
+        <ViralResponseModal
+          isOpen={Boolean(selectedWishForViral)}
+          onClose={() => setSelectedWishForViral(null)}
+          contactName={selectedWishForViral.contactName}
+          phone={selectedWishForViral.phone}
+          username={username}
+        />
+      )}
     </div>
   );
 }
