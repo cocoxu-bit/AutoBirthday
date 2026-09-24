@@ -35,6 +35,8 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+
 
   useEffect(() => {
     if (searchParams.get('sync') === 'whatsapp' || searchParams.get('openSync') === 'true') {
@@ -194,11 +196,12 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
               >
                 {/* LEFT: WHATSAPP AVATAR (PHOTO OR INITIALS) */}
                 <div className="relative shrink-0">
-                  {contact.profilePictureUrl ? (
+                  {contact.profilePictureUrl && !imgErrors[contact.id || ''] ? (
                     <img
                       src={contact.profilePictureUrl}
                       alt={contact.name}
                       className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200/80"
+                      onError={() => setImgErrors(prev => ({ ...prev, [contact.id || '']: true }))}
                     />
                   ) : (
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm transition-transform group-hover:scale-105 ${

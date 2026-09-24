@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { useState } from "react";
 import { Cake, ArrowRight, UserPlus, Users } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 
@@ -26,6 +27,7 @@ interface UpcomingBirthdaysProps {
 export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
   const { t, dict } = useTranslation();
   const currentYear = new Date().getFullYear();
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
 
   const formatBirthDate = (bday: UpcomingBirthdayItem) => {
     if (bday.birthDay && bday.birthMonth && dict.contactForm?.months?.[bday.birthMonth - 1]) {
@@ -61,11 +63,12 @@ export function UpcomingBirthdays({ birthdays }: UpcomingBirthdaysProps) {
                 className="flex items-center justify-between p-3 rounded-2xl hover:bg-white/90 transition-all border border-transparent hover:border-slate-100"
               >
                 <div className="flex items-center gap-3">
-                  {bday.profilePictureUrl ? (
+                  {bday.profilePictureUrl && !imgErrors[bday.id] ? (
                     <img 
                       src={bday.profilePictureUrl} 
                       alt={bday.name}
                       className="w-10 h-10 rounded-2xl object-cover shadow-sm ring-1 ring-slate-200/80 shrink-0" 
+                      onError={() => setImgErrors(prev => ({ ...prev, [bday.id]: true }))}
                     />
                   ) : (
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0 ${

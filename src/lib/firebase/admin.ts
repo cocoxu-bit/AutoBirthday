@@ -1,10 +1,12 @@
 import { initializeApp, getApps, cert, getApp, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getStorage, type Storage } from 'firebase-admin/storage';
 
 let _adminApp: App | null = null;
 let _adminAuth: Auth | null = null;
 let _adminDb: Firestore | null = null;
+let _adminStorage: Storage | null = null;
 
 export function getAdminApp(): App {
   if (_adminApp) return _adminApp;
@@ -40,6 +42,7 @@ export function getAdminApp(): App {
   _adminApp = initializeApp({
     ...(credential ? { credential } : {}),
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cumple-9bcd7',
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'cumple-9bcd7.firebasestorage.app',
   });
 
   return _adminApp;
@@ -71,3 +74,13 @@ export const adminDb: Firestore = new Proxy({} as Firestore, {
     return (_adminDb as any)[prop];
   },
 });
+
+export const adminStorage: Storage = new Proxy({} as Storage, {
+  get(_, prop) {
+    if (!_adminStorage) {
+      _adminStorage = getStorage(getAdminApp());
+    }
+    return (_adminStorage as any)[prop];
+  },
+});
+

@@ -15,6 +15,7 @@ import { parseICalendar } from '@/lib/parsers/calendar-ics';
 import { parseVCard } from '@/lib/parsers/vcard-vcf';
 import { WhatsAppGroup, WhatsAppChatContact, ParsedContactPreview } from '@/types';
 import { formatToWhatsappJid } from '@/lib/utils/phone';
+import { persistAvatarToStorage } from '@/lib/storage/avatars';
 
 async function getAuthenticatedUserId(): Promise<string> {
   const cookieStore = await cookies();
@@ -39,6 +40,13 @@ export async function createContact(formData: ContactFormData) {
         profilePictureUrl = await evolutionApi.fetchProfilePictureUrl(instanceName, validatedData.phone);
       }
     } catch {}
+
+    if (profilePictureUrl) {
+      try {
+        const idKey = validatedData.targetType === 'group' ? (validatedData.groupId || 'group') : (validatedData.phone || 'unknown');
+        profilePictureUrl = await persistAvatarToStorage(userId, idKey, profilePictureUrl);
+      } catch {}
+    }
 
     await dbCreateContact(userId, {
       name: validatedData.name,
@@ -89,6 +97,13 @@ export async function updateContact(contactId: string, formData: ContactFormData
         profilePictureUrl = await evolutionApi.fetchProfilePictureUrl(instanceName, validatedData.phone);
       }
     } catch {}
+
+    if (profilePictureUrl) {
+      try {
+        const idKey = validatedData.targetType === 'group' ? (validatedData.groupId || 'group') : (validatedData.phone || 'unknown');
+        profilePictureUrl = await persistAvatarToStorage(userId, idKey, profilePictureUrl);
+      } catch {}
+    }
 
     await dbUpdateContact(userId, contactId, {
       name: validatedData.name,

@@ -9,6 +9,7 @@ import { evolutionApi } from '@/lib/evolution-api/client';
 import { fetchGoogleCalendarBirthdays } from '@/lib/integrations/google-calendar';
 import { fetchICloudCalendarBirthdays } from '@/lib/integrations/icloud-calendar';
 import { matchAllBirthdaysToWhatsApp1to1 } from '@/lib/parsers/fuzzy-match';
+import { persistAvatarToStorage } from '@/lib/storage/avatars';
 import { WhatsAppChatContact, WhatsAppGroup, ContactSource, WishMode, AiTone, TargetType } from '@/types';
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -371,6 +372,12 @@ export async function saveSingleSyncedContactAction(contact: {
       } catch {}
     }
 
+    if (profilePic) {
+      try {
+        profilePic = await persistAvatarToStorage(userId, contact.phone, profilePic);
+      } catch {}
+    }
+
     const createdId = await dbCreateContact(userId, {
       name: contact.name.trim(),
       phone: contact.phone.trim(),
@@ -446,6 +453,12 @@ export async function batchApproveSyncedContacts(
       if (!profilePic) {
         try {
           profilePic = await evolutionApi.fetchProfilePictureUrl(instanceName, contact.phone);
+        } catch {}
+      }
+
+      if (profilePic) {
+        try {
+          profilePic = await persistAvatarToStorage(userId, contact.phone, profilePic);
         } catch {}
       }
 
