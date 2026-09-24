@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { logSystemEvent } from "@/lib/logger/system-logger";
 
 interface GenerateWishParams {
   name: string;
@@ -97,6 +98,13 @@ ${langInstruction}
     return text && text.length > 5 ? text : defaultWish;
   } catch (error: any) {
     console.error('Error generating AI wish with Gemini:', error?.message || error);
+    await logSystemEvent({
+      severity: 'warning',
+      source: 'ai:gemini',
+      message: `Error al generar felicitación con Gemini para ${name}`,
+      details: error?.message || String(error),
+      metadata: { contactName: name, relationship, tone },
+    }).catch(() => {});
     return defaultWish;
   }
 }

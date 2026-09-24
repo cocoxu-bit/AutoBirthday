@@ -5,6 +5,7 @@ import { generateBirthdayWish } from '@/lib/ai/generate-wish';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { getAppUrl } from '@/lib/utils';
 import { AiTone } from '@/types';
+import { logSystemEvent } from '@/lib/logger/system-logger';
 
 /**
  * Checks if a given year is a leap year.
@@ -229,8 +230,15 @@ ${targetDesc}
           mode: contact.mode || 'manual',
           message: generatedMessage,
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error processing birthday scan for contact ${item.id}:`, err);
+        await logSystemEvent({
+          severity: 'error',
+          source: 'cron:daily-scan',
+          message: `Fallo al procesar cumpleaños para contacto ${item.id}`,
+          details: err?.message || String(err),
+          userId: item.userId,
+        });
         errors++;
       }
     }

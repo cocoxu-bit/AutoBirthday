@@ -1145,3 +1145,153 @@ export async function adminStopImpersonationAction(): Promise<{
   }
 }
 
+export interface AdminSystemLogItem {
+  id: string;
+  timestamp: number;
+  timeFormatted: string;
+  severity: 'error' | 'warning' | 'info';
+  source: string;
+  message: string;
+  details?: string | null;
+  userId?: string | null;
+  userEmail?: string | null;
+  metadata?: any;
+}
+
+export interface AdminSystemLogsResponse {
+  logs: AdminSystemLogItem[];
+  failedWishes: AdminWishRecord[];
+  summary: {
+    totalErrors24h: number;
+    totalWarnings24h: number;
+    totalFailedWishes: number;
+  };
+}
+
+export async function getAdminSystemLogsAction(): Promise<{
+  success: boolean;
+  data?: AdminSystemLogsResponse;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+
+    const now = Date.now();
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+    // 1. Fetch recent system logs
+    const logsSnap = await adminDb
+      .collection('system_logs')
+      .orderBy('timestamp', 'desc')
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] } as any));
+
+    let totalErrors24h = 0;
+    let totalWarnings24h = 0;
+
+    const logs: AdminSystemLogItem[] = logsSnap.docs.map((doc: any) => {
+      const d = doc.data();
+      const ts = d.timestamp || now;
+      if (ts >= oneDayAgo) {
+        if (d.severity === 'error') totalErrors24h++;
+        if (d.severity === 'warning') totalWarnings24h++;
+      }
+
+      return {
+        id: doc.id,
+        timestamp: ts,
+        timeFormatted: new Date(ts).toLocaleString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        severity: d.severity || 'info',
+        source: d.source || 'system',
+        message: d.message || 'Sin mensaje',
+        details: d.details || null,
+        userId: d.userId || null,
+        userEmail: d.userEmail || null,
+        metadata: d.metadata || null,
+      };
+    });
+
+    // 2. Fetch all failed wishes
+    const failedWishesSnap = await adminDb
+      .collection('wishes')
+      .where('status', '==', 'failed')
+      .limit(50)
+      .get()
+      .catch(() => ({ docs: [] } as any));
+
+    const usersSnap = await adminDb.collection('users').get();
+    const userMap = new Map<string, { email: string; name: string }>();
+    usersSnap.docs.forEach((d) => {
+      const u = d.data();
+      userMap.set(d.id, {
+        email: u.email || 'Sin email',
+        name: u.displayName || u.name || 'Usuario',
+      });
+    });
+
+    const failedWishes: AdminWishRecord[] = [];
+    for (const doc of failedWishesSnap.docs) {
+      const w = doc.data();
+      const user = userMap.get(w.userId) || { email: 'Desconocido', name: 'Desconocido' };
+
+      failedWishes.push({
+        id: doc.id,
+        userId: w.userId || '',
+        userEmail: user.email,
+        userName: user.name,
+        contactId: w.contactId || '',
+        contactName: w.targetName || w.contactName || 'Contacto',
+        contactPhone: w.targetPhone || w.phone || '',
+        status: 'failed',
+        mode: w.mode || 'manual',
+        message: w.generatedMessage || w.customMessage || '',
+        scheduledFor: w.scheduledFor ? new Date(w.scheduledFor.toDate ? w.scheduledFor.toDate() : w.scheduledFor).toLocaleDateString('es-ES') : '',
+        errorMessage: w.errorLog || w.errorMessage || 'Error desconocido al enviar mensaje',
+      });
+    }
+
+    return {
+      success: true,
+      data: {
+        logs,
+        failedWishes,
+        summary: {
+          totalErrors24h,
+          totalWarnings24h,
+          totalFailedWishes: failedWishes.length,
+        },
+      },
+    };
+  } catch (error: any) {
+    console.error('getAdminSystemLogsAction error:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al obtener registros del sistema',
+    };
+  }
+}
+
+export async function clearAdminSystemLogsAction(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await verifyAdminAuth();
+    const logsSnap = await adminDb.collection('system_logs').limit(100).get();
+    const batch = adminDb.batch();
+    logsSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Error al limpiar registros' };
+  }
+}
+
+

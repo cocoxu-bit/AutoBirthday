@@ -50,8 +50,11 @@ import {
   adminRestartWhatsAppInstanceAction,
   adminToggleUserStatusAction,
   adminRetryWishAction,
-  adminImpersonateUserAction
+  adminImpersonateUserAction,
+  getAdminSystemLogsAction,
+  type AdminSystemLogsResponse
 } from '@/app/admin/actions';
+import { AdminErrorMonitor } from './admin-error-monitor';
 import { 
   Cpu, 
   Server, 
@@ -68,11 +71,15 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [data, setData] = useState<AdminAnalyticsData>(initialData);
-  const [activeTab, setActiveTab] = useState<'users' | 'wishes' | 'system'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'wishes' | 'errors' | 'system'>('users');
   
   // System Telemetry state
   const [telemetry, setTelemetry] = useState<AdminSystemTelemetry | null>(null);
   const [loadingTelemetry, setLoadingTelemetry] = useState(false);
+
+  // System Logs & Incidents state
+  const [logsData, setLogsData] = useState<AdminSystemLogsResponse | null>(null);
+  const [loadingLogs, setLoadingLogs] = useState(false);
   
   // Users tab state
   const [searchTerm, setSearchTerm] = useState('');
@@ -170,6 +177,8 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
 
       if (activeTab === 'wishes') {
         await loadGlobalWishes();
+      } else if (activeTab === 'errors') {
+        await loadSystemLogs();
       } else if (activeTab === 'system') {
         await loadSystemTelemetry();
       }
@@ -196,6 +205,22 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
     }
   };
 
+  const loadSystemLogs = async () => {
+    setLoadingLogs(true);
+    try {
+      const res = await getAdminSystemLogsAction();
+      if (res.success && res.data) {
+        setLogsData(res.data);
+      } else {
+        toast.error(res.error || 'Error al consultar registros de error');
+      }
+    } catch {
+      toast.error('Error al conectar con la base de datos');
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
   const loadSystemTelemetry = async () => {
     setLoadingTelemetry(true);
     try {
@@ -212,10 +237,12 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
     }
   };
 
-  const handleTabChange = (tab: 'users' | 'wishes' | 'system') => {
+  const handleTabChange = (tab: 'users' | 'wishes' | 'errors' | 'system') => {
     setActiveTab(tab);
     if (tab === 'wishes' && wishes.length === 0) {
       loadGlobalWishes();
+    } else if (tab === 'errors') {
+      loadSystemLogs();
     } else if (tab === 'system') {
       loadSystemTelemetry();
     }
@@ -399,10 +426,23 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
           }`}
         >
           <Gift className="w-4 h-4" />
-          <span>Monitor de Felicitaciones & Errores</span>
-          {summary.totalFailedWishes > 0 && (
-            <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse">
-              {summary.totalFailedWishes} fallos
+          <span>Auditoría de Felicitaciones</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('errors')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all ${
+            activeTab === 'errors'
+              ? 'bg-rose-950 text-white shadow-sm border border-rose-800'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <AlertCircle className={`w-4 h-4 ${summary.totalFailedWishes > 0 ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`} />
+          <span>Monitor de Errores</span>
+          {(summary.totalFailedWishes > 0 || (logsData?.summary?.totalErrors24h || 0) > 0) && (
+            <span className="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse">
+              {(logsData?.summary?.totalErrors24h || 0) + summary.totalFailedWishes} fallos
             </span>
           )}
         </button>
@@ -974,6 +1014,12 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
             </div>
           )}
         </div>
+      ) : activeTab === 'errors' ? (
+        <AdminErrorMonitor
+          logsData={logsData}
+          loading={loadingLogs}
+          onRefresh={loadSystemLogs}
+        />
       ) : (
         /* SYSTEM, TOKENS & VPS RESOURCES TELEMETRY TAB */
         <div className="space-y-6">

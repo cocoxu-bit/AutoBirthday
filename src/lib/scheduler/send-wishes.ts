@@ -2,6 +2,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { formatToWhatsappJid } from '@/lib/utils/phone';
 import { toZonedTime } from 'date-fns-tz';
+import { logSystemEvent } from '@/lib/logger/system-logger';
 
 export interface SendResult {
   sent: number;
@@ -194,6 +195,17 @@ export async function executeSendWishes(
       await doc.ref.update({
         status: 'failed',
         errorLog: errMsg,
+      });
+      await logSystemEvent({
+        severity: 'error',
+        source: 'cron:send-wishes',
+        message: `Fallo al enviar felicitación (ID: ${doc.id})`,
+        details: errMsg,
+        userId: wish.userId,
+        metadata: {
+          wishId: doc.id,
+          contactId: wish.contactId,
+        },
       });
       failed++;
       details.push({
