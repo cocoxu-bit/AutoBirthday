@@ -82,6 +82,8 @@ export interface AdminUserRecord {
   fixedModeContactsCount: number;
   templateModeContactsCount: number;
   aiModeContactsCount: number;
+  username?: string | null;
+  collectorContactsCount: number;
 }
 
 export interface AdminWishRecord {
@@ -98,6 +100,39 @@ export interface AdminWishRecord {
   scheduledFor: string;
   sentAt?: string;
   errorMessage?: string;
+}
+
+export interface AdminGrowthData {
+  totalCollectorContacts: number;
+  collectorUsersCount: number;
+  totalShares: number;
+  sharesByType: {
+    whatsapp_chat: number;
+    story_whatsapp: number;
+    story_instagram: number;
+    story_tiktok: number;
+    copy_link: number;
+    download_story: number;
+  };
+  topCollectorHosts: Array<{
+    id: string;
+    displayName: string;
+    email: string;
+    username: string;
+    photoURL?: string | null;
+    count: number;
+  }>;
+  recentSubmissions: Array<{
+    id: string;
+    contactName: string;
+    contactPhone: string;
+    birthDay: number;
+    birthMonth: number;
+    hostName: string;
+    hostUsername: string;
+    timeStr: string;
+    createdAtMs: number;
+  }>;
 }
 
 export interface AdminAnalyticsData {
@@ -123,8 +158,11 @@ export interface AdminAnalyticsData {
     totalAiModeContacts: number;
     aiModeContactsRate: number;
     totalFailedWishes: number;
+    totalCollectorContacts?: number;
+    collectorUsersCount?: number;
   };
   users: AdminUserRecord[];
+  growth?: AdminGrowthData;
 }
 
 async function verifyAdminAuth(): Promise<string> {
@@ -245,7 +283,40 @@ export async function getAdminAnalyticsDataAction(): Promise<{
       const isAtRisk = contactsCount > 0 && waStatus === 'disconnected';
       const isSuspended = Boolean(u.isSuspended);
 
-      const userRecord: AdminUserRecord = {
+      const collectorContacts = contacts.filter((c: any) => c.source === 'public_collector');
+      const collectorContactsCount = collectorContacts.length;
+
+      const userCollectorSubmissions = collectorContacts.map((c: any) => {
+        let timeMs = now;
+        if (c.createdAt) {
+          if (typeof c.createdAt.toDate === 'function') timeMs = c.createdAt.toDate().getTime();
+          else if (c.createdAt._seconds) timeMs = c.createdAt._seconds * 1000;
+          else timeMs = new Date(c.createdAt).getTime();
+        }
+        let timeStr = 'Reciente';
+        try {
+          timeStr = new Date(timeMs).toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        } catch {}
+
+        return {
+          id: c.id || `${userId}-${c.phone}`,
+          contactName: c.name || 'Amigo',
+          contactPhone: c.phone || '',
+          birthDay: c.birthDay || 0,
+          birthMonth: c.birthMonth || 0,
+          hostName: resolvedDisplayName || 'Usuario',
+          hostUsername: u.username || '',
+          timeStr,
+          createdAtMs: timeMs,
+        };
+      });
+
+      const userRecord: AdminUserRecord & { _submissions?: typeof userCollectorSubmissions } = {
         id: userId,
         email: resolvedEmail || 'Sin correo',
         displayName: resolvedDisplayName || 'Usuario',
@@ -266,12 +337,19 @@ export async function getAdminAnalyticsDataAction(): Promise<{
         fixedModeContactsCount,
         templateModeContactsCount,
         aiModeContactsCount,
+        username: u.username || null,
+        collectorContactsCount,
+        _submissions: userCollectorSubmissions,
       };
 
       return userRecord;
     });
 
-    const users = await Promise.all(userPromises);
+    const usersWithSubmissions = await Promise.all(userPromises);
+
+    // Extract submissions & clean users
+    const allCollectorSubmissions = usersWithSubmissions.flatMap(u => u._submissions || []);
+    const users: AdminUserRecord[] = usersWithSubmissions.map(({ _submissions, ...u }) => u);
 
     // Sort newest registrations first
     users.sort((a, b) => b.createdAtMs - a.createdAtMs);
@@ -305,6 +383,45 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const totalAiModeContacts = users.reduce((acc, u) => acc + u.aiModeContactsCount, 0);
     const aiModeContactsRate = totalContacts > 0 ? Math.round((totalAiModeContacts / totalContacts) * 100) : 0;
 
+    // Growth & Viral Loop Metrics
+    const growthStatsSnap = await adminDb.collection('system').doc('growth_stats').get().catch(() => null);
+    const growthStatsData = (growthStatsSnap && typeof (growthStatsSnap as any).data === 'function')
+      ? (growthStatsSnap as any).data() || {}
+      : {};
+    const byType = growthStatsData?.byType || {};
+
+    const totalCollectorContacts = users.reduce((acc, u) => acc + (u.collectorContactsCount || 0), 0);
+    const collectorUsersCount = users.filter(u => (u.collectorContactsCount || 0) > 0).length;
+
+    const topCollectorHosts = users
+      .filter(u => (u.collectorContactsCount || 0) > 0)
+      .sort((a, b) => b.collectorContactsCount - a.collectorContactsCount)
+      .slice(0, 10)
+      .map(u => ({
+        id: u.id,
+        displayName: u.displayName,
+        email: u.email,
+        username: u.username || '',
+        photoURL: u.photoURL,
+        count: u.collectorContactsCount,
+      }));
+
+    const growth: AdminGrowthData = {
+      totalCollectorContacts,
+      collectorUsersCount,
+      totalShares: Number(growthStatsData.totalShares || 0),
+      sharesByType: {
+        whatsapp_chat: Number(byType.whatsapp_chat || 0),
+        story_whatsapp: Number(byType.story_whatsapp || 0),
+        story_instagram: Number(byType.story_instagram || 0),
+        story_tiktok: Number(byType.story_tiktok || 0),
+        copy_link: Number(byType.copy_link || 0),
+        download_story: Number(byType.download_story || 0),
+      },
+      topCollectorHosts,
+      recentSubmissions: allCollectorSubmissions.sort((a, b) => b.createdAtMs - a.createdAtMs).slice(0, 25),
+    };
+
     return {
       success: true,
       data: {
@@ -330,8 +447,11 @@ export async function getAdminAnalyticsDataAction(): Promise<{
           totalAiModeContacts,
           aiModeContactsRate,
           totalFailedWishes,
+          totalCollectorContacts,
+          collectorUsersCount,
         },
         users,
+        growth,
       },
     };
   } catch (error: any) {

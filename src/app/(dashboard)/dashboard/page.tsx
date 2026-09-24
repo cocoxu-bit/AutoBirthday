@@ -223,7 +223,7 @@ export default async function DashboardPage() {
 
       {/* Growth & Viral Collector Card */}
       {data?.username && (
-        <GrowthCollectorCard username={data.username} />
+        <GrowthCollectorCard username={data.username} displayName={data?.displayName} />
       )}
 
       {/* Quick Action Cards: 3 Columns on Desktop, Stacked on Mobile */}

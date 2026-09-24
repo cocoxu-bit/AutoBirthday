@@ -63,6 +63,7 @@ import {
   Gauge 
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
+import { AdminGrowthTab } from './admin-growth-tab';
 import { toast } from 'sonner';
 
 interface AdminDashboardProps {
@@ -71,7 +72,7 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [data, setData] = useState<AdminAnalyticsData>(initialData);
-  const [activeTab, setActiveTab] = useState<'users' | 'wishes' | 'errors' | 'system'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'growth' | 'wishes' | 'errors' | 'system'>('users');
   
   // System Telemetry state
   const [telemetry, setTelemetry] = useState<AdminSystemTelemetry | null>(null);
@@ -237,7 +238,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
     }
   };
 
-  const handleTabChange = (tab: 'users' | 'wishes' | 'errors' | 'system') => {
+  const handleTabChange = (tab: 'users' | 'growth' | 'wishes' | 'errors' | 'system') => {
     setActiveTab(tab);
     if (tab === 'wishes' && wishes.length === 0) {
       loadGlobalWishes();
@@ -413,6 +414,24 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
             activeTab === 'users' ? 'bg-slate-800 text-slate-200' : 'bg-slate-200 text-slate-600'
           }`}>
             {summary.totalUsers}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('growth')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all ${
+            activeTab === 'growth'
+              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>Bucle Viral & Recolector</span>
+          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+            activeTab === 'growth' ? 'bg-violet-800 text-white' : 'bg-violet-100 text-violet-700'
+          }`}>
+            {data.growth?.totalCollectorContacts || 0}
           </span>
         </button>
 
@@ -864,6 +883,8 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
 
           </div>
         </>
+      ) : activeTab === 'growth' ? (
+        <AdminGrowthTab growth={data.growth} />
       ) : activeTab === 'wishes' ? (
         /* GLOBAL WISHES MONITOR & AUDIT LOG TAB */
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">

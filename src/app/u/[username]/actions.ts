@@ -96,6 +96,19 @@ export async function submitPublicBirthdayAction(payload: SubmitPublicBirthdayPa
         updatedAt: new Date(),
       });
 
+      adminDb.collection('growth_events').add({
+        type: 'collector_submission',
+        username: payload.username,
+        hostUserId,
+        contactName: cleanName,
+        contactPhone: cleanPhone,
+        birthDay: day,
+        birthMonth: month,
+        birthYear: year,
+        isUpdate: true,
+        createdAt: new Date(),
+      }).catch(() => {});
+
       revalidatePath('/contacts');
       revalidatePath('/dashboard');
 
@@ -124,6 +137,19 @@ export async function submitPublicBirthdayAction(payload: SubmitPublicBirthdayPa
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    adminDb.collection('growth_events').add({
+      type: 'collector_submission',
+      username: payload.username,
+      hostUserId,
+      contactName: cleanName,
+      contactPhone: cleanPhone,
+      birthDay: day,
+      birthMonth: month,
+      birthYear: year,
+      isUpdate: false,
+      createdAt: new Date(),
+    }).catch(() => {});
 
     // 7. Background: Attempt to fetch and persist WhatsApp profile photo
     (async () => {
