@@ -25,7 +25,9 @@ export function ViralResponseModal({
   if (!isOpen) return null;
 
   const firstName = contactName.split(' ')[0] || contactName;
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://autobirthday.com';
+  const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+    ? window.location.origin 
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://autobirthday.vercel.app');
   const collectorUrl = `${origin}/u/${username}`;
 
   const messageText = `¡De nada ${firstName}! Uso AutoBirthday para que no se me escape ni un cumple con mi mala memoria 😂. Pon tu fecha aquí que luego siempre me olvido de la tuya 👉 ${collectorUrl}`;

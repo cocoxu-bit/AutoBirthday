@@ -11,7 +11,6 @@ import {
   Sparkles, 
   User, 
   ArrowRight,
-  MessageCircle,
   PartyPopper
 } from 'lucide-react';
 import { submitPublicBirthdayAction } from '@/app/u/[username]/actions';
@@ -37,7 +36,6 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
   const [birthDay, setBirthDay] = useState<number | ''>('');
   const [birthMonth, setBirthMonth] = useState<number | ''>('');
   const [birthYear, setBirthYear] = useState('');
-  const [notes, setNotes] = useState('');
   const [honeypot, setHoneypot] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +72,6 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
         birthDay: Number(birthDay),
         birthMonth: Number(birthMonth),
         birthYear: birthYear ? parseInt(birthYear, 10) : null,
-        notes: notes.trim() || undefined,
         honeypot: honeypot || undefined,
       });
 
@@ -313,24 +310,6 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
               </div>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">El año es opcional. Solo el día y el mes son necesarios.</p>
-          </div>
-
-          {/* 4. Notes / Connection (optional) */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
-                <span>¿De qué os conocéis? / Pista</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">Opcional</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Ej. Del cole, pádel, prima de Valencia..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
           </div>
 
           {/* SUBMIT BUTTON */}

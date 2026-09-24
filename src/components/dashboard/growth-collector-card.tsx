@@ -12,8 +12,9 @@ interface GrowthCollectorCardProps {
 export function GrowthCollectorCard({ username }: GrowthCollectorCardProps) {
   const [copied, setCopied] = useState(false);
 
-  // Build clean absolute URL
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://autobirthday.com';
+  const origin = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+    ? window.location.origin 
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://autobirthday.vercel.app');
   const collectorUrl = `${origin}/u/${username}`;
 
   const shareText = `Amigos, estoy armando mi calendario para no olvidarme del cumple de nadie este año. Pon tu fecha aquí en 5 segundos 👉 ${collectorUrl}`;
