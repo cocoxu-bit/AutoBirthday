@@ -164,26 +164,27 @@ export function StoryShareModal({
     ctx.fillStyle = '#ffffff';
     ctx.fillText(`¡Amigos de ${firstName}! 🎂`, 540, 290);
 
-    // 6. Punchy Headline
-    ctx.font = '900 78px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    // 6. Punchy Headline (Multi-line, perfectly centered without overflow)
+    ctx.font = '900 76px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#fef08a'; // Pastel yellow
     ctx.fillText('¡No me dejes sin tu cumple!', 540, 390);
 
-    ctx.font = '500 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '600 40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#e2e8f0';
-    ctx.fillText('Estoy creando mi calendario para acordarme de todos 🥳', 540, 465);
+    ctx.fillText('Estoy creando mi calendario', 540, 465);
+    ctx.fillText('para acordarme de todos 🥳', 540, 520);
 
-    // 7. Central White Card with QR Code and Link
-    const cardW = 860;
-    const cardH = 960;
+    // 7. Central White Card with Link Sticker Callout (No un-scannable QR)
+    const cardW = 880;
+    const cardH = 760;
     const cardX = (1080 - cardW) / 2;
-    const cardY = 530;
+    const cardY = 590;
 
     // Card shadow
     ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetY = 20;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 45;
+    ctx.shadowOffsetY = 25;
 
     ctx.beginPath();
     ctx.roundRect(cardX, cardY, cardW, cardH, 50);
@@ -191,63 +192,55 @@ export function StoryShareModal({
     ctx.fill();
     ctx.restore();
 
-    // Top text inside card
-    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    // Inside card: Celebration Icon
+    ctx.font = '110px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('🎂', 540, cardY + 140);
+
+    // Inside card: Main prompt
+    ctx.font = '900 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#0f172a';
+    ctx.fillText('¿Cuándo es tu cumpleaños?', 540, cardY + 230);
+
+    ctx.font = '500 34px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#64748b';
-    ctx.fillText('ESCANEA O ENTRA AL ENLACE', 540, cardY + 75);
+    ctx.fillText('Solo tardas 5 segundos en poner tu fecha', 540, cardY + 290);
 
-    // QR Code Image
-    const qrSize = 480;
-    const qrX = (1080 - qrSize) / 2;
-    const qrY = cardY + 115;
-
-    try {
-      const qrImg = new Image();
-      qrImg.crossOrigin = 'anonymous';
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(collectorUrl)}&margin=15&bgcolor=ffffff&color=0f172a`;
-      
-      await new Promise<void>((resolve, reject) => {
-        qrImg.onload = () => resolve();
-        qrImg.onerror = () => resolve(); // continue even if QR fails
-        setTimeout(resolve, 1500); // 1.5s timeout safety
-      });
-
-      if (qrImg.complete && qrImg.naturalWidth > 0) {
-        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-      } else {
-        // Fallback icon placeholder if offline
-        ctx.fillStyle = '#f1f5f9';
-        ctx.fillRect(qrX, qrY, qrSize, qrSize);
-      }
-    } catch {}
-
-    // Link Sticker Simulation inside card (looks like Instagram Stories link sticker)
+    // Link Sticker Simulation (Styled like Instagram Story link sticker)
     const stickerW = 760;
-    const stickerH = 110;
+    const stickerH = 130;
     const stickerX = (1080 - stickerW) / 2;
-    const stickerY = qrY + qrSize + 35;
+    const stickerY = cardY + 360;
 
+    ctx.save();
+    ctx.shadowColor = 'rgba(15, 23, 42, 0.15)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 8;
     ctx.beginPath();
-    ctx.roundRect(stickerX, stickerY, stickerW, stickerH, 30);
-    ctx.fillStyle = '#f1f5f9';
+    ctx.roundRect(stickerX, stickerY, stickerW, stickerH, 35);
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
     ctx.lineWidth = 3;
-    ctx.strokeStyle = '#cbd5e1';
+    ctx.strokeStyle = '#e2e8f0';
     ctx.stroke();
+    ctx.restore();
 
-    ctx.font = '800 38px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '800 40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#0f172a';
-    ctx.fillText(`🔗 ${shortUrl}`, 540, stickerY + 68);
+    ctx.fillText(`🔗 ${shortUrl}`, 540, stickerY + 80);
 
-    // Callout text under sticker
-    ctx.font = 'bold 34px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = '#0284c7';
-    ctx.fillText('Toca el link o pon tu fecha en 5 segundos 👉', 540, cardY + cardH - 50);
+    // Tap callout under sticker
+    ctx.font = '800 38px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#7c3aed';
+    ctx.fillText('Toca el sticker o entra al enlace 👆', 540, cardY + 575);
+
+    ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('¡Prometo felicitarte por WhatsApp este año! 📲', 540, cardY + 645);
 
     // 8. Bottom Footer instructions
-    ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('¡Prometo felicitarte este año por WhatsApp! 📲', 540, 1590);
+    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText('AutoBirthday · Sincronización inteligente de cumpleaños', 540, 1660);
 
     ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';

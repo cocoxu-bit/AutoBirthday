@@ -63,39 +63,53 @@ export function GrowthCollectorCard({ username, displayName }: GrowthCollectorCa
           </div>
 
           {/* Right: Actions */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             
-            {/* Story Generator Button */}
-            <button
-              type="button"
-              onClick={() => setIsStoryModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white font-black text-xs transition-all shadow-md shadow-purple-950/40 active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-1">
-                <InstagramIcon className="w-3.5 h-3.5" />
-                <WhatsAppIcon className="w-3.5 h-3.5" size={14} />
-                <TikTokIcon className="w-3.5 h-3.5" />
-              </div>
-              <span>Crear Historia / Estado</span>
-            </button>
-
-            {/* Direct Share on WhatsApp */}
+            {/* 1. Direct WhatsApp Chat Share */}
             <a
               href={whatsappShareUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleWhatsAppShareClick}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all shadow-md shadow-emerald-950/40 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all shadow-md shadow-emerald-950/40 active:scale-[0.98]"
             >
               <WhatsAppIcon className="w-4 h-4" size={16} />
-              <span>Enviar a WhatsApp</span>
+              <span>WhatsApp Grupos</span>
             </a>
 
-            {/* Copy Link Button */}
+            {/* 2. Direct WhatsApp Status Share */}
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackGrowthShareAction('story_whatsapp', username)}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-emerald-700/80 hover:bg-emerald-600 border border-emerald-500/40 text-white font-black text-xs transition-all shadow-md active:scale-[0.98]"
+            >
+              <WhatsAppIcon className="w-4 h-4" size={16} />
+              <span>Mi Estado</span>
+            </a>
+
+            {/* 3. Instagram Direct */}
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(collectorUrl);
+                toast.success('¡Enlace copiado! Pégalo con el sticker de enlace en Instagram Stories.');
+                trackGrowthShareAction('story_instagram', username);
+                window.location.href = 'instagram://story-camera';
+                setTimeout(() => window.open('https://instagram.com', '_blank'), 1200);
+              }}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:opacity-90 text-white font-black text-xs transition-all shadow-md shadow-pink-950/40 active:scale-[0.98]"
+            >
+              <InstagramIcon className="w-4 h-4" />
+              <span>Instagram</span>
+            </button>
+
+            {/* 4. Copy Link Button */}
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs transition-all active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs transition-all active:scale-[0.98]"
             >
               {copied ? (
                 <>
@@ -105,9 +119,20 @@ export function GrowthCollectorCard({ username, displayName }: GrowthCollectorCa
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span>Copiar Enlace</span>
+                  <span>Copiar</span>
                 </>
               )}
+            </button>
+
+            {/* 5. Storie 9:16 Modal Button */}
+            <button
+              type="button"
+              onClick={() => setIsStoryModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl bg-violet-800/40 hover:bg-violet-800/70 border border-violet-600/40 text-violet-200 font-bold text-xs transition-all active:scale-[0.98]"
+              title="Personalizar imagen vertical 9:16 para Stories"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Storie 9:16</span>
             </button>
 
           </div>
