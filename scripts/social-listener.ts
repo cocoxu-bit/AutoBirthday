@@ -73,17 +73,50 @@ function isPostFresh(createdAt: Date): boolean {
 }
 
 const KEYWORDS_ES = [
+  // 1. Olvidos consumados (dolor activo)
   'se me olvidó el cumple',
   'se me olvido el cumple',
   'se me pasó el cumpleaños',
   'se me paso el cumple',
-  'casi se me pasa felicitar',
   'olvidé el cumpleaños',
   'olvide el cumpleaños',
   'olvidé el cumple',
   'olvide el cumple',
+  'se me olvidó felicitar',
+  'se me olvido felicitar',
+  'se me pasó felicitar',
+  'se me paso felicitar',
+  'olvidé felicitar',
+  'olvide felicitar',
+  'no felicité por su cumple',
+  'no felicite por su cumple',
+  'olvidé el cumple de mi',
+  'olvide el cumple de mi',
+  'se me olvidó el cumple de mi',
+  'se me olvido el cumple de mi',
+  'no me acordé del cumpleaños',
+  'no me acorde del cumple',
+  'se me fue el cumple',
+  'se me fue felicitar',
+
+  // 2. Casi olvido / alerta de última hora
+  'casi se me pasa felicitar',
+  'casi se me olvida felicitar',
+  'casi se me olvida el cumple',
+  'casi se me pasa el cumple',
+  'casi olvido el cumple',
+  'casi olvido felicitar',
+  'por poco se me olvida el cumple',
+
+  // 3. Problema recurrente de memoria / búsqueda de soluciones
+  'siempre se me olvidan los cumpleaños',
+  'siempre se me pasan los cumpleaños',
+  'siempre se me olvida felicitar',
+  'soy pésimo recordando cumpleaños',
+  'soy malísimo para los cumpleaños',
+  'nunca me acuerdo de los cumpleaños',
   'recordar cumpleaños',
-  'se me olvida felicitar',
+  'app para recordar cumpleaños',
 ];
 
 const TARGET_SUBREDDITS = [
@@ -96,6 +129,9 @@ const TARGET_SUBREDDITS = [
   'mexico',
   'Colombia',
   'relationships',
+  'RedditPregunta',
+  'confesiones',
+  'relaciones',
 ];
 
 const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 AutoBirthdayListener/1.0';
@@ -313,10 +349,25 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
       '"se me olvidó el cumple"',
       '"se me olvido el cumple"',
       '"se me pasó el cumpleaños"',
+      '"se me paso el cumple"',
       '"olvidé el cumpleaños"',
+      '"olvide el cumpleaños"',
+      '"olvidé el cumple"',
+      '"olvide el cumple"',
+      '"se me olvidó felicitar"',
+      '"se me olvido felicitar"',
+      '"se me pasó felicitar"',
       '"casi se me pasa felicitar"',
+      '"casi se me olvida felicitar"',
+      '"casi se me olvida el cumple"',
+      '"siempre se me olvidan los cumpleaños"',
+      '"olvidé el cumple de mi"',
+      '"se me fue el cumple"',
       'se me olvidó el cumple',
       'se me olvido el cumple',
+      'se me pasó el cumple',
+      'olvidé felicitar',
+      'olvide felicitar por su cumple',
     ];
 
     // Rotar 1 query por ciclo para ejecución rápida y no llamar la atención
@@ -381,8 +432,8 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
   const allPosts: RawSocialPost[] = [];
   const seenIds = new Set<string>();
 
-  // 1. Pullpush keyword queries (muestreo de palabras clave de Reddit)
-  const sampledKeywords = KEYWORDS_ES.slice(0, 3);
+  // 1. Pullpush keyword queries (muestreo rotatorio de 6 palabras clave de Reddit por ciclo)
+  const sampledKeywords = [...KEYWORDS_ES].sort(() => Math.random() - 0.5).slice(0, 6);
   for (const kw of sampledKeywords) {
     const [subPosts, comPosts] = await Promise.all([
       fetchPullpushSubmissions(kw),
@@ -397,8 +448,8 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
     }
   }
 
-  // 2. Subreddit RSS feeds
-  const sampledSubs = TARGET_SUBREDDITS.slice(0, 3);
+  // 2. Subreddit RSS feeds (muestreo rotatorio de 4 comunidades por ciclo)
+  const sampledSubs = [...TARGET_SUBREDDITS].sort(() => Math.random() - 0.5).slice(0, 4);
   for (const sub of sampledSubs) {
     const rssPosts = await fetchSubredditRss(sub);
     for (const p of rssPosts) {
