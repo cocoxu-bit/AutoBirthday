@@ -5,6 +5,7 @@ import { getUserByUsername } from '@/lib/user/slug';
 import { formatToWhatsappJid } from '@/lib/utils/phone';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { persistAvatarToStorage } from '@/lib/storage/avatars';
+import { recordGlobalBirthday } from '@/lib/directory/global-birthdays';
 import { revalidatePath } from 'next/cache';
 
 export interface SubmitPublicBirthdayPayload {
@@ -96,6 +97,9 @@ export async function submitPublicBirthdayAction(payload: SubmitPublicBirthdayPa
         updatedAt: new Date(),
       });
 
+      // Record in Global Birthdays Directory (Self-verified)
+      recordGlobalBirthday(cleanPhone, day, month, year, true).catch(() => {});
+
       adminDb.collection('growth_events').add({
         type: 'collector_submission',
         username: payload.username,
@@ -137,6 +141,9 @@ export async function submitPublicBirthdayAction(payload: SubmitPublicBirthdayPa
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    // Record in Global Birthdays Directory (Self-verified)
+    recordGlobalBirthday(cleanPhone, day, month, year, true).catch(() => {});
 
     adminDb.collection('growth_events').add({
       type: 'collector_submission',

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { executeSendWishes } from '@/lib/scheduler/send-wishes';
+import { getGlobalBirthdaysStats } from '@/lib/directory/global-birthdays';
 
 const ADMIN_EMAILS = [
   'lucasjimeneznavarro@gmail.com',
@@ -105,6 +106,8 @@ export interface AdminWishRecord {
 export interface AdminGrowthData {
   totalCollectorContacts: number;
   collectorUsersCount: number;
+  totalGlobalBirthdays?: number;
+  verifiedGlobalBirthdays?: number;
   totalShares: number;
   sharesByType: {
     whatsapp_chat: number;
@@ -383,8 +386,11 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const totalAiModeContacts = users.reduce((acc, u) => acc + u.aiModeContactsCount, 0);
     const aiModeContactsRate = totalContacts > 0 ? Math.round((totalAiModeContacts / totalContacts) * 100) : 0;
 
-    // Growth & Viral Loop Metrics
-    const growthStatsSnap = await adminDb.collection('system').doc('growth_stats').get().catch(() => null);
+    // Growth & Viral Loop Metrics + Global Birthdays Directory
+    const [growthStatsSnap, globalBdaysStats] = await Promise.all([
+      adminDb.collection('system').doc('growth_stats').get().catch(() => null),
+      getGlobalBirthdaysStats().catch(() => ({ totalCount: 0, verifiedCount: 0 })),
+    ]);
     const growthStatsData = (growthStatsSnap && typeof (growthStatsSnap as any).data === 'function')
       ? (growthStatsSnap as any).data() || {}
       : {};
@@ -409,6 +415,8 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const growth: AdminGrowthData = {
       totalCollectorContacts,
       collectorUsersCount,
+      totalGlobalBirthdays: globalBdaysStats.totalCount,
+      verifiedGlobalBirthdays: globalBdaysStats.verifiedCount,
       totalShares: Number(growthStatsData.totalShares || 0),
       sharesByType: {
         whatsapp_chat: Number(byType.whatsapp_chat || 0),

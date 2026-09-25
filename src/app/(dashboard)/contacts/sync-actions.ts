@@ -10,6 +10,7 @@ import { fetchGoogleCalendarBirthdays } from '@/lib/integrations/google-calendar
 import { fetchICloudCalendarBirthdays } from '@/lib/integrations/icloud-calendar';
 import { matchAllBirthdaysToWhatsApp1to1 } from '@/lib/parsers/fuzzy-match';
 import { persistAvatarToStorage } from '@/lib/storage/avatars';
+import { lookupGlobalBirthdays, recordGlobalBirthday } from '@/lib/directory/global-birthdays';
 import { WhatsAppChatContact, WhatsAppGroup, ContactSource, WishMode, AiTone, TargetType } from '@/types';
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -401,6 +402,16 @@ export async function saveSingleSyncedContactAction(contact: {
       source: contact.source,
     });
 
+    if (contact.phone && contact.targetType !== 'group' && contact.birthDay && contact.birthMonth) {
+      recordGlobalBirthday(
+        contact.phone,
+        contact.birthDay,
+        contact.birthMonth,
+        contact.birthYear,
+        false
+      ).catch(() => {});
+    }
+
     revalidatePath('/contacts');
     revalidatePath('/dashboard');
 
@@ -485,6 +496,16 @@ export async function batchApproveSyncedContacts(
         source: contact.source,
       });
 
+      if (contact.phone && contact.targetType !== 'group' && contact.birthDay && contact.birthMonth) {
+        recordGlobalBirthday(
+          contact.phone,
+          contact.birthDay,
+          contact.birthMonth,
+          contact.birthYear,
+          false
+        ).catch(() => {});
+      }
+
       savedCount++;
     }
 
@@ -519,6 +540,8 @@ export interface WhatsAppSyncItem {
   birthDay: number;
   birthMonth: number;
   birthYear?: number | null;
+  isAutoDetected?: boolean;
+  verifiedBySelf?: boolean;
   
   // Target Destination
   targetType: TargetType;
@@ -645,17 +668,26 @@ export async function getWhatsAppInitialBatchForSyncAction(): Promise<{
     // Deliver initial batch of first 3 contacts — truly instant
     const initialCandidates = candidates.slice(0, 3);
 
+    // Query Global Directory for cross-account known birthdays
+    const initialPhones = initialCandidates.map(c => c.phone).filter(Boolean);
+    const globalBirthdaysMap = await lookupGlobalBirthdays(initialPhones);
+
     const items: WhatsAppSyncItem[] = initialCandidates.map((c: any, index) => {
       const isGroupOrigin = c.source === 'group_participant' && Boolean(c.originGroupId);
+      const globalBday = globalBirthdaysMap.get(c.phone);
+      const hasDetected = Boolean(globalBday && globalBday.birthDay > 0 && globalBday.birthMonth > 0);
+
       return {
         id: `wa-sync-${c.phone}-${index}`,
         name: c.name,
         phone: c.phone,
         pushName: c.pushName,
         profilePictureUrl: c.profilePictureUrl || null,
-        birthDay: 0,
-        birthMonth: 0,
-        birthYear: null,
+        birthDay: hasDetected ? globalBday!.birthDay : 0,
+        birthMonth: hasDetected ? globalBday!.birthMonth : 0,
+        birthYear: hasDetected ? globalBday!.birthYear : null,
+        isAutoDetected: hasDetected,
+        verifiedBySelf: globalBday?.verifiedBySelf,
         targetType: isGroupOrigin ? 'group' : 'individual',
         groupId: isGroupOrigin ? c.originGroupId : undefined,
         groupName: isGroupOrigin ? c.originGroupName : undefined,
@@ -779,17 +811,26 @@ export async function getWhatsAppChunkedContactsForSyncAction(
     // Take next chunk (offset is ignored since we filter by alreadyLoadedPhones)
     const chunkSlice = remaining.slice(0, limit);
 
+    // Query Global Directory for cross-account known birthdays
+    const chunkPhones = chunkSlice.map(c => c.phone).filter(Boolean);
+    const globalBirthdaysMap = await lookupGlobalBirthdays(chunkPhones);
+
     const items: WhatsAppSyncItem[] = chunkSlice.map((c: any, index) => {
       const isGroupOrigin = c.source === 'group_participant' && Boolean(c.originGroupId);
+      const globalBday = globalBirthdaysMap.get(c.phone);
+      const hasDetected = Boolean(globalBday && globalBday.birthDay > 0 && globalBday.birthMonth > 0);
+
       return {
         id: `wa-sync-${c.phone}-chunk-${index}`,
         name: c.name,
         phone: c.phone,
         pushName: c.pushName,
         profilePictureUrl: c.profilePictureUrl || null,
-        birthDay: 0,
-        birthMonth: 0,
-        birthYear: null,
+        birthDay: hasDetected ? globalBday!.birthDay : 0,
+        birthMonth: hasDetected ? globalBday!.birthMonth : 0,
+        birthYear: hasDetected ? globalBday!.birthYear : null,
+        isAutoDetected: hasDetected,
+        verifiedBySelf: globalBday?.verifiedBySelf,
         targetType: isGroupOrigin ? 'group' : 'individual',
         groupId: isGroupOrigin ? c.originGroupId : undefined,
         groupName: isGroupOrigin ? c.originGroupName : undefined,
@@ -863,28 +904,39 @@ export async function getWhatsAppRemainingContactsForSyncAction(alreadyLoadedPho
     // Sort purely by most recent conversation
     remaining.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
-    const items: WhatsAppSyncItem[] = remaining.map((c, index) => ({
-      id: `wa-sync-${c.phone}-bg-${index}`,
-      name: c.name,
-      phone: c.phone,
-      pushName: c.pushName,
-      profilePictureUrl: c.profilePictureUrl || null,
-      birthDay: 0,
-      birthMonth: 0,
-      birthYear: null,
-      targetType: 'individual',
-      groupId: undefined,
-      groupName: undefined,
-      mentionInGroup: true,
-      mode: 'manual',
-      templateId: undefined,
-      customMessage: undefined,
-      aiTone: 'casual',
-      aiNotes: undefined,
-      autoSend: false,
-      sendTimeStart: '09:00',
-      sendTimeEnd: '11:00',
-    }));
+    // Query Global Directory for cross-account known birthdays
+    const remainingPhones = remaining.map(c => c.phone).filter(Boolean);
+    const globalBirthdaysMap = await lookupGlobalBirthdays(remainingPhones);
+
+    const items: WhatsAppSyncItem[] = remaining.map((c, index) => {
+      const globalBday = globalBirthdaysMap.get(c.phone);
+      const hasDetected = Boolean(globalBday && globalBday.birthDay > 0 && globalBday.birthMonth > 0);
+
+      return {
+        id: `wa-sync-${c.phone}-bg-${index}`,
+        name: c.name,
+        phone: c.phone,
+        pushName: c.pushName,
+        profilePictureUrl: c.profilePictureUrl || null,
+        birthDay: hasDetected ? globalBday!.birthDay : 0,
+        birthMonth: hasDetected ? globalBday!.birthMonth : 0,
+        birthYear: hasDetected ? globalBday!.birthYear : null,
+        isAutoDetected: hasDetected,
+        verifiedBySelf: globalBday?.verifiedBySelf,
+        targetType: 'individual',
+        groupId: undefined,
+        groupName: undefined,
+        mentionInGroup: true,
+        mode: 'manual',
+        templateId: undefined,
+        customMessage: undefined,
+        aiTone: 'casual',
+        aiNotes: undefined,
+        autoSend: false,
+        sendTimeStart: '09:00',
+        sendTimeEnd: '11:00',
+      };
+    });
 
     return {
       success: true,
@@ -959,28 +1011,39 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       // Sort purely by most recent conversation timestamp descending
       candidates.sort((a, b) => b.lastActivity - a.lastActivity);
 
-      const items: WhatsAppSyncItem[] = candidates.map((c, index) => ({
-        id: `wa-sync-${c.phone}-${index}`,
-        name: c.name,
-        phone: c.phone,
-        pushName: c.pushName,
-        profilePictureUrl: c.profilePictureUrl || null,
-        birthDay: 0,
-        birthMonth: 0,
-        birthYear: null,
-        targetType: 'individual',
-        groupId: undefined,
-        groupName: undefined,
-        mentionInGroup: true,
-        mode: 'manual',
-        templateId: undefined,
-        customMessage: undefined,
-        aiTone: 'casual',
-        aiNotes: undefined,
-        autoSend: false,
-        sendTimeStart: '09:00',
-        sendTimeEnd: '11:00',
-      }));
+      // Query Global Directory for cross-account known birthdays
+      const candidatePhones = candidates.map(c => c.phone).filter(Boolean);
+      const globalBirthdaysMap = await lookupGlobalBirthdays(candidatePhones);
+
+      const items: WhatsAppSyncItem[] = candidates.map((c, index) => {
+        const globalBday = globalBirthdaysMap.get(c.phone);
+        const hasDetected = Boolean(globalBday && globalBday.birthDay > 0 && globalBday.birthMonth > 0);
+
+        return {
+          id: `wa-sync-${c.phone}-${index}`,
+          name: c.name,
+          phone: c.phone,
+          pushName: c.pushName,
+          profilePictureUrl: c.profilePictureUrl || null,
+          birthDay: hasDetected ? globalBday!.birthDay : 0,
+          birthMonth: hasDetected ? globalBday!.birthMonth : 0,
+          birthYear: hasDetected ? globalBday!.birthYear : null,
+          isAutoDetected: hasDetected,
+          verifiedBySelf: globalBday?.verifiedBySelf,
+          targetType: 'individual',
+          groupId: undefined,
+          groupName: undefined,
+          mentionInGroup: true,
+          mode: 'manual',
+          templateId: undefined,
+          customMessage: undefined,
+          aiTone: 'casual',
+          aiNotes: undefined,
+          autoSend: false,
+          sendTimeStart: '09:00',
+          sendTimeEnd: '11:00',
+        };
+      });
 
       return {
         success: true,
@@ -1136,16 +1199,25 @@ export async function getWhatsAppRecentChatsForSyncAction(): Promise<{
       if (item.pic) picMap.set(item.phone, item.pic);
     });
 
+    // Query Global Directory for cross-account known birthdays
+    const allPhones = allCandidates.map(c => c.phone).filter(Boolean);
+    const globalBirthdaysMap = await lookupGlobalBirthdays(allPhones);
+
     const items: WhatsAppSyncItem[] = allCandidates.map((c, index) => {
+      const globalBday = globalBirthdaysMap.get(c.phone);
+      const hasDetected = Boolean(globalBday && globalBday.birthDay > 0 && globalBday.birthMonth > 0);
+
       return {
         id: `wa-sync-${c.phone}-${index}`,
         name: c.name,
         phone: c.phone,
         pushName: c.pushName,
         profilePictureUrl: picMap.get(c.phone) || c.profilePictureUrl || null,
-        birthDay: 0,
-        birthMonth: 0,
-        birthYear: null,
+        birthDay: hasDetected ? globalBday!.birthDay : 0,
+        birthMonth: hasDetected ? globalBday!.birthMonth : 0,
+        birthYear: hasDetected ? globalBday!.birthYear : null,
+        isAutoDetected: hasDetected,
+        verifiedBySelf: globalBday?.verifiedBySelf,
         targetType: 'individual',
         groupId: undefined,
         groupName: undefined,

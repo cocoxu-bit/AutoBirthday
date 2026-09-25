@@ -14,7 +14,8 @@ import {
   Smartphone,
   Eye,
   CheckCircle2,
-  Copy
+  Copy,
+  Globe
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { InstagramIcon, TikTokIcon } from '@/components/ui/social-icons';
@@ -32,6 +33,8 @@ const MONTH_NAMES = [
 export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
   const totalCollectorContacts = growth?.totalCollectorContacts || 0;
   const collectorUsersCount = growth?.collectorUsersCount || 0;
+  const totalGlobalBirthdays = growth?.totalGlobalBirthdays || 0;
+  const verifiedGlobalBirthdays = growth?.verifiedGlobalBirthdays || 0;
   const totalShares = growth?.totalShares || 0;
   const shares = growth?.sharesByType || {
     whatsapp_chat: 0,
@@ -58,10 +61,10 @@ export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
               <span>Product-Led Growth & Bucle Viral</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white">
-              Analítica del Recolector de Cumpleaños 🚀
+              Analítica del Recolector y Red Global 🚀
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
-              Métricas de captación orgánica a través de páginas públicas <span className="text-violet-300 font-mono">/u/[username]</span>, generador de Stories 9:16 para Instagram, TikTok y Estados de WhatsApp.
+              Métricas de captación orgánica a través de páginas públicas <span className="text-violet-300 font-mono">/u/[username]</span>, generador de Stories 9:16 y el <span className="text-emerald-300 font-medium">Directorio Global de Cumpleaños</span> compartido entre cuentas.
             </p>
           </div>
 
@@ -78,55 +81,70 @@ export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
       </div>
 
       {/* 2. Primary Growth KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         
-        {/* KPI 1: Cumpleaños Captados */}
+        {/* KPI 1: Directorio Global */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Cumpleaños Captados</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Directorio Global</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <Globe className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-3xl font-black text-slate-900 tracking-tight">{totalGlobalBirthdays}</p>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold truncate">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span>{verifiedGlobalBirthdays} verificados por titular</span>
+          </div>
+        </div>
+
+        {/* KPI 2: Cumpleaños Captados */}
+        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider">Captados por Enlace</span>
             <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center">
               <PartyPopper className="w-4 h-4" />
             </div>
           </div>
           <p className="text-3xl font-black text-slate-900 tracking-tight">{totalCollectorContacts}</p>
-          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Por páginas públicas</span>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold truncate">
+            <TrendingUp className="w-3.5 h-3.5 shrink-0" />
+            <span>Páginas públicas /u/</span>
           </div>
         </div>
 
-        {/* KPI 2: Anfitriones Activos */}
+        {/* KPI 3: Anfitriones Activos */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider">Anfitriones Virales</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <p className="text-3xl font-black text-slate-900 tracking-tight">{collectorUsersCount}</p>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
             <span>Usuarios con fechas recibidas</span>
           </div>
         </div>
 
-        {/* KPI 3: Difusiones Totales */}
+        {/* KPI 4: Difusiones Totales */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Acciones de Difusión</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Acciones Difusión</span>
             <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
               <Share2 className="w-4 h-4" />
             </div>
           </div>
           <p className="text-3xl font-black text-slate-900 tracking-tight">{totalShares}</p>
-          <div className="flex items-center gap-1.5 text-xs text-indigo-600 font-bold">
+          <div className="flex items-center gap-1.5 text-xs text-indigo-600 font-bold truncate">
             <span>WhatsApp + Stories + Enlaces</span>
           </div>
         </div>
 
-        {/* KPI 4: Stories Creadas */}
+        {/* KPI 5: Stories Creadas */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-bold uppercase tracking-wider">Stories & Estados</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Stories Creadas</span>
             <div className="w-8 h-8 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center">
               <Smartphone className="w-4 h-4" />
             </div>
@@ -134,8 +152,8 @@ export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
           <p className="text-3xl font-black text-slate-900 tracking-tight">
             {shares.story_instagram + shares.story_whatsapp + shares.story_tiktok + shares.download_story}
           </p>
-          <div className="flex items-center gap-1.5 text-xs text-pink-600 font-bold">
-            <span>Instagram, TikTok & WhatsApp</span>
+          <div className="flex items-center gap-1.5 text-xs text-pink-600 font-bold truncate">
+            <span>Instagram, TikTok & WA</span>
           </div>
         </div>
 

@@ -277,8 +277,11 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
   // Update field of current card
   const updateCurrentCard = (updates: Partial<WhatsAppSyncItem>) => {
-    if (updates.birthDay || updates.birthMonth) {
+    if (updates.birthDay !== undefined || updates.birthMonth !== undefined) {
       setBirthdayError(false);
+      if (updates.isAutoDetected === undefined) {
+        updates.isAutoDetected = false;
+      }
     }
     setCards(prev => {
       const next = [...prev];
@@ -656,13 +659,21 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       <CalendarIcon className="w-4 h-4 text-emerald-700" />
                       <span>{t('contactForm.birthdayLabel')}</span>
                     </label>
-                    <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
-                      currentCard.birthDay && currentCard.birthMonth
-                        ? 'bg-emerald-200 text-emerald-900'
-                        : 'bg-amber-200 text-amber-900'
-                    }`}>
-                      {currentCard.birthDay && currentCard.birthMonth ? t('contactForm.completedBadge') : t('contactForm.requiredBadge')}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {currentCard.isAutoDetected && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200 animate-in fade-in">
+                          <Sparkles className="w-3 h-3 text-violet-600" />
+                          <span>AutoBirthday</span>
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
+                        currentCard.birthDay && currentCard.birthMonth
+                          ? 'bg-emerald-200 text-emerald-900'
+                          : 'bg-amber-200 text-amber-900'
+                      }`}>
+                        {currentCard.birthDay && currentCard.birthMonth ? t('contactForm.completedBadge') : t('contactForm.requiredBadge')}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Day, Month, and Year Selectors (Perfect 1-line alignment) */}
@@ -729,12 +740,20 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
                   {/* Days Info Badge */}
                   {daysInfo ? (
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-white/90 px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
-                      <span>
-                        {currentCard.birthDay} {dict.contactForm.months[currentCard.birthMonth - 1]}
-                        {currentCard.birthYear ? ` ${currentCard.birthYear}` : ''} — <strong>{daysInfo.text}</strong>
-                        {daysInfo.age ? ` (${daysInfo.age} ${t('common.yearsOld')})` : ''}
-                      </span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-white/90 px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
+                        <span>
+                          {currentCard.birthDay} {dict.contactForm.months[currentCard.birthMonth - 1]}
+                          {currentCard.birthYear ? ` ${currentCard.birthYear}` : ''} — <strong>{daysInfo.text}</strong>
+                          {daysInfo.age ? ` (${daysInfo.age} ${t('common.yearsOld')})` : ''}
+                        </span>
+                      </div>
+                      {currentCard.isAutoDetected && (
+                        <p className="text-[11px] text-violet-700 font-bold flex items-center gap-1 px-1">
+                          <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                          <span>Fecha detectada automáticamente por la red AutoBirthday</span>
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <p className="text-[11px] text-slate-500 font-medium">

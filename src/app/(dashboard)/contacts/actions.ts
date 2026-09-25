@@ -16,6 +16,7 @@ import { parseVCard } from '@/lib/parsers/vcard-vcf';
 import { WhatsAppGroup, WhatsAppChatContact, ParsedContactPreview } from '@/types';
 import { formatToWhatsappJid } from '@/lib/utils/phone';
 import { persistAvatarToStorage } from '@/lib/storage/avatars';
+import { recordGlobalBirthday, lookupSingleGlobalBirthday } from '@/lib/directory/global-birthdays';
 
 async function getAuthenticatedUserId(): Promise<string> {
   const cookieStore = await cookies();
@@ -72,6 +73,16 @@ export async function createContact(formData: ContactFormData) {
       source: validatedData.source || 'manual',
     });
 
+    if (validatedData.phone && validatedData.targetType !== 'group' && validatedData.birthDay && validatedData.birthMonth) {
+      recordGlobalBirthday(
+        validatedData.phone,
+        validatedData.birthDay,
+        validatedData.birthMonth,
+        validatedData.birthYear,
+        false
+      ).catch(() => {});
+    }
+
     revalidatePath('/contacts');
     revalidatePath('/dashboard');
 
@@ -127,6 +138,16 @@ export async function updateContact(contactId: string, formData: ContactFormData
       sendTimeEnd: validatedData.sendTimeEnd ?? '11:45',
       isActive: validatedData.isActive ?? true,
     });
+
+    if (validatedData.phone && validatedData.targetType !== 'group' && validatedData.birthDay && validatedData.birthMonth) {
+      recordGlobalBirthday(
+        validatedData.phone,
+        validatedData.birthDay,
+        validatedData.birthMonth,
+        validatedData.birthYear,
+        false
+      ).catch(() => {});
+    }
 
     revalidatePath('/contacts');
     revalidatePath('/dashboard');
@@ -316,6 +337,34 @@ export async function importContacts(
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     return { success: false, error: message };
+  }
+}
+
+/**
+ * Looks up a single phone number in the global directory for authenticated users.
+ * Returns the birthday if previously recorded across the AutoBirthday network.
+ * Names are never exposed or returned.
+ */
+export async function lookupGlobalBirthdayForPhoneAction(phone: string): Promise<{
+  found: boolean;
+  birthDay?: number;
+  birthMonth?: number;
+  birthYear?: number | null;
+  verifiedBySelf?: boolean;
+}> {
+  try {
+    await getAuthenticatedUserId();
+    const result = await lookupSingleGlobalBirthday(phone);
+    if (!result) return { found: false };
+    return {
+      found: true,
+      birthDay: result.birthDay,
+      birthMonth: result.birthMonth,
+      birthYear: result.birthYear,
+      verifiedBySelf: result.verifiedBySelf,
+    };
+  } catch {
+    return { found: false };
   }
 }
 
