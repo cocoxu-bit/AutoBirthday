@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -90,7 +91,7 @@ export function Sidebar() {
         })}
 
         {isAdmin && (
-          <div className="pt-2">
+          <div className="pt-2 space-y-1">
             <Link
               href="/admin"
               prefetch={true}
@@ -104,6 +105,21 @@ export function Sidebar() {
             >
               <ShieldCheck className="w-5 h-5 shrink-0 text-amber-600" />
               {!collapsed && <span className="ml-3 truncate text-xs font-black">👑 {t('nav.admin')}</span>}
+            </Link>
+
+            <Link
+              href="/tools/fake-chat"
+              prefetch={true}
+              title={collapsed ? "Fake Chat Studio" : undefined}
+              className={cn(
+                "flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative border",
+                pathname.startsWith("/tools/fake-chat")
+                  ? "bg-purple-100 border-purple-300 text-purple-950 font-bold shadow-xs"
+                  : "bg-purple-50/70 border-purple-200/80 text-purple-900 hover:bg-purple-100"
+              )}
+            >
+              <Sparkles className="w-5 h-5 shrink-0 text-purple-600" />
+              {!collapsed && <span className="ml-3 truncate text-xs font-black">🎭 Fake Chat Studio</span>}
             </Link>
           </div>
         )}

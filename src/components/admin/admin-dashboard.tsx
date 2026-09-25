@@ -376,6 +376,15 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <Link
+            href="/tools/fake-chat"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-bold text-xs sm:text-sm rounded-xl hover:opacity-90 transition-all shadow-sm shadow-purple-500/20"
+            title="Generador de Fake Chats y Creatividades"
+          >
+            <Smartphone className="w-4 h-4 text-purple-200" />
+            <span>Fake Chat Studio 🎭</span>
+          </Link>
+
           <button
             type="button"
             onClick={handleRefresh}

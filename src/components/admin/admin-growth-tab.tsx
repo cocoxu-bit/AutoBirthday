@@ -119,7 +119,14 @@ export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/tools/fake-chat"
+              className="inline-flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold text-xs rounded-2xl shadow-lg shadow-purple-500/30 transition-all hover:scale-[1.02] cursor-pointer"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>Fake Chat Studio 🎭</span>
+            </Link>
             <div className="px-4 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 text-center">
               <p className="text-[11px] text-slate-300 font-bold uppercase tracking-wider">Tasa de Viralidad</p>
               <p className="text-xl font-black text-emerald-400">

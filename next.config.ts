@@ -40,6 +40,16 @@ const nextConfig: NextConfig = {
         destination: '/settings',
         permanent: true,
       },
+      {
+        source: '/studio',
+        destination: '/tools/fake-chat',
+        permanent: false,
+      },
+      {
+        source: '/fake-chat',
+        destination: '/tools/fake-chat',
+        permanent: false,
+      },
     ];
   },
 };
