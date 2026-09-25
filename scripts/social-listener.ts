@@ -63,6 +63,15 @@ const ADMIN_PHONE = process.env.ADMIN_PHONE || '34926312436';
 const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'seen-leads.json');
 
+// Ventana de frescura temporal: solo publicaciones de las últimas horas
+const MAX_AGE_HOURS = parseInt(process.env.MAX_POST_AGE_HOURS || '4', 10);
+const MAX_AGE_MS = MAX_AGE_HOURS * 60 * 60 * 1000;
+
+function isPostFresh(createdAt: Date): boolean {
+  if (!createdAt || isNaN(createdAt.getTime())) return false;
+  return (Date.now() - createdAt.getTime()) <= MAX_AGE_MS;
+}
+
 const KEYWORDS_ES = [
   'se me olvidó el cumple',
   'se me olvido el cumple',
@@ -135,7 +144,8 @@ function isLeadSeen(id: string): boolean {
  */
 async function fetchPullpushSubmissions(query: string): Promise<RawSocialPost[]> {
   try {
-    const url = `https://api.pullpush.io/reddit/search/submission/?q=${encodeURIComponent(query)}&size=8`;
+    const afterEpoch = Math.floor((Date.now() - MAX_AGE_MS) / 1000);
+    const url = `https://api.pullpush.io/reddit/search/submission/?q=${encodeURIComponent(query)}&after=${afterEpoch}&size=8`;
     const res = await fetch(url, {
       headers: { 'User-Agent': USER_AGENT },
       signal: AbortSignal.timeout(6000),
@@ -145,16 +155,18 @@ async function fetchPullpushSubmissions(query: string): Promise<RawSocialPost[]>
     const data = await res.json();
     if (!Array.isArray(data.data)) return [];
 
-    return data.data.map((item: any): RawSocialPost => ({
-      id: item.id || `pp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      platform: 'reddit',
-      subreddit: item.subreddit || 'reddit',
-      title: item.title || '',
-      content: item.selftext || '',
-      author: item.author ? `u/${item.author}` : 'u/anonimo',
-      url: item.full_link || (item.permalink ? `https://reddit.com${item.permalink}` : `https://reddit.com/r/${item.subreddit}`),
-      createdAt: item.created_utc ? new Date(item.created_utc * 1000) : new Date(),
-    }));
+    return data.data
+      .map((item: any): RawSocialPost => ({
+        id: item.id || `pp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        platform: 'reddit',
+        subreddit: item.subreddit || 'reddit',
+        title: item.title || '',
+        content: item.selftext || '',
+        author: item.author ? `u/${item.author}` : 'u/anonimo',
+        url: item.full_link || (item.permalink ? `https://reddit.com${item.permalink}` : `https://reddit.com/r/${item.subreddit}`),
+        createdAt: item.created_utc ? new Date(item.created_utc * 1000) : new Date(),
+      }))
+      .filter((p: RawSocialPost) => isPostFresh(p.createdAt));
   } catch (err: any) {
     return [];
   }
@@ -165,7 +177,8 @@ async function fetchPullpushSubmissions(query: string): Promise<RawSocialPost[]>
  */
 async function fetchPullpushComments(query: string): Promise<RawSocialPost[]> {
   try {
-    const url = `https://api.pullpush.io/reddit/search/comment/?q=${encodeURIComponent(query)}&size=8`;
+    const afterEpoch = Math.floor((Date.now() - MAX_AGE_MS) / 1000);
+    const url = `https://api.pullpush.io/reddit/search/comment/?q=${encodeURIComponent(query)}&after=${afterEpoch}&size=8`;
     const res = await fetch(url, {
       headers: { 'User-Agent': USER_AGENT },
       signal: AbortSignal.timeout(6000),
@@ -175,16 +188,18 @@ async function fetchPullpushComments(query: string): Promise<RawSocialPost[]> {
     const data = await res.json();
     if (!Array.isArray(data.data)) return [];
 
-    return data.data.map((item: any): RawSocialPost => ({
-      id: item.id || `pp_c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      platform: 'reddit',
-      subreddit: item.subreddit || 'reddit',
-      title: `Comentario en r/${item.subreddit || 'reddit'}`,
-      content: item.body || '',
-      author: item.author ? `u/${item.author}` : 'u/anonimo',
-      url: item.permalink ? `https://reddit.com${item.permalink}` : `https://reddit.com/r/${item.subreddit}`,
-      createdAt: item.created_utc ? new Date(item.created_utc * 1000) : new Date(),
-    }));
+    return data.data
+      .map((item: any): RawSocialPost => ({
+        id: item.id || `pp_c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        platform: 'reddit',
+        subreddit: item.subreddit || 'reddit',
+        title: `Comentario en r/${item.subreddit || 'reddit'}`,
+        content: item.body || '',
+        author: item.author ? `u/${item.author}` : 'u/anonimo',
+        url: item.permalink ? `https://reddit.com${item.permalink}` : `https://reddit.com/r/${item.subreddit}`,
+        createdAt: item.created_utc ? new Date(item.created_utc * 1000) : new Date(),
+      }))
+      .filter((p: RawSocialPost) => isPostFresh(p.createdAt));
   } catch (err: any) {
     return [];
   }
@@ -215,9 +230,16 @@ async function fetchSubredditRss(subreddit: string): Promise<RawSocialPost[]> {
       const authorMatch = entry.match(/<author><name>([^<]+)<\/name>/);
       const idMatch = entry.match(/<id>([^<]+)<\/id>/);
       const contentMatch = entry.match(/<content type="html">([\s\S]*?)<\/content>/);
+      const dateMatch = entry.match(/<updated>([^<]+)<\/updated>/) || entry.match(/<published>([^<]+)<\/published>/);
 
       const title = titleMatch ? titleMatch[1] : '';
       const rawContent = contentMatch ? contentMatch[1].replace(/<[^>]+>/g, ' ').slice(0, 1000) : '';
+      const createdAt = dateMatch ? new Date(dateMatch[1]) : new Date();
+
+      // Descartar publicaciones antiguas
+      if (!isPostFresh(createdAt)) {
+        continue;
+      }
 
       // Check if entry contains birthday keywords
       const fullText = `${title} ${rawContent}`.toLowerCase();
@@ -234,7 +256,7 @@ async function fetchSubredditRss(subreddit: string): Promise<RawSocialPost[]> {
           content: rawContent.trim(),
           author: authorMatch ? authorMatch[1] : 'u/anonimo',
           url: linkMatch[1],
-          createdAt: new Date(),
+          createdAt,
         });
       }
     }
@@ -292,7 +314,9 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
       '"se me olvido el cumple"',
       '"se me pasó el cumpleaños"',
       '"olvidé el cumpleaños"',
-      '"casi se me pasa felicitar"'
+      '"casi se me pasa felicitar"',
+      'se me olvidó el cumple',
+      'se me olvido el cumple',
     ];
 
     // Rotar 1 query por ciclo para ejecución rápida y no llamar la atención
@@ -306,12 +330,21 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
     const articles = await page.locator('article[data-testid="tweet"]').all();
     console.log(`🐦 Tweets encontrados en el DOM de X: ${articles.length}`);
 
-    for (const art of articles.slice(0, 6)) {
+    for (const art of articles.slice(0, 8)) {
       const text = (await art.locator('[data-testid="tweetText"]').textContent().catch(() => ''))?.trim() || '';
       const user = (await art.locator('[data-testid="User-Name"]').textContent().catch(() => ''))?.trim() || '';
       const href = (await art.locator('a[href*="/status/"]').first().getAttribute('href').catch(() => '')) || '';
+      const timeAttr = await art.locator('time').getAttribute('datetime').catch(() => null);
 
       if (text && href) {
+        const tweetDate = timeAttr ? new Date(timeAttr) : new Date();
+
+        // Descartar tweets con más de MAX_AGE_HOURS de antigüedad
+        if (timeAttr && !isPostFresh(tweetDate)) {
+          console.log(`⏳ Tweet descartado por antigüedad (> ${MAX_AGE_HOURS}h): ${timeAttr}`);
+          continue;
+        }
+
         const idMatch = href.match(/status\/(\d+)/);
         const tweetId = idMatch ? idMatch[1] : `tw_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
         const handleMatch = user.match(/@(\w+)/);
@@ -326,7 +359,7 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
           content: text.replace(/\s+/g, ' '),
           author: authorHandle,
           url: tweetUrl,
-          createdAt: new Date(),
+          createdAt: tweetDate,
         });
       }
     }
@@ -357,7 +390,7 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
     ]);
 
     for (const p of [...subPosts, ...comPosts]) {
-      if (!seenIds.has(p.id) && !isLeadSeen(p.id)) {
+      if (isPostFresh(p.createdAt) && !seenIds.has(p.id) && !isLeadSeen(p.id)) {
         seenIds.add(p.id);
         allPosts.push(p);
       }
@@ -369,7 +402,7 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
   for (const sub of sampledSubs) {
     const rssPosts = await fetchSubredditRss(sub);
     for (const p of rssPosts) {
-      if (!seenIds.has(p.id) && !isLeadSeen(p.id)) {
+      if (isPostFresh(p.createdAt) && !seenIds.has(p.id) && !isLeadSeen(p.id)) {
         seenIds.add(p.id);
         allPosts.push(p);
       }
@@ -379,7 +412,7 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
   // 3. Twitter / X posts con Playwright headless (si las credenciales están configuradas)
   const twitterPosts = await fetchTwitterPosts();
   for (const p of twitterPosts) {
-    if (!seenIds.has(p.id) && !isLeadSeen(p.id)) {
+    if (isPostFresh(p.createdAt) && !seenIds.has(p.id) && !isLeadSeen(p.id)) {
       seenIds.add(p.id);
       allPosts.push(p);
     }
@@ -528,23 +561,12 @@ async function sendWhatsAppAlert(post: RawSocialPost, qualification: LeadQualifi
       ? (openInstance.name || openInstance.instance?.instanceName)
       : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
 
-    const urgencyEmoji = 
-      qualification.leadScore === 'CRITICO' ? '🚨' :
-      qualification.leadScore === 'ALTO' ? '⚡' : '📌';
+    // El usuario solicitó exclusivamente el enlace directo sin texto adicional
+    const message = post.url;
 
-    const platform = post.platform === 'twitter' ? '𝕏' : `r/${post.subreddit}`;
-    const snippet = (post.content || post.title).replace(/\s+/g, ' ').slice(0, 100);
-
-    const message = `${urgencyEmoji} *Lead ${qualification.leadScore}* · ${platform}
-${post.author} → ${qualification.targetPerson}
-_"${snippet}..."_
-${post.url}
-
-💬 ${qualification.suggestedReply}`;
-
-    console.log(`📲 Enviando alerta de WhatsApp a ${ADMIN_PHONE} usando instancia "${instanceName}"...`);
+    console.log(`📲 Enviando enlace a WhatsApp (${ADMIN_PHONE}) usando instancia "${instanceName}"...`);
     const res = await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
-    console.log(`✅ ¡Alerta de WhatsApp entregada con éxito!`);
+    console.log(`✅ ¡Enlace enviado con éxito (${post.url})!`);
     return true;
   } catch (error: any) {
     console.error(`❌ Error al enviar alerta de WhatsApp:`, error?.message || error);
@@ -559,6 +581,20 @@ ${post.url}
 async function processPost(post: RawSocialPost, dryRun = false): Promise<boolean> {
   const channelTag = post.platform === 'twitter' ? 'X' : `r/${post.subreddit}`;
   console.log(`\n🔍 Analizando publicación: [${channelTag}] "${post.title.slice(0, 60)}..." por ${post.author}`);
+
+  // Filtro de frescura: verificar que sea de las últimas horas/minutos
+  if (!isPostFresh(post.createdAt)) {
+    console.log(`⏳ Descartado por antigüedad (> ${MAX_AGE_HOURS}h): ${post.url}`);
+    saveSeenLead({
+      id: post.id,
+      title: post.title,
+      url: post.url,
+      detectedAt: new Date().toISOString(),
+      score: 'ANTIGUO',
+      notified: false,
+    });
+    return false;
+  }
 
   // 1. Evaluar con Gemini
   const qualification = await qualifyLeadWithGemini(post);
@@ -649,6 +685,7 @@ async function main() {
   console.log(`🚀 AutoBirthday Social Listening & Intent Hijacking`);
   console.log(`=======================================================`);
   console.log(`📱 Admin Phone:    ${ADMIN_PHONE}`);
+  console.log(`⏱️ Ventana tiempo:  Últimas ${MAX_AGE_HOURS} horas`);
   console.log(`⚙️ Modo de ejecución: ${isTest ? 'TEST / SIMULACIÓN' : isWatch ? `DAEMON (Cada ${intervalMinutes} min)` : 'ONE-SHOT'}`);
   if (isDryRun) console.log(`🧪 Dry-run activo (sin envío real de WhatsApp)`);
   console.log(`-------------------------------------------------------`);
