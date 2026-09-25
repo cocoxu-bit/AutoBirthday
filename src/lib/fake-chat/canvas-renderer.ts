@@ -90,6 +90,210 @@ export function drawRoundRect(
   ctx.closePath();
 }
 
+// --- Canvas Vector Glyph Helpers for Pixel-Perfect Native Rendering ---
+
+export function drawAndroidArrow(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3.2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x + 18, y);
+  ctx.lineTo(x - 4, y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y - 10);
+  ctx.lineTo(x - 4, y);
+  ctx.lineTo(x + 6, y + 10);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawAndroidNavBar(ctx: CanvasRenderingContext2D, width: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // Back triangle (◁)
+  const backX = width * 0.24;
+  ctx.beginPath();
+  ctx.moveTo(backX + 7, y - 8);
+  ctx.lineTo(backX - 5, y);
+  ctx.lineTo(backX + 7, y + 8);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Home circle / ring (○)
+  const homeX = width * 0.5;
+  ctx.beginPath();
+  ctx.arc(homeX, y, 7.5, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Recents rounded square (≡ / ▢)
+  const recX = width * 0.76;
+  drawRoundRect(ctx, recX - 7, y - 7, 14, 14, 3);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+export function drawVideoIcon(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  drawRoundRect(ctx, x - 13, y - 10, 20, 20, 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + 7, y - 5);
+  ctx.lineTo(x + 16, y - 10);
+  ctx.lineTo(x + 16, y + 10);
+  ctx.lineTo(x + 7, y + 5);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawPhoneIcon(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.arc(x, y + 3, 10, -Math.PI * 0.8, -Math.PI * 0.2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 9, y - 4);
+  ctx.lineTo(x - 6, y - 7);
+  ctx.moveTo(x + 9, y - 4);
+  ctx.lineTo(x + 6, y - 7);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawThreeDots(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  for (const offset of [-9, 0, 9]) {
+    ctx.beginPath();
+    ctx.arc(x, y + offset, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+export function drawSmileyOutline(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x - r * 0.35, y - r * 0.2, 1.8, 0, Math.PI * 2);
+  ctx.arc(x + r * 0.35, y - r * 0.2, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y + r * 0.1, r * 0.5, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawPaperclipIcon(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + 5);
+  ctx.lineTo(x + 4, y - 4);
+  ctx.arc(x + 6, y - 6, 3, Math.PI * 0.25, -Math.PI * 0.75, true);
+  ctx.lineTo(x - 3, y + 3);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawCameraGlyph(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  drawRoundRect(ctx, x - 11, y - 8, 22, 16, 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x + 6, y - 4, 1.2, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
+export function drawMicrophoneGlyph(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  drawRoundRect(ctx, x - 4.5, y - 9, 9, 14, 4.5);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y - 1, 8.5, 0, Math.PI);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y + 7.5);
+  ctx.lineTo(x, y + 13);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawGalleryIcon(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  drawRoundRect(ctx, x - 10, y - 9, 20, 18, 3.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x - 4, y - 3, 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 8, y + 6);
+  ctx.lineTo(x - 2, y);
+  ctx.lineTo(x + 3, y + 4);
+  ctx.lineTo(x + 7, y + 1);
+  ctx.lineTo(x + 8, y + 6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawPlusIcon(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 5);
+  ctx.lineTo(x, y + 5);
+  ctx.moveTo(x - 5, y);
+  ctx.lineTo(x + 5, y);
+  ctx.stroke();
+  ctx.restore();
+}
+
 // --- Image Cache for Avatars ---
 const imageCache = new Map<string, HTMLImageElement>();
 
@@ -133,6 +337,7 @@ export interface MessageTimelineEvent {
   message: ChatMessage;
   index: number;
   isIncoming: boolean;
+  isFirstOfGroup: boolean;
   typingStart: number;
   typingDuration: number;
   appearTime: number;
@@ -206,7 +411,7 @@ export function computeChatTimeline(
 ): ChatTimeline {
   const tempCanvas = typeof document !== "undefined" ? document.createElement("canvas") : null;
   const ctx = tempCanvas ? tempCanvas.getContext("2d") : null;
-  const maxBubbleWidth = canvasWidth * 0.76;
+  const isInstagram = settings.platform === "instagram";
   const events: MessageTimelineEvent[] = [];
   const metrics = getFontMetrics(settings.fontSize || "large");
 
@@ -215,7 +420,13 @@ export function computeChatTimeline(
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
     const isIncoming = !msg.isMe;
+    const isFirstOfGroup = i === 0 || messages[i - 1].isMe !== msg.isMe;
     const words = Math.max(2, msg.text.trim().split(/\s+/).length);
+
+    // Max bubble width (incoming Instagram leaves room for avatar)
+    const maxBubbleWidth = isInstagram && isIncoming ? canvasWidth * 0.71 : canvasWidth * 0.76;
+    // Instagram does not have inside timestamps, so bottom padding is tighter
+    const basePadBottom = isInstagram ? metrics.paddingY * 2 : metrics.basePadBottom;
 
     // Measure bubble size
     let lines: string[] = [msg.text];
@@ -231,7 +442,7 @@ export function computeChatTimeline(
         if (w > maxLineWidth) maxLineWidth = w;
       }
       bubbleWidth = Math.max(metrics.minWidth, Math.min(maxBubbleWidth, maxLineWidth + metrics.paddingX * 2));
-      bubbleHeight = Math.max(metrics.minHeight, lines.length * metrics.lineHeight + metrics.basePadBottom);
+      bubbleHeight = Math.max(metrics.minHeight, lines.length * metrics.lineHeight + basePadBottom);
       if (msg.reaction) bubbleHeight += 18;
     } else {
       // Fallback text estimation for non-DOM/SSR environments (~18px per char)
@@ -249,7 +460,7 @@ export function computeChatTimeline(
       }
       if (curr) lines.push(curr);
       bubbleWidth = Math.min(maxBubbleWidth, Math.max(metrics.minWidth, msg.text.length * (metrics.fontSize * 0.5) + metrics.paddingX * 2));
-      bubbleHeight = Math.max(metrics.minHeight, lines.length * metrics.lineHeight + metrics.basePadBottom);
+      bubbleHeight = Math.max(metrics.minHeight, lines.length * metrics.lineHeight + basePadBottom);
       if (msg.reaction) bubbleHeight += 18;
     }
 
@@ -276,6 +487,7 @@ export function computeChatTimeline(
       message: msg,
       index: i,
       isIncoming,
+      isFirstOfGroup,
       typingStart,
       typingDuration,
       appearTime,
@@ -393,22 +605,39 @@ export function drawChatFrame(
   // Translate by scroll offset
   ctx.translate(0, viewportTopY - targetScroll);
 
-  // Render Date Pill ("HOY")
+  // Render Platform-Specific Date Header
   ctx.save();
-  ctx.font = "600 22px system-ui, -apple-system, sans-serif";
-  const dateText = "HOY";
-  const dateMetrics = ctx.measureText(dateText);
-  const pillW = dateMetrics.width + 36;
-  const pillH = 40;
-  const pillX = (width - pillW) / 2;
-  const pillY = 16;
-  ctx.fillStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-  drawRoundRect(ctx, pillX, pillY, pillW, pillH, 12);
-  ctx.fill();
-  ctx.fillStyle = isDark ? "#8696A0" : "#667781";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(dateText, width / 2, pillY + pillH / 2);
+  if (platform === "whatsapp") {
+    ctx.font = "600 20px system-ui, -apple-system, sans-serif";
+    const dateText = "Hoy";
+    const dateMetrics = ctx.measureText(dateText);
+    const pillW = dateMetrics.width + 36;
+    const pillH = 38;
+    const pillX = (width - pillW) / 2;
+    const pillY = 16;
+    ctx.fillStyle = isDark ? "#182229" : "#FFFFFF";
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+    ctx.lineWidth = 1;
+    drawRoundRect(ctx, pillX, pillY, pillW, pillH, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = isDark ? "#8696A0" : "#54656F";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(dateText, width / 2, pillY + pillH / 2);
+  } else if (platform === "instagram") {
+    ctx.font = "500 22px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = isDark ? "#8E8E8E" : "#737373";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`DOM, ${settings.currentTime || "12:00"}`, width / 2, 34);
+  } else {
+    ctx.font = "600 21px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = isDark ? "#8E8E93" : "#8E8E93";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`Hoy ${settings.currentTime || "12:00"}`, width / 2, 34);
+  }
   ctx.restore();
 
   // Render Messages
@@ -419,7 +648,7 @@ export function drawChatFrame(
     if (time < ev.appearTime) {
       // If typing indicator is active right now for this incoming event, render bouncing typing bubble
       if (ev === activeTypingEvent) {
-        drawTypingBubble(ctx, currentY, time, platform, isDark);
+        drawTypingBubble(ctx, currentY, time, platform, isDark, settings);
       }
       break;
     }
@@ -445,7 +674,8 @@ export function drawChatFrame(
       isDark,
       scale,
       alpha,
-      settings.fontSize || "large"
+      settings.fontSize || "large",
+      settings
     );
 
     currentY += ev.bubbleHeight + GAP;
@@ -469,7 +699,7 @@ function drawStatusBar(
   isDark: boolean
 ) {
   ctx.save();
-  const textColor = settings.platform === "whatsapp" && !isDark ? "#FFFFFF" : isDark ? "#FFFFFF" : "#000000";
+  const textColor = isDark ? "#FFFFFF" : "#111B21";
   ctx.fillStyle = textColor;
   ctx.font = "600 24px system-ui, -apple-system, sans-serif";
   ctx.textBaseline = "middle";
@@ -478,11 +708,11 @@ function drawStatusBar(
   ctx.textAlign = "left";
   ctx.fillText(settings.currentTime || "9:41", 54, 34);
 
-  // Wifi + Battery on right
+  // Status icons on right: 5G, Wifi, Battery % and capsule
   const rightX = width - 54;
 
   // Battery capsule
-  const batW = 44;
+  const batW = 42;
   const batH = 22;
   const batX = rightX - batW;
   const batY = 23;
@@ -502,9 +732,15 @@ function drawStatusBar(
   drawRoundRect(ctx, batX + 4, batY + 4, fillW, batH - 8, 3);
   ctx.fill();
 
+  // Battery percentage text
+  ctx.font = "500 20px monospace, system-ui";
+  ctx.textAlign = "right";
+  ctx.fillText(`${settings.batteryLevel}%`, batX - 10, 34);
+
   // Wifi icon
+  let nextX = batX - 70;
   if (settings.wifi) {
-    const wifiX = batX - 34;
+    const wifiX = nextX;
     const wifiY = 34;
     ctx.beginPath();
     ctx.arc(wifiX, wifiY, 3, 0, Math.PI * 2);
@@ -518,7 +754,14 @@ function drawStatusBar(
     ctx.beginPath();
     ctx.arc(wifiX, wifiY + 2, 16, -Math.PI * 0.75, -Math.PI * 0.25);
     ctx.stroke();
+
+    nextX -= 34;
   }
+
+  // 5G Network text
+  ctx.font = "bold 18px system-ui";
+  ctx.textAlign = "right";
+  ctx.fillText("5G", nextX, 34);
 
   ctx.restore();
 }
@@ -534,6 +777,7 @@ function drawHeader(
   const platform = settings.platform;
   const headerHeight = 126;
   const headerY = 64;
+  const centerY = headerY + headerHeight / 2;
 
   // Header background
   let headerBg = "#FFFFFF";
@@ -541,9 +785,12 @@ function drawHeader(
   let subtitleColor = "#8696A0";
 
   if (platform === "whatsapp") {
-    headerBg = isDark ? "#1F2C34" : "#075E54";
-    textColor = "#FFFFFF";
-    subtitleColor = isDark ? "#8696A0" : "#D1E7DD";
+    // Modern WhatsApp: clean white in light mode, #1F2C34 in dark mode
+    headerBg = isDark ? "#1F2C34" : "#FFFFFF";
+    textColor = isDark ? "#FFFFFF" : "#111B21";
+    subtitleColor = isTyping
+      ? "#00A884"
+      : isDark ? "#8696A0" : "#667781";
   } else if (platform === "instagram") {
     headerBg = isDark ? "#000000" : "#FFFFFF";
     textColor = isDark ? "#FFFFFF" : "#000000";
@@ -566,38 +813,28 @@ function drawHeader(
   ctx.lineTo(width, headerY + headerHeight);
   ctx.stroke();
 
-  // Back chevron
-  ctx.fillStyle = platform === "imessage" ? "#007AFF" : textColor;
-  ctx.strokeStyle = platform === "imessage" ? "#007AFF" : textColor;
-  ctx.lineWidth = 3.5;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  const chevronX = 48;
-  const centerY = headerY + headerHeight / 2;
-  ctx.beginPath();
-  ctx.moveTo(chevronX + 10, centerY - 14);
-  ctx.lineTo(chevronX, centerY);
-  ctx.lineTo(chevronX + 10, centerY + 14);
-  ctx.stroke();
+  // Back Button / Arrow
+  const arrowColor = platform === "imessage" ? "#007AFF" : textColor;
+  if (platform === "imessage") {
+    ctx.strokeStyle = arrowColor;
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    const chevronX = 48;
+    ctx.beginPath();
+    ctx.moveTo(chevronX + 10, centerY - 14);
+    ctx.lineTo(chevronX, centerY);
+    ctx.lineTo(chevronX + 10, centerY + 14);
+    ctx.stroke();
+  } else {
+    // Android arrow (WhatsApp & Instagram)
+    drawAndroidArrow(ctx, 46, centerY, arrowColor);
+  }
 
   // Avatar drawing
   const avatarRadius = 38;
   const avatarX = 126;
   const avatarY = centerY;
-
-  // Instagram gradient story ring
-  if (platform === "instagram") {
-    const grad = ctx.createLinearGradient(avatarX - 44, avatarY + 44, avatarX + 44, avatarY - 44);
-    grad.addColorStop(0, "#F58529");
-    grad.addColorStop(0.5, "#DD2A7B");
-    grad.addColorStop(1, "#8134AF");
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(avatarX, avatarY, avatarRadius + 5, 0, Math.PI * 2);
-    ctx.stroke();
-  }
 
   ctx.save();
   ctx.beginPath();
@@ -608,7 +845,7 @@ function drawHeader(
   if (avatarImg) {
     ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
   } else {
-    ctx.fillStyle = "#00A884";
+    ctx.fillStyle = platform === "whatsapp" ? "#00A884" : "#262626";
     ctx.fillRect(avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "bold 26px system-ui, -apple-system, sans-serif";
@@ -627,11 +864,12 @@ function drawHeader(
   ctx.textBaseline = "alphabetic";
 
   const textStartX = avatarX + avatarRadius + 22;
-  ctx.fillText(settings.contactName, textStartX, centerY - 4);
+  const displayName = platform === "instagram" ? `${settings.contactName} ›` : settings.contactName;
+  ctx.fillText(displayName, textStartX, centerY - 4);
 
   // Blue verification badge
   if (settings.isVerified) {
-    const nameWidth = ctx.measureText(settings.contactName).width;
+    const nameWidth = ctx.measureText(displayName).width;
     const badgeX = textStartX + nameWidth + 12;
     const badgeY = centerY - 14;
     ctx.fillStyle = "#0095F6";
@@ -647,41 +885,35 @@ function drawHeader(
 
   // Status subtitle
   ctx.font = `500 ${metrics.headerStatusSize}px system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = isTyping
-    ? platform === "whatsapp"
-      ? isDark ? "#00A884" : "#D1E7DD"
-      : "#0095F6"
-    : subtitleColor;
+  ctx.fillStyle = subtitleColor;
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  const statusText = isTyping
-    ? "escribiendo..."
-    : settings.statusText || (platform === "instagram" ? `@${settings.contactHandle || settings.contactName.toLowerCase().replace(/\s+/g, "_")}` : "en línea");
+  let statusText = "en línea";
+  if (isTyping) {
+    statusText = "escribiendo...";
+  } else if (settings.statusText) {
+    statusText = settings.statusText;
+  } else if (platform === "instagram") {
+    statusText = `@${settings.contactHandle || settings.contactName.toLowerCase().replace(/\s+/g, "_")}`;
+  }
   ctx.fillText(statusText, textStartX, centerY + 26);
 
   // Right action icons
-  ctx.strokeStyle = platform === "imessage" ? "#007AFF" : textColor;
-  ctx.lineWidth = 2.5;
+  const iconColor = textColor;
 
   if (platform === "whatsapp") {
     // Video icon
-    const vx = width - 130;
-    drawRoundRect(ctx, vx - 14, centerY - 10, 20, 18, 4);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(vx + 6, centerY - 5);
-    ctx.lineTo(vx + 16, centerY - 10);
-    ctx.lineTo(vx + 16, centerY + 8);
-    ctx.lineTo(vx + 6, centerY + 3);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Call icon
-    const cx = width - 68;
-    ctx.beginPath();
-    ctx.arc(cx, centerY, 12, 0, Math.PI * 2);
-    ctx.stroke();
+    drawVideoIcon(ctx, width - 150, centerY, iconColor);
+    // Phone icon
+    drawPhoneIcon(ctx, width - 96, centerY, iconColor);
+    // 3 vertical dots
+    drawThreeDots(ctx, width - 44, centerY, iconColor);
+  } else if (platform === "instagram") {
+    // Phone call icon
+    drawPhoneIcon(ctx, width - 100, centerY, iconColor);
+    // Video camera icon
+    drawVideoIcon(ctx, width - 48, centerY, iconColor);
   }
 
   ctx.restore();
@@ -696,19 +928,48 @@ function drawMessageBubble(
   isDark: boolean,
   scale: number,
   alpha: number,
-  fontSize: "normal" | "large" | "xlarge" = "large"
+  fontSize: "normal" | "large" | "xlarge" = "large",
+  settings: ChatSettings
 ) {
   const metrics = getFontMetrics(fontSize);
   const isMe = ev.message.isMe;
+  const isFirstOfGroup = ev.isFirstOfGroup;
   const bw = ev.bubbleWidth;
   const bh = ev.bubbleHeight;
 
   // Calculate horizontal bubble position
-  const marginX = 40;
-  const x = isMe ? canvasWidth - marginX - bw : marginX;
+  let marginX = 40;
+  if (platform === "instagram" && !isMe) {
+    marginX = 94; // leave space for avatar on left
+  }
+  const x = isMe ? canvasWidth - 40 - bw : marginX;
 
   ctx.save();
   ctx.globalAlpha = alpha;
+
+  // Draw avatar next to incoming Instagram bubbles
+  if (platform === "instagram" && !isMe) {
+    const avatarR = 21;
+    const avatarCX = 48;
+    const avatarCY = y + bh - avatarR - 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+    ctx.clip();
+    const avatarImg = getCachedImage(settings.contactAvatar);
+    if (avatarImg) {
+      ctx.drawImage(avatarImg, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+    } else {
+      ctx.fillStyle = "#262626";
+      ctx.fillRect(avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 16px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(settings.contactName.slice(0, 2).toUpperCase(), avatarCX, avatarCY);
+    }
+    ctx.restore();
+  }
 
   // Apply pop-in scale from bubble corner anchor
   const anchorX = isMe ? x + bw : x;
@@ -717,32 +978,62 @@ function drawMessageBubble(
   ctx.scale(scale, scale);
   ctx.translate(-anchorX, -anchorY);
 
-  // Bubble Background Color
+  // Bubble Background Color & Corner Shape
   if (platform === "whatsapp") {
     ctx.fillStyle = isMe
       ? isDark ? "#005C4B" : "#D9FDD3"
       : isDark ? "#202C33" : "#FFFFFF";
+
+    // Speech bubble tail & corner radius
+    if (isFirstOfGroup) {
+      if (isMe) {
+        // Outgoing first: sharp top-right with triangular tail
+        drawRoundRect(ctx, x, y, bw, bh, { tl: 18, tr: 4, br: 18, bl: 18 });
+        ctx.fill();
+        // Tail triangle on top-right
+        ctx.beginPath();
+        ctx.moveTo(x + bw, y);
+        ctx.lineTo(x + bw + 10, y);
+        ctx.lineTo(x + bw, y + 14);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Incoming first: sharp top-left with triangular tail
+        drawRoundRect(ctx, x, y, bw, bh, { tl: 4, tr: 18, br: 18, bl: 18 });
+        ctx.fill();
+        // Tail triangle on top-left
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - 10, y);
+        ctx.lineTo(x, y + 14);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else {
+      // Consecutive messages: rounded corners
+      drawRoundRect(ctx, x, y, bw, bh, 18);
+      ctx.fill();
+    }
   } else if (platform === "instagram") {
     if (isMe) {
       const grad = ctx.createLinearGradient(x, y, x + bw, y + bh);
-      grad.addColorStop(0, "#7F00FF");
-      grad.addColorStop(0.5, "#E100FF");
-      grad.addColorStop(1, "#FF007F");
+      grad.addColorStop(0, "#7000FF");
+      grad.addColorStop(0.5, "#A824FF");
+      grad.addColorStop(1, "#D80070");
       ctx.fillStyle = grad;
     } else {
       ctx.fillStyle = isDark ? "#262626" : "#EFEFEF";
     }
+    drawRoundRect(ctx, x, y, bw, bh, 24);
+    ctx.fill();
   } else {
     // iMessage
     ctx.fillStyle = isMe
       ? "#007AFF"
       : isDark ? "#26252A" : "#E9E9EB";
+    drawRoundRect(ctx, x, y, bw, bh, 24);
+    ctx.fill();
   }
-
-  // Draw rounded bubble
-  const cornerR = platform === "instagram" ? 28 : platform === "imessage" ? 24 : 18;
-  drawRoundRect(ctx, x, y, bw, bh, cornerR);
-  ctx.fill();
 
   // Subtle shadow
   ctx.shadowColor = "rgba(0,0,0,0.06)";
@@ -772,21 +1063,23 @@ function drawMessageBubble(
     ctx.fillText(ev.lines[l], x + paddingX, y + paddingY + l * lineHeight);
   }
 
-  // Draw timestamp & double checkmarks for outgoing
-  const timeY = y + bh - metrics.timePadY;
-  ctx.font = `500 ${metrics.timeSize}px system-ui, -apple-system, sans-serif`;
-  const timeColor = isMe
-    ? platform === "whatsapp" && !isDark ? "#53bdeb" : "rgba(255,255,255,0.7)"
-    : isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)";
-  ctx.fillStyle = timeColor;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
+  // Draw timestamp & double checkmarks (WhatsApp & iMessage only; Instagram has no inside timestamp!)
+  if (platform !== "instagram") {
+    const timeY = y + bh - metrics.timePadY;
+    ctx.font = `500 ${metrics.timeSize}px system-ui, -apple-system, sans-serif`;
+    const timeColor = isMe
+      ? platform === "whatsapp" && !isDark ? "#53bdeb" : "rgba(255,255,255,0.7)"
+      : isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)";
+    ctx.fillStyle = timeColor;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
 
-  let timeString = ev.message.timestamp || "12:00";
-  if (isMe && platform === "whatsapp") {
-    timeString += " ✓✓";
+    let timeString = ev.message.timestamp || "12:00";
+    if (isMe && platform === "whatsapp") {
+      timeString += " ✓✓";
+    }
+    ctx.fillText(timeString, x + bw - 20, timeY);
   }
-  ctx.fillText(timeString, x + bw - 20, timeY);
 
   // Reaction badge
   if (ev.message.reaction) {
@@ -816,9 +1109,36 @@ function drawTypingBubble(
   y: number,
   time: number,
   platform: PlatformType,
-  isDark: boolean
+  isDark: boolean,
+  settings?: ChatSettings
 ) {
-  const marginX = 40;
+  let marginX = 40;
+  if (platform === "instagram") {
+    marginX = 94; // leave space for avatar
+    if (settings) {
+      const avatarR = 21;
+      const avatarCX = 48;
+      const avatarCY = y + 64 - avatarR - 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+      ctx.clip();
+      const avatarImg = getCachedImage(settings.contactAvatar);
+      if (avatarImg) {
+        ctx.drawImage(avatarImg, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+      } else {
+        ctx.fillStyle = "#262626";
+        ctx.fillRect(avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 16px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(settings.contactName.slice(0, 2).toUpperCase(), avatarCX, avatarCY);
+      }
+      ctx.restore();
+    }
+  }
+
   const bw = 120;
   const bh = 64;
 
@@ -845,7 +1165,6 @@ function drawTypingBubble(
   const centerY = y + bh / 2;
 
   for (let i = 0; i < 3; i++) {
-    // Smooth continuous oscillation
     const offset = Math.sin(time * 8.5 - i * 0.8) * 6.5;
     ctx.beginPath();
     ctx.arc(startDotX + i * dotSpacing, centerY + offset, dotRadius, 0, Math.PI * 2);
@@ -866,72 +1185,123 @@ function drawBottomBar(
   ctx.save();
   const barY = height - barHeight;
 
-  // Background
-  ctx.fillStyle = platform === "whatsapp"
-    ? isDark ? "#1F2C34" : "#F0F2F5"
-    : isDark ? "#000000" : "#FFFFFF";
-  ctx.fillRect(0, barY, width, barHeight);
-
-  // Top separator
-  ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, barY);
-  ctx.lineTo(width, barY);
-  ctx.stroke();
-
-  // Pill input field
-  const pillMarginX = 36;
-  const pillW = platform === "whatsapp" ? width - pillMarginX * 2 - 80 : width - pillMarginX * 2;
-  const pillH = 68;
-  const pillY = barY + 20;
-
-  ctx.fillStyle = platform === "whatsapp"
-    ? isDark ? "#2A3942" : "#FFFFFF"
-    : isDark ? "#1C1C1E" : "#F2F2F7";
-  drawRoundRect(ctx, pillMarginX, pillY, pillW, pillH, 34);
-  ctx.fill();
-
-  // Placeholder text
-  ctx.font = "normal 26px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  const placeholder = platform === "instagram" ? "Enviar mensaje..." : platform === "imessage" ? "iMessage" : "Mensaje";
-  ctx.fillText(placeholder, pillMarginX + 32, pillY + pillH / 2);
-
-  // WhatsApp green circular mic button
   if (platform === "whatsapp") {
-    const micX = width - pillMarginX - 34;
-    const micY = pillY + pillH / 2;
+    // Seamless chat canvas background underneath
+    ctx.fillStyle = isDark ? "#0B141A" : "#EFEAE2";
+    ctx.fillRect(0, barY, width, barHeight);
+
+    // Floating white/dark capsule on left
+    const capsuleMarginX = 18;
+    const capsuleW = width - capsuleMarginX * 2 - 82;
+    const capsuleH = 72;
+    const capsuleY = barY + 12;
+
+    ctx.fillStyle = isDark ? "#1F2C34" : "#FFFFFF";
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+    ctx.lineWidth = 1;
+    drawRoundRect(ctx, capsuleMarginX, capsuleY, capsuleW, capsuleH, 36);
+    ctx.fill();
+    ctx.stroke();
+
+    // Outline smiley icon inside capsule
+    const iconColor = isDark ? "#8696A0" : "#667781";
+    drawSmileyOutline(ctx, capsuleMarginX + 34, capsuleY + 36, 15, iconColor);
+
+    // Blinking green cursor + Mensaje placeholder
+    ctx.fillStyle = "#00A884";
+    ctx.fillRect(capsuleMarginX + 68, capsuleY + 22, 2.5, 28);
+
+    ctx.font = "normal 26px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = iconColor;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Mensaje", capsuleMarginX + 80, capsuleY + 36);
+
+    // Paperclip & Camera on right inside capsule
+    drawPaperclipIcon(ctx, capsuleMarginX + capsuleW - 74, capsuleY + 36, iconColor);
+    drawCameraGlyph(ctx, capsuleMarginX + capsuleW - 32, capsuleY + 36, iconColor);
+
+    // Circular green mic button on right
+    const micX = width - capsuleMarginX - 36;
+    const micY = capsuleY + 36;
     ctx.fillStyle = "#00A884";
     ctx.beginPath();
-    ctx.arc(micX, micY, 32, 0, Math.PI * 2);
+    ctx.arc(micX, micY, 34, 0, Math.PI * 2);
+    ctx.fill();
+    drawMicrophoneGlyph(ctx, micX, micY, "#FFFFFF");
+
+    // Android Navigation Bar (◁ ⬡ ≡)
+    drawAndroidNavBar(ctx, width, height - 26, isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)");
+  } else if (platform === "instagram") {
+    ctx.fillStyle = isDark ? "#000000" : "#FFFFFF";
+    ctx.fillRect(0, barY, width, barHeight);
+
+    const capsuleMarginX = 18;
+    const capsuleW = width - capsuleMarginX * 2;
+    const capsuleH = 72;
+    const capsuleY = barY + 12;
+
+    ctx.fillStyle = isDark ? "#262626" : "#F2F2F2";
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+    ctx.lineWidth = 1;
+    drawRoundRect(ctx, capsuleMarginX, capsuleY, capsuleW, capsuleH, 36);
+    ctx.fill();
+    ctx.stroke();
+
+    // Blue circular camera button on left
+    const camX = capsuleMarginX + 36;
+    const camY = capsuleY + 36;
+    ctx.fillStyle = "#0095F6";
+    ctx.beginPath();
+    ctx.arc(camX, camY, 24, 0, Math.PI * 2);
+    ctx.fill();
+    drawCameraGlyph(ctx, camX, camY, "#FFFFFF");
+
+    // Placeholder text
+    ctx.font = "normal 25px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = isDark ? "#8E8E8E" : "#737373";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Envía un mens...", capsuleMarginX + 78, capsuleY + 36);
+
+    // Action icons on right inside capsule: Mic, Gallery, Smiley, Plus
+    const iconColor = isDark ? "#CCCCCC" : "#555555";
+    drawMicrophoneGlyph(ctx, capsuleMarginX + capsuleW - 146, capsuleY + 36, iconColor);
+    drawGalleryIcon(ctx, capsuleMarginX + capsuleW - 108, capsuleY + 36, iconColor);
+    drawSmileyOutline(ctx, capsuleMarginX + capsuleW - 70, capsuleY + 36, 12, iconColor);
+    drawPlusIcon(ctx, capsuleMarginX + capsuleW - 32, capsuleY + 36, iconColor);
+
+    // Android Navigation Bar (◁ ⬡ ≡)
+    drawAndroidNavBar(ctx, width, height - 26, isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)");
+  } else {
+    // iMessage
+    ctx.fillStyle = isDark ? "#1C1C1E" : "#F6F6F6";
+    ctx.fillRect(0, barY, width, barHeight);
+
+    const pillMarginX = 36;
+    const pillW = width - pillMarginX * 2;
+    const pillH = 68;
+    const pillY = barY + 16;
+
+    ctx.fillStyle = isDark ? "#2C2C2E" : "#FFFFFF";
+    drawRoundRect(ctx, pillMarginX, pillY, pillW, pillH, 34);
     ctx.fill();
 
-    // White microphone icon
-    ctx.fillStyle = "#FFFFFF";
-    drawRoundRect(ctx, micX - 6, micY - 12, 12, 18, 6);
+    ctx.font = "normal 26px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("iMessage", pillMarginX + 32, pillY + pillH / 2);
+
+    // iOS Home Indicator Bar
+    const homeBarW = 360;
+    const homeBarH = 8;
+    const homeBarX = (width - homeBarW) / 2;
+    const homeBarY = height - 20;
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+    drawRoundRect(ctx, homeBarX, homeBarY, homeBarW, homeBarH, 4);
     ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.beginPath();
-    ctx.arc(micX, micY - 2, 11, 0, Math.PI);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(micX, micY + 9);
-    ctx.lineTo(micX, micY + 16);
-    ctx.stroke();
   }
-
-  // iOS Home Indicator Bar
-  const homeBarW = 360;
-  const homeBarH = 8;
-  const homeBarX = (width - homeBarW) / 2;
-  const homeBarY = height - 20;
-  ctx.fillStyle = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
-  drawRoundRect(ctx, homeBarX, homeBarY, homeBarW, homeBarH, 4);
-  ctx.fill();
 
   ctx.restore();
 }
