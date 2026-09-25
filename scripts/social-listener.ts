@@ -246,73 +246,96 @@ async function fetchSubredditRss(subreddit: string): Promise<RawSocialPost[]> {
 }
 
 /**
- * Ingestión opcional de X (Twitter) mediante agent-twitter-client
+ * Ingestión automatizada de X (Twitter) con Chromium headless (Playwright)
+ * Cero coste, sesión persistente con cookies secundarias y evasión de bloqueos API.
  */
-let twitterScraperInstance: any = null;
-
-async function getTwitterScraper() {
-  if (twitterScraperInstance) return twitterScraperInstance;
-
-  const username = process.env.TWITTER_USERNAME;
-  const password = process.env.TWITTER_PASSWORD;
-  const email = process.env.TWITTER_EMAIL;
-  const twoFactor = process.env.TWITTER_2FA_SECRET;
+async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
   const authToken = process.env.TWITTER_AUTH_TOKEN;
   const ct0 = process.env.TWITTER_CT0;
 
-  if (!authToken && !username) {
-    return null;
+  if (!authToken || !ct0) {
+    return [];
   }
-
-  try {
-    const { Scraper } = await import('agent-twitter-client');
-    const scraper = new Scraper();
-
-    if (authToken) {
-      const cookieStrings = [
-        `auth_token=${authToken}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
-        ct0 ? `ct0=${ct0}; Domain=.twitter.com; Path=/; Secure` : '',
-      ].filter(Boolean);
-      await scraper.setCookies(cookieStrings);
-    } else if (username && password) {
-      await scraper.login(username, password, email, twoFactor);
-    }
-
-    twitterScraperInstance = scraper;
-    return scraper;
-  } catch (err: any) {
-    console.warn('⚠️ Error al autenticar en X (Twitter):', err?.message || err);
-    return null;
-  }
-}
-
-async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
-  const scraper = await getTwitterScraper();
-  if (!scraper) return [];
 
   const results: RawSocialPost[] = [];
+  let browser: any = null;
+
   try {
-    const { SearchMode } = await import('agent-twitter-client');
-    const query = '("se me olvidó el cumple" OR "se me pasó el cumpleaños" OR "olvidé el cumpleaños" OR "casi se me pasa felicitar") lang:es';
-    
-    // Fetch latest 10 tweets
-    const tweetsGenerator = scraper.searchTweets(query, 10, SearchMode.Latest);
-    for await (const tweet of tweetsGenerator) {
-      if (tweet && tweet.id && tweet.text) {
+    const { chromium } = await import('playwright');
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-blink-features=AutomationControlled'
+      ]
+    });
+
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+      viewport: { width: 1280, height: 800 }
+    });
+
+    await context.addCookies([
+      { name: 'auth_token', value: authToken, domain: '.x.com', path: '/' },
+      { name: 'ct0', value: ct0, domain: '.x.com', path: '/' },
+      { name: 'auth_token', value: authToken, domain: '.twitter.com', path: '/' },
+      { name: 'ct0', value: ct0, domain: '.twitter.com', path: '/' },
+    ]);
+
+    const page = await context.newPage();
+
+    // Palabras clave de dolor en X
+    const twitterSearchQueries = [
+      '"se me olvidó el cumple"',
+      '"se me olvido el cumple"',
+      '"se me pasó el cumpleaños"',
+      '"olvidé el cumpleaños"',
+      '"casi se me pasa felicitar"'
+    ];
+
+    // Rotar 1 query por ciclo para ejecución rápida y no llamar la atención
+    const selectedQuery = twitterSearchQueries[Math.floor(Math.random() * twitterSearchQueries.length)];
+    const searchUrl = `https://x.com/search?q=${encodeURIComponent(selectedQuery)}&f=live`;
+
+    console.log(`🐦 Escaneando X (Twitter) en vivo con Chromium headless [query: ${selectedQuery}]...`);
+    await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {});
+    await page.waitForTimeout(5000);
+
+    const articles = await page.locator('article[data-testid="tweet"]').all();
+    console.log(`🐦 Tweets encontrados en el DOM de X: ${articles.length}`);
+
+    for (const art of articles.slice(0, 6)) {
+      const text = (await art.locator('[data-testid="tweetText"]').textContent().catch(() => ''))?.trim() || '';
+      const user = (await art.locator('[data-testid="User-Name"]').textContent().catch(() => ''))?.trim() || '';
+      const href = (await art.locator('a[href*="/status/"]').first().getAttribute('href').catch(() => '')) || '';
+
+      if (text && href) {
+        const idMatch = href.match(/status\/(\d+)/);
+        const tweetId = idMatch ? idMatch[1] : `tw_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        const handleMatch = user.match(/@(\w+)/);
+        const authorHandle = handleMatch ? `@${handleMatch[1]}` : (user.split('\n')[0] || '@usuario');
+        const tweetUrl = href.startsWith('http') ? href : `https://x.com${href}`;
+
         results.push({
-          id: `tw_${tweet.id}`,
+          id: `tw_${tweetId}`,
           platform: 'twitter',
           subreddit: 'X (Twitter)',
-          title: `Tweet de @${tweet.username || 'usuario'}`,
-          content: tweet.text,
-          author: tweet.username ? `@${tweet.username}` : '@anonimo',
-          url: tweet.permanentUrl || `https://x.com/${tweet.username || 'i'}/status/${tweet.id}`,
-          createdAt: tweet.timeParsed ? new Date(tweet.timeParsed) : new Date(),
+          title: `Tweet de ${authorHandle}`,
+          content: text.replace(/\s+/g, ' '),
+          author: authorHandle,
+          url: tweetUrl,
+          createdAt: new Date(),
         });
       }
     }
   } catch (err: any) {
-    console.warn('⚠️ Error al buscar tweets en X:', err?.message || err);
+    console.warn('⚠️ Error al buscar tweets en X con Playwright:', err?.message || err);
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
   }
 
   return results;
@@ -325,8 +348,8 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
   const allPosts: RawSocialPost[] = [];
   const seenIds = new Set<string>();
 
-  // 1. Pullpush keyword queries (muestreo de palabras clave)
-  const sampledKeywords = KEYWORDS_ES.slice(0, 4);
+  // 1. Pullpush keyword queries (muestreo de palabras clave de Reddit)
+  const sampledKeywords = KEYWORDS_ES.slice(0, 3);
   for (const kw of sampledKeywords) {
     const [subPosts, comPosts] = await Promise.all([
       fetchPullpushSubmissions(kw),
@@ -353,7 +376,7 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
     }
   }
 
-  // 3. Twitter / X posts (si las credenciales están configuradas)
+  // 3. Twitter / X posts con Playwright headless (si las credenciales están configuradas)
   const twitterPosts = await fetchTwitterPosts();
   for (const p of twitterPosts) {
     if (!seenIds.has(p.id) && !isLeadSeen(p.id)) {
@@ -376,8 +399,20 @@ async function qualifyLeadWithGemini(post: RawSocialPost): Promise<LeadQualifica
     return null;
   }
 
+  const isTwitter = post.platform === 'twitter';
+  const platformInstructions = isTwitter
+    ? `* REGLA ABSOLUTA: CERO tono comercial, CERO ventas agresivas, NADA de sonar como bot o spam corporativo.
+     * Tono: Cercano, empático, desenfadado y ultra-breve (MÁXIMO 240 caracteres para entrar en un solo tweet).
+     * Da un consejo rápido o empatiza con humor/comprensión.
+     * Menciona orgánicamente y de pasada "autobirthday.com" como el truco que usas para que no te vuelva a pasar.`
+    : `* REGLA ABSOLUTA: CERO tono comercial, CERO ventas agresivas, NADA de sonar como un bot o una empresa.
+     * Tono: Empático, humano, comprensivo, como un colega que comparte cómo salió él de un problema idéntico.
+     * Empatiza primero con la situación ("Uff menudo marrón...", "A mí me pasaba todo el tiempo con mi novia...").
+     * Da un consejo realista para compensar o arreglar la situación hoy mismo.
+     * Menciona casual y orgánicamente que para no volver a liarla tú usas autobirthday.com que manda el WhatsApp directo en el momento exacto.`;
+
   const prompt = `Eres el analista de Growth y Social Listening de AutoBirthday.com.
-Tu misión es evaluar publicaciones de Reddit para detectar personas que olvidaron o casi olvidan el cumpleaños de un ser querido (pareja, madre, familiar, amigo, compañero de trabajo).
+Tu misión es evaluar publicaciones de redes sociales (Reddit y X/Twitter) para detectar personas que olvidaron o casi olvidan el cumpleaños de un ser querido (pareja, madre, familiar, amigo, compañero de trabajo).
 
 CRITERIOS DE FILTRADO:
 1. "isValidLead": true SOLO si la persona expresa un problema REAL de haber olvidado, estar a punto de olvidar, o tener problemas constantes para recordar y felicitar cumpleaños a tiempo.
@@ -386,15 +421,11 @@ CRITERIOS DE FILTRADO:
    - "leadScore": "CRITICO" (pareja / madre / crisis actual), "ALTO" (amigo cercano / familiar), "MEDIO" (dudas generales de cómo recordar).
    - "targetPerson": A quién olvidó (ej: "Novia / Pareja", "Madre", "Mejor amigo", "Compañero").
    - "painSummary": Resumen conciso de 1 frase del problema.
-   - "suggestedReply": Redacta una respuesta de usuario a usuario de Reddit:
-     * REGLA ABSOLUTA: CERO tono comercial, CERO ventas agresivas, NADA de sonar como un bot o una empresa.
-     * Tono: Empático, humano, comprensivo, como un colega que comparte cómo salió él de un problema idéntico.
-     * Empatiza primero con la situación ("Uff menudo marrón...", "A mí me pasaba todo el tiempo con mi novia...").
-     * Da un consejo realista para compensar o arreglar la situación hoy mismo.
-     * Menciona casual y orgánicamente que para no volver a liarla tú usas autobirthday.com que manda el WhatsApp directo en el momento exacto.
+   - "suggestedReply": Redacta una respuesta de usuario a usuario:
+${platformInstructions}
 
 DATOS DEL POST A EVALUAR:
-- Plataforma: Reddit (${post.subreddit})
+- Plataforma: ${isTwitter ? 'X (Twitter)' : `Reddit (r/${post.subreddit})`}
 - Título: ${post.title}
 - Texto: ${post.content || '(Sin texto adicional)'}
 - Autor: ${post.author}
@@ -437,6 +468,17 @@ Devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
       return parsed;
     } catch (err: any) {
       const errMsg = err?.message || String(err);
+      // Filtro defensivo: Si el post contiene NSFW/adulto que activa el filtro de seguridad de Gemini, descartar inmediatamente
+      if (errMsg.includes('SAFETY') || errMsg.includes('blocked') || errMsg.includes('sexually_explicit')) {
+        return {
+          isValidLead: false,
+          leadScore: 'MEDIO',
+          targetPerson: 'Descartado',
+          painSummary: 'Descartado por filtro de seguridad de contenido',
+          suggestedReply: '',
+          reasoning: 'Contenido descartado por políticas de seguridad de Gemini (NSFW/Spam)'
+        };
+      }
       if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('billing')) {
         await triggerBillingQuotaAlert('Google Gemini API', `Límite de cuota detectado (${modelName}): ${errMsg.slice(0, 100)}`);
       }
@@ -494,24 +536,30 @@ async function sendWhatsAppAlert(post: RawSocialPost, qualification: LeadQualifi
       ? (post.content.length > 220 ? `${post.content.slice(0, 220)}...` : post.content)
       : post.title;
 
+    const isTwitter = post.platform === 'twitter';
+    const channelHeader = isTwitter ? `🐦 *X (Twitter)*` : `📌 *r/${post.subreddit} (Reddit)*`;
+    const tipFooter = isTwitter
+      ? `💡 *Consejo:* Responde al tweet desde tu cuenta personal de forma cercana y empática.`
+      : `💡 *Consejo:* Publica la respuesta desde tu perfil personal de Reddit de forma natural y cercana para máxima conversión.`;
+
     const message = `${urgencyEmoji} *¡NUEVO LEAD DETECTADO EN REDES!* 🎯
 
-📌 *Comunidad:* r/${post.subreddit} (Reddit)
+${channelHeader}
 👤 *Usuario:* ${post.author}
 🔥 *Prioridad:* ${qualification.leadScore} (${qualification.targetPerson})
 
-📝 *Post Original:*
+📝 *${isTwitter ? 'Tweet' : 'Post'} Original:*
 "${post.title}"
 _${shortContent}_
 
-🔗 *Enlace directo al hilo:*
+🔗 *Enlace directo:*
 ${post.url}
 
 ───────────────────────
 💬 *Sugerencia de Respuesta (100% Humana):*
 "${qualification.suggestedReply}"
 ───────────────────────
-💡 *Consejo:* Publica la respuesta desde tu perfil personal de Reddit de forma natural y cercana para máxima conversión.`;
+${tipFooter}`;
 
     console.log(`📲 Enviando alerta de WhatsApp a ${ADMIN_PHONE} usando instancia "${instanceName}"...`);
     const res = await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
@@ -528,12 +576,21 @@ ${post.url}
 // ==========================================
 
 async function processPost(post: RawSocialPost, dryRun = false): Promise<boolean> {
-  console.log(`\n🔍 Analizando publicación: [r/${post.subreddit}] "${post.title.slice(0, 60)}..." por ${post.author}`);
+  const channelTag = post.platform === 'twitter' ? 'X' : `r/${post.subreddit}`;
+  console.log(`\n🔍 Analizando publicación: [${channelTag}] "${post.title.slice(0, 60)}..." por ${post.author}`);
 
   // 1. Evaluar con Gemini
   const qualification = await qualifyLeadWithGemini(post);
   if (!qualification) {
     console.log(`⏩ No se pudo evaluar el post.`);
+    saveSeenLead({
+      id: post.id,
+      title: post.title,
+      url: post.url,
+      detectedAt: new Date().toISOString(),
+      score: 'NO_EVALUABLE',
+      notified: false,
+    });
     return false;
   }
 
