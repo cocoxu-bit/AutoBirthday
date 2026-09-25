@@ -10,11 +10,15 @@ import { Download, ChevronLeft, ChevronRight, Archive, Sparkles, Layers } from "
 interface CarouselSlideViewerProps {
   slides: CarouselSlide[];
   settings: ChatSettings;
+  targetSlides?: number | "auto";
+  onTargetSlidesChange?: (val: number | "auto") => void;
 }
 
 export const CarouselSlideViewer: React.FC<CarouselSlideViewerProps> = ({
   slides,
   settings,
+  targetSlides = "auto",
+  onTargetSlidesChange,
 }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -117,8 +121,31 @@ export const CarouselSlideViewer: React.FC<CarouselSlideViewerProps> = ({
           </span>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        {/* Action Buttons & Slide Density Selector */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {onTargetSlidesChange && (
+            <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl border border-zinc-700 text-[11px] font-bold">
+              <span className="text-[10px] text-zinc-400 px-1 hidden sm:inline">Fotos:</span>
+              {[
+                { id: "auto", label: "Auto" },
+                { id: 2, label: "2" },
+                { id: 3, label: "3" },
+                { id: 1, label: "1 (Todo)" },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => onTargetSlidesChange(opt.id as number | "auto")}
+                  className={`px-2 py-0.5 rounded-lg transition cursor-pointer ${
+                    targetSlides === opt.id ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <button
             onClick={handleDownloadCurrentSlide}
             disabled={isExporting}

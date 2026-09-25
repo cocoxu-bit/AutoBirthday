@@ -6,6 +6,7 @@ import { DEFAULT_PRESETS } from "@/lib/fake-chat/presets";
 import { ChatSettings, PlatformType, ThemeMode, AspectRatio } from "@/lib/fake-chat/types";
 import { CarouselSlideViewer } from "@/components/fake-chat/CarouselSlideViewer";
 import { VideoPlayerView } from "@/components/fake-chat/VideoPlayerView";
+import { AvatarPicker } from "@/components/fake-chat/AvatarPicker";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -45,6 +46,7 @@ export function FakeChatStudioClient() {
 
   // Output mode tab: "carousel" | "video"
   const [outputMode, setOutputMode] = useState<"carousel" | "video">("carousel");
+  const [targetSlides, setTargetSlides] = useState<number | "auto">("auto");
   const [copiedScript, setCopiedScript] = useState(false);
 
   // Load a preset
@@ -73,10 +75,10 @@ export function FakeChatStudioClient() {
     }
   }, [speakers, primarySpeaker]);
 
-  // Generate carousel slides
+  // Generate carousel slides with smart density
   const slides = useMemo(() => {
-    return generateCarouselSlides(messages, 2);
-  }, [messages]);
+    return generateCarouselSlides(messages, targetSlides);
+  }, [messages, targetSlides]);
 
   // Compiled ChatSettings object
   const settings: ChatSettings = useMemo(
@@ -334,12 +336,19 @@ export function FakeChatStudioClient() {
               </div>
             </div>
 
-            {/* Profile Customization */}
-            <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2.5">
+            {/* Profile Customization with Interactive Avatar Gallery & Randomizer */}
+            <div className="pt-2 border-t border-zinc-800 flex flex-col gap-3">
               <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
                 <Settings2 className="w-3 h-3" />
                 <span>Datos del Contacto</span>
               </span>
+
+              {/* Avatar Picker Component */}
+              <AvatarPicker
+                currentAvatar={contactAvatar}
+                onSelectAvatar={(url) => setContactAvatar(url)}
+                contactName={contactName}
+              />
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -435,7 +444,12 @@ export function FakeChatStudioClient() {
           {/* Active Mode Viewport */}
           <div className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center shadow-xl backdrop-blur-sm">
             {outputMode === "carousel" ? (
-              <CarouselSlideViewer slides={slides} settings={settings} />
+              <CarouselSlideViewer
+                slides={slides}
+                settings={settings}
+                targetSlides={targetSlides}
+                onTargetSlidesChange={setTargetSlides}
+              />
             ) : (
               <VideoPlayerView messages={messages} settings={settings} />
             )}

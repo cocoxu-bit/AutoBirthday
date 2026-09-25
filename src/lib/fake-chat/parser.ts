@@ -96,19 +96,23 @@ export function parseChatScript(
 
 /**
  * Generate Progressive Carousel Slides for Instagram / TikTok
- * Each slide reveals a progressive part of the conversation (Hook -> Curiosity -> Climax).
+ * Generates just enough slides to tell the story without overwhelming the carousel.
+ * - 1 to 3 messages: 1 slide (all messages)
+ * - 4 to 6 messages: 2 slides (Hook -> Full punchline)
+ * - 7 to 10 messages: 3 slides (Hook -> Development -> Climax)
+ * - > 10 messages: 4 slides max
+ * Or explicit slideCount if requested.
  */
 export function generateCarouselSlides(
   messages: ChatMessage[],
-  minStep: number = 2
+  targetSlides?: number | "auto"
 ): CarouselSlide[] {
   if (messages.length === 0) return [];
 
-  const slides: CarouselSlide[] = [];
   const total = messages.length;
 
-  if (total <= 3) {
-    // For very short conversations, just 1 or 2 slides
+  // Single slide requested or very short conversation
+  if (targetSlides === 1 || total <= 2) {
     return [
       {
         slideIndex: 1,
@@ -119,29 +123,59 @@ export function generateCarouselSlides(
     ];
   }
 
-  // Determine reveal steps: e.g. for 6 messages:
-  // Slide 1: 2 messages (El gancho / Hook)
-  // Slide 2: 4 messages (El conflicto / Desarrollo)
-  // Slide 3: 6 messages (El desenlace / Clímax)
-  const stepSize = Math.max(1, Math.min(minStep, Math.ceil(total / 4)));
-  let currentCount = Math.min(2, total);
+  // Determine ideal number of slides:
+  let countOfSlides: number;
+  if (typeof targetSlides === "number" && targetSlides > 1) {
+    countOfSlides = Math.min(targetSlides, total);
+  } else {
+    // Smart auto:
+    if (total <= 3) countOfSlides = 1;
+    else if (total <= 6) countOfSlides = 2; // e.g. 4-6 messages -> exactly 2 slides!
+    else if (total <= 10) countOfSlides = 3; // e.g. 7-10 messages -> 3 slides
+    else countOfSlides = 4; // max 4 slides for long chats
+  }
 
-  let slideIndex = 1;
-  while (currentCount <= total) {
-    let subtitle = "Desliza para continuar 👉";
-    if (slideIndex === 1) subtitle = "1/ El comienzo...";
-    if (currentCount >= total) subtitle = "Final de la conversación ✨";
+  if (countOfSlides <= 1) {
+    return [
+      {
+        slideIndex: 1,
+        visibleMessagesCount: total,
+        messages: [...messages],
+        subtitle: "Conversación completa",
+      },
+    ];
+  }
+
+  const slides: CarouselSlide[] = [];
+
+  // Calculate message cutoffs for each slide
+  for (let i = 1; i <= countOfSlides; i++) {
+    let msgCount: number;
+    if (i === 1) {
+      // First slide: hook (typically 2 or 3 messages)
+      msgCount = Math.max(2, Math.floor(total / countOfSlides));
+    } else if (i === countOfSlides) {
+      // Final slide: all messages
+      msgCount = total;
+    } else {
+      // Intermediate slides: evenly spaced
+      msgCount = Math.min(total - 1, Math.round((total * i) / countOfSlides));
+    }
+
+    // Ensure strictly increasing
+    const prevCount = slides.length > 0 ? slides[slides.length - 1].visibleMessagesCount : 0;
+    msgCount = Math.max(prevCount + 1, Math.min(total, msgCount));
+
+    let subtitle = `Parte ${i} de ${countOfSlides} 👉`;
+    if (i === 1) subtitle = "1/ El gancho inicial 👀";
+    if (i === countOfSlides) subtitle = "Desenlace de la conversación ✨";
 
     slides.push({
-      slideIndex,
-      visibleMessagesCount: currentCount,
-      messages: messages.slice(0, currentCount),
+      slideIndex: i,
+      visibleMessagesCount: msgCount,
+      messages: messages.slice(0, msgCount),
       subtitle,
     });
-
-    if (currentCount === total) break;
-    currentCount = Math.min(total, currentCount + stepSize);
-    slideIndex++;
   }
 
   return slides;

@@ -41,7 +41,7 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
     setIsTyping(false);
   }, []);
 
-  // Advance step with realistic typing delay
+  // Advance step with realistic typing delay & comfortable reading time
   const advanceStep = useCallback(
     (step: number) => {
       if (step >= totalSteps) {
@@ -53,31 +53,34 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
       const nextMessage = messages[step];
       const isNextIncoming = !nextMessage.isMe;
 
+      // Realistic words calculation (~220ms per word + 1.2s base absorption)
+      const words = Math.max(3, nextMessage.text.trim().split(/\s+/).length);
+      const isLast = step + 1 >= totalSteps;
+      const naturalReadDelay =
+        (isLast ? 3800 : Math.max(2200, Math.min(4600, words * 240 + 1200))) / speedMultiplier;
+
       // Realistic typing indicator before incoming messages
-      if (isNextIncoming) {
+      if (isNextIncoming && step > 0) {
         setIsTyping(true);
-        const typingDelay = Math.max(700, Math.min(1800, nextMessage.text.length * 40)) / speedMultiplier;
+        const typingDelay = Math.max(900, Math.min(1800, words * 110 + 600)) / speedMultiplier;
 
         animationTimerRef.current = setTimeout(() => {
           setIsTyping(false);
           setCurrentStep(step + 1);
           if (soundEnabled) playReceivedSound();
 
-          // Schedule next message
-          const readDelay = 1200 / speedMultiplier;
           animationTimerRef.current = setTimeout(() => {
             advanceStep(step + 1);
-          }, readDelay);
+          }, naturalReadDelay);
         }, typingDelay);
       } else {
         // Outgoing message
         setCurrentStep(step + 1);
         if (soundEnabled) playSentSound();
 
-        const waitDelay = 1100 / speedMultiplier;
         animationTimerRef.current = setTimeout(() => {
           advanceStep(step + 1);
-        }, waitDelay);
+        }, naturalReadDelay);
       }
     },
     [messages, totalSteps, speedMultiplier, soundEnabled]
@@ -117,7 +120,6 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
     try {
       setIsRecording(true);
       stopAnimation();
-      setCurrentStep(0);
 
       // Create an offscreen recording canvas
       const offscreenCanvas = document.createElement("canvas");
@@ -142,6 +144,27 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
       const fps = 30;
       const frameDurationMicroseconds = Math.round(1_000_000 / fps);
+
+      // Helper to draw snapshot with aspect-fit centering & zero distortion
+      const drawSnapshotToCanvas = async (imgDataUrl: string) => {
+        const img = new Image();
+        img.src = imgDataUrl;
+        await new Promise((resolve) => {
+          img.onload = () => {
+            ctx.fillStyle = canvasBg;
+            ctx.fillRect(0, 0, videoWidth, videoHeight);
+
+            const scale = Math.min(videoWidth / img.width, videoHeight / img.height);
+            const drawWidth = img.width * scale;
+            const drawHeight = img.height * scale;
+            const drawX = (videoWidth - drawWidth) / 2;
+            const drawY = (videoHeight - drawHeight) / 2;
+
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            resolve(true);
+          };
+        });
+      };
 
       // Check if WebCodecs VideoEncoder + mp4-muxer is available in browser
       const supportsWebCodecs =
@@ -190,51 +213,55 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
         let currentTimestampMicroseconds = 0;
         let frameCount = 0;
 
-        for (let s = 0; s <= messages.length; s++) {
-          setRecordingProgress(`Renderizando escena ${s + 1} de ${messages.length + 1}...`);
-          setCurrentStep(s);
+        const encodeFrames = (seconds: number) => {
+          const framesToEncode = Math.round(seconds * fps);
+          for (let f = 0; f < framesToEncode; f++) {
+            const frame = new VideoFrame(offscreenCanvas, {
+              timestamp: currentTimestampMicroseconds,
+            });
+            videoEncoder.encode(frame, { keyFrame: frameCount % (fps * 2) === 0 });
+            frame.close();
+            currentTimestampMicroseconds += frameDurationMicroseconds;
+            frameCount++;
+          }
+        };
 
-          // Allow DOM to re-render step
+        // Render each message step
+        for (let i = 0; i < messages.length; i++) {
+          const msg = messages[i];
+          const isIncoming = !msg.isMe;
+
+          // 1. If incoming message and not the very first message, render authentic typing indicator first
+          if (isIncoming && i > 0) {
+            setRecordingProgress(`Escribiendo mensaje ${i + 1} de ${messages.length}...`);
+            setCurrentStep(i);
+            setIsTyping(true);
+            await new Promise((r) => setTimeout(r, 220));
+
+            if (canvasRef.current) {
+              const typingImg = await toPng(canvasRef.current, { pixelRatio: 2, cacheBust: true });
+              await drawSnapshotToCanvas(typingImg);
+              // Hold typing bubble for 0.85s (smooth conversational pause)
+              encodeFrames(0.85);
+            }
+            setIsTyping(false);
+          }
+
+          // 2. Reveal message i+1
+          setRecordingProgress(`Mostrando mensaje ${i + 1} de ${messages.length}...`);
+          setCurrentStep(i + 1);
           await new Promise((r) => setTimeout(r, 220));
 
           if (canvasRef.current) {
-            const frameImgData = await toPng(canvasRef.current, {
-              pixelRatio: 2,
-              cacheBust: true,
-            });
+            const msgImg = await toPng(canvasRef.current, { pixelRatio: 2, cacheBust: true });
+            await drawSnapshotToCanvas(msgImg);
 
-            const img = new Image();
-            img.src = frameImgData;
-            await new Promise((resolve) => {
-              img.onload = () => {
-                ctx.fillStyle = canvasBg;
-                ctx.fillRect(0, 0, videoWidth, videoHeight);
-
-                // Proportional aspect-fit scaling to prevent ANY stretching or distortion
-                const scale = Math.min(videoWidth / img.width, videoHeight / img.height);
-                const drawWidth = img.width * scale;
-                const drawHeight = img.height * scale;
-                const drawX = (videoWidth - drawWidth) / 2;
-                const drawY = (videoHeight - drawHeight) / 2;
-
-                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-                resolve(true);
-              };
-            });
-
-            // Climax hold: hold the final scene for 2.2s; intermediate scenes for 1.3s
-            const holdSeconds = s === messages.length ? 2.2 : 1.3;
-            const framesToEncode = Math.round(holdSeconds * fps);
-
-            for (let f = 0; f < framesToEncode; f++) {
-              const frame = new VideoFrame(offscreenCanvas, {
-                timestamp: currentTimestampMicroseconds,
-              });
-              videoEncoder.encode(frame, { keyFrame: frameCount % (fps * 2) === 0 });
-              frame.close();
-              currentTimestampMicroseconds += frameDurationMicroseconds;
-              frameCount++;
-            }
+            // Natural reading time based on word count
+            const words = Math.max(3, msg.text.trim().split(/\s+/).length);
+            const isLast = i === messages.length - 1;
+            // Last message holds for 4.2s for complete reading & reflection; intermediate holds 2.2s - 3.8s
+            const readingSeconds = isLast ? 4.2 : Math.max(2.2, Math.min(3.8, words * 0.22 + 1.2));
+            encodeFrames(readingSeconds);
           }
         }
 
@@ -269,33 +296,36 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
         recorder.start();
 
-        for (let s = 0; s <= messages.length; s++) {
-          setRecordingProgress(`Renderizando escena ${s + 1} de ${messages.length + 1}...`);
-          setCurrentStep(s);
+        for (let i = 0; i < messages.length; i++) {
+          const msg = messages[i];
+          const isIncoming = !msg.isMe;
+
+          if (isIncoming && i > 0) {
+            setRecordingProgress(`Escribiendo mensaje ${i + 1} de ${messages.length}...`);
+            setCurrentStep(i);
+            setIsTyping(true);
+            await new Promise((r) => setTimeout(r, 220));
+
+            if (canvasRef.current) {
+              const typingImg = await toPng(canvasRef.current, { pixelRatio: 2, cacheBust: true });
+              await drawSnapshotToCanvas(typingImg);
+              await new Promise((r) => setTimeout(r, 850));
+            }
+            setIsTyping(false);
+          }
+
+          setRecordingProgress(`Mostrando mensaje ${i + 1} de ${messages.length}...`);
+          setCurrentStep(i + 1);
           await new Promise((r) => setTimeout(r, 220));
 
           if (canvasRef.current) {
-            const frameImgData = await toPng(canvasRef.current, { pixelRatio: 2, cacheBust: true });
-            const img = new Image();
-            img.src = frameImgData;
-            await new Promise((resolve) => {
-              img.onload = () => {
-                ctx.fillStyle = canvasBg;
-                ctx.fillRect(0, 0, videoWidth, videoHeight);
+            const msgImg = await toPng(canvasRef.current, { pixelRatio: 2, cacheBust: true });
+            await drawSnapshotToCanvas(msgImg);
 
-                const scale = Math.min(videoWidth / img.width, videoHeight / img.height);
-                const drawWidth = img.width * scale;
-                const drawHeight = img.height * scale;
-                const drawX = (videoWidth - drawWidth) / 2;
-                const drawY = (videoHeight - drawHeight) / 2;
-
-                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-                resolve(true);
-              };
-            });
-
-            const holdMs = s === messages.length ? 2200 : 1300;
-            await new Promise((r) => setTimeout(r, holdMs));
+            const words = Math.max(3, msg.text.trim().split(/\s+/).length);
+            const isLast = i === messages.length - 1;
+            const readingMs = (isLast ? 4200 : Math.max(2200, Math.min(3800, words * 220 + 1200)));
+            await new Promise((r) => setTimeout(r, readingMs));
           }
         }
 
@@ -384,7 +414,7 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer disabled:opacity-50"
         >
           <Video className="w-3.5 h-3.5" />
-          <span>Exportar Vídeo</span>
+          <span>Exportar Vídeo MP4</span>
         </button>
       </div>
 
