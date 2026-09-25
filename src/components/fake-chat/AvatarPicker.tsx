@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import Image from "next/image";
-import { CURATED_AVATARS, getRandomAvatar, AvatarItem } from "@/lib/fake-chat/avatars";
-import { Shuffle, Upload, Sparkles, Check, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  CURATED_AVATARS,
+  getRandomAvatar,
+  AvatarCategory,
+} from "@/lib/fake-chat/avatars";
+import { Shuffle, Upload, Check, ChevronDown, ChevronUp } from "lucide-react";
 
 interface AvatarPickerProps {
   currentAvatar: string;
@@ -11,12 +14,21 @@ interface AvatarPickerProps {
   contactName: string;
 }
 
+const CATEGORIES: { id: AvatarCategory; label: string; icon: string }[] = [
+  { id: "arquetipos", label: "Arquetipos", icon: "👨‍👩‍👦" },
+  { id: "sin_foto", label: "Sin Foto", icon: "👤" },
+  { id: "anime", label: "Anime", icon: "✨" },
+  { id: "tipicas", label: "Típicas", icon: "🚗" },
+  { id: "chica", label: "Chicas", icon: "👩" },
+  { id: "chico", label: "Chicos", icon: "👨" },
+];
+
 export const AvatarPicker: React.FC<AvatarPickerProps> = ({
   currentAvatar,
   onSelectAvatar,
   contactName,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<"chica" | "chico" | "divertido">("chica");
+  const [selectedCategory, setSelectedCategory] = useState<AvatarCategory>("arquetipos");
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,6 +81,24 @@ export const AvatarPicker: React.FC<AvatarPickerProps> = ({
             <span>Aleatoria</span>
           </button>
 
+          {/* Upload Custom Photo */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept="image/*"
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition border border-zinc-700 cursor-pointer"
+            title="Subir foto desde tu ordenador"
+          >
+            <Upload className="w-3 h-3" />
+            <span className="hidden sm:inline">Subir</span>
+          </button>
+
           {/* Toggle Gallery Button */}
           <button
             type="button"
@@ -84,40 +114,34 @@ export const AvatarPicker: React.FC<AvatarPickerProps> = ({
 
       {/* 2. Collapsible Curated Gallery */}
       {isGalleryOpen && (
-        <div className="pt-2 border-t border-zinc-800/80 flex flex-col gap-2 animate-in fade-in duration-200">
+        <div className="pt-2 border-t border-zinc-800/80 flex flex-col gap-2.5 animate-in fade-in duration-200">
           {/* Category Tabs */}
-          <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800 text-[11px] font-bold">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory("chica")}
-              className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
-                selectedCategory === "chica" ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              👩 Chicas ({CURATED_AVATARS.filter(a => a.category === "chica").length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedCategory("chico")}
-              className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
-                selectedCategory === "chico" ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              👨 Chicos ({CURATED_AVATARS.filter(a => a.category === "chico").length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedCategory("divertido")}
-              className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
-                selectedCategory === "divertido" ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              🐾 Mascotas ({CURATED_AVATARS.filter(a => a.category === "divertido").length})
-            </button>
+          <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 overflow-x-auto text-[11px] font-bold scrollbar-none">
+            {CATEGORIES.map((cat) => {
+              const count = CURATED_AVATARS.filter((a) => a.category === cat.id).length;
+              const isActive = selectedCategory === cat.id;
+
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+                  }`}
+                >
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
+                  <span className="opacity-60 text-[10px]">({count})</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Avatar Thumbnails Grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 py-1 max-h-40 overflow-y-auto">
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-9 gap-2 py-1 max-h-48 overflow-y-auto">
             {filteredAvatars.map((item) => {
               const isSelected = currentAvatar === item.url;
               return (
@@ -136,11 +160,11 @@ export const AvatarPicker: React.FC<AvatarPickerProps> = ({
                   <img
                     src={item.url}
                     alt={item.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover bg-zinc-900"
                   />
                   {isSelected && (
-                    <div className="absolute inset-0 bg-emerald-950/50 flex items-center justify-center text-emerald-400">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    <div className="absolute inset-0 bg-emerald-950/60 flex items-center justify-center text-emerald-400">
+                      <Check className="w-4 h-4 stroke-[3]" />
                     </div>
                   )}
                 </button>
@@ -148,24 +172,17 @@ export const AvatarPicker: React.FC<AvatarPickerProps> = ({
             })}
           </div>
 
-          {/* Upload Custom File or Paste URL */}
-          <div className="flex items-center gap-2 pt-1 border-t border-zinc-800/80 text-xs">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-bold transition border border-zinc-700 cursor-pointer text-[11px]"
-            >
-              <Upload className="w-3 h-3" />
-              <span>Subir desde tu ordenador</span>
-            </button>
+          {/* Hint with current selection label */}
+          <div className="text-[11px] text-zinc-400 flex items-center justify-between px-1">
+            <span>
+              Mostrando:{" "}
+              <strong className="text-zinc-300">
+                {CATEGORIES.find((c) => c.id === selectedCategory)?.label}
+              </strong>
+            </span>
+            <span className="text-[10px] text-zinc-500">
+              Pasa el ratón sobre cualquier foto para ver su arquetipo
+            </span>
           </div>
         </div>
       )}
