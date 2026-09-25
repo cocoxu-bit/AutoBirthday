@@ -148,6 +148,56 @@ export interface ChatTimeline {
   speedMultiplier: number;
 }
 
+// --- Font Sizing & Typography for Mobile Feeds (Reels / TikTok / Stories) ---
+export function getFontMetrics(fontSize: "normal" | "large" | "xlarge" = "large") {
+  switch (fontSize) {
+    case "normal":
+      return {
+        fontSize: 32,
+        lineHeight: 42,
+        paddingX: 28,
+        paddingY: 20,
+        minWidth: 190,
+        minHeight: 88,
+        basePadBottom: 54,
+        timeSize: 18,
+        timePadY: 22,
+        headerNameSize: 32,
+        headerStatusSize: 21,
+      };
+    case "xlarge":
+      return {
+        fontSize: 42,
+        lineHeight: 56,
+        paddingX: 34,
+        paddingY: 26,
+        minWidth: 230,
+        minHeight: 110,
+        basePadBottom: 64,
+        timeSize: 21,
+        timePadY: 28,
+        headerNameSize: 36,
+        headerStatusSize: 24,
+      };
+    case "large":
+    default:
+      // Optimized specifically for TikTok / Reels 9:16 mobile feeds!
+      return {
+        fontSize: 37,
+        lineHeight: 48,
+        paddingX: 30,
+        paddingY: 22,
+        minWidth: 210,
+        minHeight: 98,
+        basePadBottom: 58,
+        timeSize: 19,
+        timePadY: 24,
+        headerNameSize: 34,
+        headerStatusSize: 22,
+      };
+  }
+}
+
 export function computeChatTimeline(
   messages: ChatMessage[],
   settings: ChatSettings,
@@ -158,6 +208,7 @@ export function computeChatTimeline(
   const ctx = tempCanvas ? tempCanvas.getContext("2d") : null;
   const maxBubbleWidth = canvasWidth * 0.76;
   const events: MessageTimelineEvent[] = [];
+  const metrics = getFontMetrics(settings.fontSize || "large");
 
   let currentTime = 0.4 / speedMultiplier; // Small clean lead-in
 
@@ -172,19 +223,19 @@ export function computeChatTimeline(
     let bubbleHeight = 110;
 
     if (ctx) {
-      ctx.font = "normal 30px system-ui, -apple-system, sans-serif";
-      lines = wrapText(ctx, msg.text, maxBubbleWidth - 56);
+      ctx.font = `normal ${metrics.fontSize}px system-ui, -apple-system, sans-serif`;
+      lines = wrapText(ctx, msg.text, maxBubbleWidth - metrics.paddingX * 2);
       let maxLineWidth = 0;
       for (const line of lines) {
         const w = ctx.measureText(line).width;
         if (w > maxLineWidth) maxLineWidth = w;
       }
-      bubbleWidth = Math.max(180, Math.min(maxBubbleWidth, maxLineWidth + 56));
-      bubbleHeight = Math.max(88, lines.length * 38 + 56);
-      if (msg.reaction) bubbleHeight += 16;
+      bubbleWidth = Math.max(metrics.minWidth, Math.min(maxBubbleWidth, maxLineWidth + metrics.paddingX * 2));
+      bubbleHeight = Math.max(metrics.minHeight, lines.length * metrics.lineHeight + metrics.basePadBottom);
+      if (msg.reaction) bubbleHeight += 18;
     } else {
-      // Fallback text estimation for non-DOM/SSR environments (~16px per char)
-      const approxCharsPerLine = Math.floor((maxBubbleWidth - 56) / 16);
+      // Fallback text estimation for non-DOM/SSR environments (~18px per char)
+      const approxCharsPerLine = Math.floor((maxBubbleWidth - metrics.paddingX * 2) / (metrics.fontSize * 0.55));
       lines = [];
       const wordsArr = msg.text.split(" ");
       let curr = "";
@@ -197,9 +248,9 @@ export function computeChatTimeline(
         }
       }
       if (curr) lines.push(curr);
-      bubbleWidth = Math.min(maxBubbleWidth, Math.max(180, msg.text.length * 16 + 56));
-      bubbleHeight = Math.max(88, lines.length * 38 + 56);
-      if (msg.reaction) bubbleHeight += 16;
+      bubbleWidth = Math.min(maxBubbleWidth, Math.max(metrics.minWidth, msg.text.length * (metrics.fontSize * 0.5) + metrics.paddingX * 2));
+      bubbleHeight = Math.max(metrics.minHeight, lines.length * metrics.lineHeight + metrics.basePadBottom);
+      if (msg.reaction) bubbleHeight += 18;
     }
 
     // Dynamic typing delay before incoming messages
@@ -393,7 +444,8 @@ export function drawChatFrame(
       platform,
       isDark,
       scale,
-      alpha
+      alpha,
+      settings.fontSize || "large"
     );
 
     currentY += ev.bubbleHeight + GAP;
@@ -566,9 +618,11 @@ function drawHeader(
   }
   ctx.restore();
 
+  const metrics = getFontMetrics(settings.fontSize || "large");
+
   // Contact name
   ctx.fillStyle = textColor;
-  ctx.font = "bold 30px system-ui, -apple-system, sans-serif";
+  ctx.font = `bold ${metrics.headerNameSize}px system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
@@ -592,7 +646,7 @@ function drawHeader(
   }
 
   // Status subtitle
-  ctx.font = "500 20px system-ui, -apple-system, sans-serif";
+  ctx.font = `500 ${metrics.headerStatusSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = isTyping
     ? platform === "whatsapp"
       ? isDark ? "#00A884" : "#D1E7DD"
@@ -641,8 +695,10 @@ function drawMessageBubble(
   platform: PlatformType,
   isDark: boolean,
   scale: number,
-  alpha: number
+  alpha: number,
+  fontSize: "normal" | "large" | "xlarge" = "large"
 ) {
+  const metrics = getFontMetrics(fontSize);
   const isMe = ev.message.isMe;
   const bw = ev.bubbleWidth;
   const bh = ev.bubbleHeight;
@@ -694,7 +750,7 @@ function drawMessageBubble(
   ctx.shadowOffsetY = 2;
 
   // Draw message text
-  ctx.font = "normal 30px system-ui, -apple-system, sans-serif";
+  ctx.font = `normal ${metrics.fontSize}px system-ui, -apple-system, sans-serif`;
   let textColor = "#000000";
   if (platform === "whatsapp") {
     textColor = isDark ? "#E9EDEF" : "#111B21";
@@ -708,17 +764,17 @@ function drawMessageBubble(
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  const paddingX = 26;
-  const paddingY = 20;
-  const lineHeight = 38;
+  const paddingX = metrics.paddingX;
+  const paddingY = metrics.paddingY;
+  const lineHeight = metrics.lineHeight;
 
   for (let l = 0; l < ev.lines.length; l++) {
     ctx.fillText(ev.lines[l], x + paddingX, y + paddingY + l * lineHeight);
   }
 
   // Draw timestamp & double checkmarks for outgoing
-  const timeY = y + bh - 24;
-  ctx.font = "500 18px system-ui, -apple-system, sans-serif";
+  const timeY = y + bh - metrics.timePadY;
+  ctx.font = `500 ${metrics.timeSize}px system-ui, -apple-system, sans-serif`;
   const timeColor = isMe
     ? platform === "whatsapp" && !isDark ? "#53bdeb" : "rgba(255,255,255,0.7)"
     : isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)";

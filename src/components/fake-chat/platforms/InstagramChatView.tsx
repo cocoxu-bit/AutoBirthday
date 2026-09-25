@@ -142,9 +142,9 @@ export const InstagramChatView: React.FC<InstagramChatViewProps> = ({
               key={msg.id || index}
               className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
             >
-              <div className="relative group max-w-[80%]">
+              <div className="relative group max-w-[85%]">
                 <div
-                  className={`px-4 py-2.5 text-[14px] leading-relaxed font-normal shadow-xs ${
+                  className={`px-4.5 py-3 text-[16px] sm:text-[17px] leading-relaxed font-normal shadow-xs ${
                     isMe
                       ? "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white rounded-3xl rounded-br-xs"
                       : `${incomingBubble} rounded-3xl rounded-bl-xs`

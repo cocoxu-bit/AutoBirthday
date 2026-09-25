@@ -26,6 +26,7 @@ export interface ChatSettings {
   platform: PlatformType;
   theme: ThemeMode;
   aspectRatio: AspectRatio;
+  fontSize?: "normal" | "large" | "xlarge";
 }
 
 export interface CarouselSlide {

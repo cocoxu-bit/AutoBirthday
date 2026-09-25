@@ -108,7 +108,7 @@ export const WhatsAppChatView: React.FC<WhatsAppChatViewProps> = ({
               className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
             >
               <div
-                className={`relative px-3 py-2 text-[14px] leading-relaxed max-w-[82%] shadow-xs rounded-xl ${
+                className={`relative px-3.5 py-2.5 text-[16px] sm:text-[17px] leading-relaxed max-w-[85%] shadow-xs rounded-xl ${
                   isMe
                     ? `${outgoingBubble} rounded-tr-xs`
                     : `${incomingBubble} rounded-tl-xs`
@@ -117,7 +117,7 @@ export const WhatsAppChatView: React.FC<WhatsAppChatViewProps> = ({
                 <span>{msg.text}</span>
 
                 {/* Bubble footer with time & double checks */}
-                <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${timeText}`}>
+                <div className={`flex items-center justify-end gap-1 mt-0.5 text-[11px] ${timeText}`}>
                   <span>{msg.timestamp}</span>
                   {isMe && (
                     <span className="text-blue-500 font-bold ml-0.5">✓✓</span>

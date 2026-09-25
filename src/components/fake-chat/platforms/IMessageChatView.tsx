@@ -102,7 +102,7 @@ export const IMessageChatView: React.FC<IMessageChatViewProps> = ({
               className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
             >
               <div
-                className={`relative px-4 py-2 text-[15px] leading-snug max-w-[78%] rounded-2xl ${
+                className={`relative px-4.5 py-2.5 text-[16px] sm:text-[17px] leading-snug max-w-[82%] rounded-2xl ${
                   isMe
                     ? `${outgoingBubble} rounded-br-xs`
                     : `${incomingBubble} rounded-bl-xs`

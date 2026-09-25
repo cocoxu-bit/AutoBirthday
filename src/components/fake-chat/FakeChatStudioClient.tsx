@@ -22,6 +22,9 @@ import {
   Check,
   ArrowLeft,
   ShieldCheck,
+  Trash2,
+  Eraser,
+  Type,
 } from "lucide-react";
 
 export function FakeChatStudioClient() {
@@ -43,6 +46,7 @@ export function FakeChatStudioClient() {
   const [batteryLevel, setBatteryLevel] = useState<number>(88);
   const [wifi, setWifi] = useState<boolean>(true);
   const [primarySpeaker, setPrimarySpeaker] = useState<string>("Lucas");
+  const [fontSize, setFontSize] = useState<"normal" | "large" | "xlarge">("large");
 
   // Output mode tab: "carousel" | "video"
   const [outputMode, setOutputMode] = useState<"carousel" | "video">("carousel");
@@ -61,6 +65,21 @@ export function FakeChatStudioClient() {
     setContactHandle(preset.contactHandle);
     setContactAvatar(preset.contactAvatar);
     setIsVerified(preset.isVerified);
+  };
+
+  // Clear entire script textarea
+  const handleClearScript = () => {
+    setScriptText("");
+    setSelectedPresetId("");
+  };
+
+  // Strip leading hyphens/dashes from lines
+  const handleRemoveHyphens = () => {
+    const cleaned = scriptText
+      .split("\n")
+      .map((line) => line.replace(/^[ \t]*[-–—•*][ \t]*/, ""))
+      .join("\n");
+    setScriptText(cleaned);
   };
 
   // Parse conversation whenever script or primarySpeaker changes
@@ -94,6 +113,7 @@ export function FakeChatStudioClient() {
       platform,
       theme,
       aspectRatio,
+      fontSize,
     }),
     [
       contactName,
@@ -106,6 +126,7 @@ export function FakeChatStudioClient() {
       platform,
       theme,
       aspectRatio,
+      fontSize,
     ]
   );
 
@@ -197,20 +218,46 @@ export function FakeChatStudioClient() {
 
           {/* Script Textarea */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-2.5 shadow-sm flex-1 min-h-[300px]">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
                 <span>Guión de la Conversación</span>
               </label>
 
-              <button
-                onClick={copyScriptToClipboard}
-                className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
-                title="Copiar guión"
-              >
-                {copiedScript ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedScript ? "Copiado" : "Copiar"}</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                {/* Remove hyphens/bullets */}
+                <button
+                  type="button"
+                  onClick={handleRemoveHyphens}
+                  className="text-[11px] text-zinc-300 hover:text-amber-300 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 transition cursor-pointer border border-zinc-700 font-medium"
+                  title="Quitar guiones (-) o viñetas de cada línea"
+                >
+                  <Eraser className="w-3 h-3 text-amber-400" />
+                  <span>Quitar guiones (-)</span>
+                </button>
+
+                {/* Clear/Delete script */}
+                <button
+                  type="button"
+                  onClick={handleClearScript}
+                  className="text-[11px] text-zinc-300 hover:text-rose-400 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 transition cursor-pointer border border-zinc-700 font-medium"
+                  title="Borrar todo el guión para empezar uno nuevo"
+                >
+                  <Trash2 className="w-3 h-3 text-rose-400" />
+                  <span>Borrar guión</span>
+                </button>
+
+                {/* Copy script */}
+                <button
+                  type="button"
+                  onClick={copyScriptToClipboard}
+                  className="text-[11px] text-zinc-300 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 transition cursor-pointer border border-zinc-700 font-medium"
+                  title="Copiar guión al portapapeles"
+                >
+                  {copiedScript ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedScript ? "Copiado" : "Copiar"}</span>
+                </button>
+              </div>
             </div>
 
             <textarea
@@ -333,6 +380,54 @@ export function FakeChatStudioClient() {
                     9:16 Reel
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Font Size Selector for Reels/TikTok */}
+            <div className="pt-2 border-t border-zinc-800">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] text-zinc-400 font-semibold flex items-center gap-1.5">
+                  <Type className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Tamaño de Letra</span>
+                </label>
+                <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  {fontSize === "large" ? "Óptimo Reels / TikTok 🔥" : fontSize === "xlarge" ? "Extra Grande" : "Normal"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 bg-zinc-800 p-1 rounded-xl border border-zinc-700 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setFontSize("normal")}
+                  className={`py-1.5 rounded-lg transition cursor-pointer ${
+                    fontSize === "normal"
+                      ? "bg-zinc-900 text-white shadow-xs"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Normal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFontSize("large")}
+                  className={`py-1.5 rounded-lg transition cursor-pointer ${
+                    fontSize === "large"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Grande (Reels) 🔥
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFontSize("xlarge")}
+                  className={`py-1.5 rounded-lg transition cursor-pointer ${
+                    fontSize === "xlarge"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Extra Grande
+                </button>
               </div>
             </div>
 

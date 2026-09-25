@@ -28,7 +28,8 @@ export function parseChatScript(
   lines.forEach((line) => {
     // Check for reaction tags like [❤️] or [reaccion: 😂] or (❤️)
     let reaction: string | undefined;
-    let cleanLine = line;
+    // Strip leading dashes/bullets (- , – , — , • , * ) if present
+    let cleanLine = line.replace(/^[ \t]*[-–—•*][ \t]*/, "").trim();
 
     const reactionMatch = cleanLine.match(/\[(?:reacci[oó]n:?\s*)?([\p{Emoji}\u200d\uFE0F]+)\]/u);
     if (reactionMatch) {
