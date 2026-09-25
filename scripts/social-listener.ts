@@ -59,7 +59,7 @@ export interface SeenLeadCacheRecord {
 // 2. Configuración y Constantes
 // ==========================================
 
-const ADMIN_PHONE = process.env.ADMIN_PHONE || '34606513672';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '34926312436';
 const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'seen-leads.json');
 
@@ -529,37 +529,18 @@ async function sendWhatsAppAlert(post: RawSocialPost, qualification: LeadQualifi
       : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
 
     const urgencyEmoji = 
-      qualification.leadScore === 'CRITICO' ? '🚨🔥' :
+      qualification.leadScore === 'CRITICO' ? '🚨' :
       qualification.leadScore === 'ALTO' ? '⚡' : '📌';
 
-    const shortContent = post.content 
-      ? (post.content.length > 220 ? `${post.content.slice(0, 220)}...` : post.content)
-      : post.title;
+    const platform = post.platform === 'twitter' ? '𝕏' : `r/${post.subreddit}`;
+    const snippet = (post.content || post.title).replace(/\s+/g, ' ').slice(0, 100);
 
-    const isTwitter = post.platform === 'twitter';
-    const channelHeader = isTwitter ? `🐦 *X (Twitter)*` : `📌 *r/${post.subreddit} (Reddit)*`;
-    const tipFooter = isTwitter
-      ? `💡 *Consejo:* Responde al tweet desde tu cuenta personal de forma cercana y empática.`
-      : `💡 *Consejo:* Publica la respuesta desde tu perfil personal de Reddit de forma natural y cercana para máxima conversión.`;
-
-    const message = `${urgencyEmoji} *¡NUEVO LEAD DETECTADO EN REDES!* 🎯
-
-${channelHeader}
-👤 *Usuario:* ${post.author}
-🔥 *Prioridad:* ${qualification.leadScore} (${qualification.targetPerson})
-
-📝 *${isTwitter ? 'Tweet' : 'Post'} Original:*
-"${post.title}"
-_${shortContent}_
-
-🔗 *Enlace directo:*
+    const message = `${urgencyEmoji} *Lead ${qualification.leadScore}* · ${platform}
+${post.author} → ${qualification.targetPerson}
+_"${snippet}..."_
 ${post.url}
 
-───────────────────────
-💬 *Sugerencia de Respuesta (100% Humana):*
-"${qualification.suggestedReply}"
-───────────────────────
-${tipFooter}`;
+💬 ${qualification.suggestedReply}`;
 
     console.log(`📲 Enviando alerta de WhatsApp a ${ADMIN_PHONE} usando instancia "${instanceName}"...`);
     const res = await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
