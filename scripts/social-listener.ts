@@ -28,7 +28,7 @@ import { evolutionApi } from '../src/lib/evolution-api/client';
 
 export interface RawSocialPost {
   id: string;
-  platform: 'reddit';
+  platform: 'reddit' | 'twitter';
   subreddit: string;
   title: string;
   content: string;
@@ -246,7 +246,80 @@ async function fetchSubredditRss(subreddit: string): Promise<RawSocialPost[]> {
 }
 
 /**
- * Recopila publicaciones de todas las fuentes
+ * Ingestión opcional de X (Twitter) mediante agent-twitter-client
+ */
+let twitterScraperInstance: any = null;
+
+async function getTwitterScraper() {
+  if (twitterScraperInstance) return twitterScraperInstance;
+
+  const username = process.env.TWITTER_USERNAME;
+  const password = process.env.TWITTER_PASSWORD;
+  const email = process.env.TWITTER_EMAIL;
+  const twoFactor = process.env.TWITTER_2FA_SECRET;
+  const authToken = process.env.TWITTER_AUTH_TOKEN;
+  const ct0 = process.env.TWITTER_CT0;
+
+  if (!authToken && !username) {
+    return null;
+  }
+
+  try {
+    const { Scraper } = await import('agent-twitter-client');
+    const scraper = new Scraper();
+
+    if (authToken) {
+      const cookieStrings = [
+        `auth_token=${authToken}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
+        ct0 ? `ct0=${ct0}; Domain=.twitter.com; Path=/; Secure` : '',
+      ].filter(Boolean);
+      await scraper.setCookies(cookieStrings);
+    } else if (username && password) {
+      await scraper.login(username, password, email, twoFactor);
+    }
+
+    twitterScraperInstance = scraper;
+    return scraper;
+  } catch (err: any) {
+    console.warn('⚠️ Error al autenticar en X (Twitter):', err?.message || err);
+    return null;
+  }
+}
+
+async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
+  const scraper = await getTwitterScraper();
+  if (!scraper) return [];
+
+  const results: RawSocialPost[] = [];
+  try {
+    const { SearchMode } = await import('agent-twitter-client');
+    const query = '("se me olvidó el cumple" OR "se me pasó el cumpleaños" OR "olvidé el cumpleaños" OR "casi se me pasa felicitar") lang:es';
+    
+    // Fetch latest 10 tweets
+    const tweetsGenerator = scraper.searchTweets(query, 10, SearchMode.Latest);
+    for await (const tweet of tweetsGenerator) {
+      if (tweet && tweet.id && tweet.text) {
+        results.push({
+          id: `tw_${tweet.id}`,
+          platform: 'twitter',
+          subreddit: 'X (Twitter)',
+          title: `Tweet de @${tweet.username || 'usuario'}`,
+          content: tweet.text,
+          author: tweet.username ? `@${tweet.username}` : '@anonimo',
+          url: tweet.permanentUrl || `https://x.com/${tweet.username || 'i'}/status/${tweet.id}`,
+          createdAt: tweet.timeParsed ? new Date(tweet.timeParsed) : new Date(),
+        });
+      }
+    }
+  } catch (err: any) {
+    console.warn('⚠️ Error al buscar tweets en X:', err?.message || err);
+  }
+
+  return results;
+}
+
+/**
+ * Recopila publicaciones de todas las fuentes (Reddit + X)
  */
 async function harvestSocialPosts(): Promise<RawSocialPost[]> {
   const allPosts: RawSocialPost[] = [];
@@ -277,6 +350,15 @@ async function harvestSocialPosts(): Promise<RawSocialPost[]> {
         seenIds.add(p.id);
         allPosts.push(p);
       }
+    }
+  }
+
+  // 3. Twitter / X posts (si las credenciales están configuradas)
+  const twitterPosts = await fetchTwitterPosts();
+  for (const p of twitterPosts) {
+    if (!seenIds.has(p.id) && !isLeadSeen(p.id)) {
+      seenIds.add(p.id);
+      allPosts.push(p);
     }
   }
 
@@ -354,13 +436,38 @@ Devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
       const parsed: LeadQualification = JSON.parse(rawText);
       return parsed;
     } catch (err: any) {
-      // Try next model if rate-limited or unavailable
+      const errMsg = err?.message || String(err);
+      if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('billing')) {
+        await triggerBillingQuotaAlert('Google Gemini API', `Límite de cuota detectado (${modelName}): ${errMsg.slice(0, 100)}`);
+      }
       continue;
     }
   }
 
   console.warn(`⚠️ Todos los modelos de Gemini fallaron para post ${post.id}`);
   return null;
+}
+
+async function triggerBillingQuotaAlert(service: string, reason: string) {
+  try {
+    const instances = await evolutionApi.fetchInstances();
+    const openInstance = instances.find(
+      (inst: any) => (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
+    );
+    const instanceName = openInstance 
+      ? (openInstance.name || openInstance.instance?.instanceName)
+      : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
+
+    const message = `🚨💳 *ALERTA DE SEGURIDAD FINANCIERA (AUTOBIRTHDAY)*
+
+Hola Lucas, el centinela ha detectado una situación de cuota/coste:
+📌 *Servicio:* ${service}
+⚠️ *Motivo:* ${reason}
+
+🛑 *Medida tomada:* Se han pausado temporalmente las consultas para garantizar que NO se produzca ningún cobro involuntario.`;
+
+    await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
+  } catch {}
 }
 
 // ==========================================
