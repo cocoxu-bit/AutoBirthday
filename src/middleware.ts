@@ -21,6 +21,9 @@ export function middleware(request: NextRequest) {
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/tools') ||
+    pathname.startsWith('/studio') ||
+    pathname.startsWith('/fake-chat') ||
     pathname.startsWith('/whatsapp') ||
     pathname.startsWith('/contacts') ||
     pathname.startsWith('/templates') ||
