@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
 import { signIn, signInWithGoogle, getIdToken } from "@/lib/firebase/auth";
+import { PageTrafficTracker } from "@/components/analytics/page-traffic-tracker";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -76,6 +77,7 @@ export default function LoginPage() {
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-6 sm:p-8 space-y-6">
+      <PageTrafficTracker path="/login" title="Acceso Usuarios (Login)" category="core" />
       
       {/* Header */}
       <div className="text-center space-y-2">

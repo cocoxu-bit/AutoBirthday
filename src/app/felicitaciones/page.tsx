@@ -13,6 +13,7 @@ import {
   Cake
 } from 'lucide-react';
 import { BirthdayWishGenerator } from '@/components/public/birthday-wish-generator';
+import { PageTrafficTracker } from '@/components/analytics/page-traffic-tracker';
 import { WISH_SEO_PAGES, generateWishJsonLd } from '@/lib/seo/wishes-seo-data';
 
 export const metadata: Metadata = {
@@ -85,6 +86,7 @@ export default function FelicitacionesHubPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-purple-50/20 to-slate-50 text-slate-900 font-sans">
+      <PageTrafficTracker path="/felicitaciones" title="Hub Generador Felicitaciones IA" category="seo_hub" />
       
       {/* Schema.org JSON-LD Script */}
       <script

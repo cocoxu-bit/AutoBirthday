@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { PageTrafficTracker } from "@/components/analytics/page-traffic-tracker";
 import {
   Cake,
   MessageCircle,
@@ -13,6 +14,7 @@ import {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-festive">
+      <PageTrafficTracker path="/" title="Landing Principal AutoBirthday" category="core" />
       {/* Header */}
       <header className="glass-strong sticky top-0 z-50 border-b border-white/20">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">

@@ -14,6 +14,7 @@ import {
   PartyPopper
 } from 'lucide-react';
 import { submitPublicBirthdayAction } from '@/app/u/[username]/actions';
+import { recordPageConversionAction } from '@/lib/analytics/traffic-actions';
 import { toast } from 'sonner';
 
 interface BirthdayCollectorFormProps {
@@ -78,6 +79,9 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
       if (res.success) {
         setUpdatedExisting(Boolean(res.updatedExisting));
         setIsSuccess(true);
+        if (typeof window !== 'undefined') {
+          recordPageConversionAction(window.location.pathname, 'birthday_submitted').catch(() => {});
+        }
       } else {
         toast.error(res.error || 'No se pudo guardar la fecha');
       }

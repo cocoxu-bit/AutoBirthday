@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { BirthdayWishGenerator } from '@/components/public/birthday-wish-generator';
 import { CopyWishCard } from '@/components/public/copy-wish-card';
+import { PageTrafficTracker } from '@/components/analytics/page-traffic-tracker';
 import { 
   WISH_SEO_PAGES, 
   getWishSeoConfig, 
@@ -83,6 +84,11 @@ export default async function FelicitacionesSlugPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-purple-50/20 to-slate-50 text-slate-900 font-sans">
+      <PageTrafficTracker 
+        path={`/felicitaciones/${config.slug}`} 
+        title={config.h1} 
+        category="seo_programmatic" 
+      />
       
       {/* Schema.org JSON-LD Script */}
       <script

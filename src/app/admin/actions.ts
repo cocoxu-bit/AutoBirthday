@@ -5,6 +5,7 @@ import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { evolutionApi } from '@/lib/evolution-api/client';
 import { executeSendWishes } from '@/lib/scheduler/send-wishes';
 import { getGlobalBirthdaysStats } from '@/lib/directory/global-birthdays';
+import { WISH_SEO_PAGES } from '@/lib/seo/wishes-seo-data';
 
 const ADMIN_EMAILS = [
   'lucasjimeneznavarro@gmail.com',
@@ -103,6 +104,18 @@ export interface AdminWishRecord {
   errorMessage?: string;
 }
 
+export interface ActiveUrlTrafficItem {
+  path: string;
+  title: string;
+  category: 'core' | 'seo_hub' | 'seo_programmatic' | 'viral_collector';
+  views: number;
+  conversions: number;
+  conversionRate: number;
+  lastVisitedStr?: string;
+  isIndexable: boolean;
+  schemaType?: string;
+}
+
 export interface AdminGrowthData {
   totalCollectorContacts: number;
   collectorUsersCount: number;
@@ -136,6 +149,15 @@ export interface AdminGrowthData {
     timeStr: string;
     createdAtMs: number;
   }>;
+  activeUrls: ActiveUrlTrafficItem[];
+  trafficSummary: {
+    totalActiveUrls: number;
+    totalViews: number;
+    totalConversions: number;
+    avgConversionRate: number;
+    seoViews: number;
+    viralViews: number;
+  };
 }
 
 export interface AdminAnalyticsData {
@@ -386,15 +408,118 @@ export async function getAdminAnalyticsDataAction(): Promise<{
     const totalAiModeContacts = users.reduce((acc, u) => acc + u.aiModeContactsCount, 0);
     const aiModeContactsRate = totalContacts > 0 ? Math.round((totalAiModeContacts / totalContacts) * 100) : 0;
 
-    // Growth & Viral Loop Metrics + Global Birthdays Directory
-    const [growthStatsSnap, globalBdaysStats] = await Promise.all([
+    // Growth & Viral Loop Metrics + Global Birthdays Directory + URL Traffic
+    const [growthStatsSnap, globalBdaysStats, trafficDocsSnap] = await Promise.all([
       adminDb.collection('system').doc('growth_stats').get().catch(() => null),
       getGlobalBirthdaysStats().catch(() => ({ totalCount: 0, verifiedCount: 0 })),
+      adminDb.collection('url_traffic').get().catch(() => null),
     ]);
     const growthStatsData = (growthStatsSnap && typeof (growthStatsSnap as any).data === 'function')
       ? (growthStatsSnap as any).data() || {}
       : {};
     const byType = growthStatsData?.byType || {};
+
+    const trafficMap = new Map<string, { views: number; conversions: number; lastVisited?: Date }>();
+    if (trafficDocsSnap && !trafficDocsSnap.empty) {
+      trafficDocsSnap.docs.forEach(doc => {
+        const d = doc.data();
+        const cleanPath = (d.path || '').trim();
+        if (cleanPath) {
+          trafficMap.set(cleanPath, {
+            views: Number(d.views || 0),
+            conversions: Number(d.conversions || 0),
+            lastVisited: d.lastVisited?.toDate ? d.lastVisited.toDate() : (d.lastVisited ? new Date(d.lastVisited) : undefined),
+          });
+        }
+      });
+    }
+
+    // Build active URLs catalog
+    const activeUrls: ActiveUrlTrafficItem[] = [];
+
+    // 1. Core pages
+    const coreUrls = [
+      { path: '/', title: 'Landing Principal AutoBirthday', category: 'core' as const, isIndexable: true, schemaType: 'WebSite' },
+      { path: '/felicitaciones', title: 'Hub Generador de Felicitaciones IA', category: 'seo_hub' as const, isIndexable: true, schemaType: 'SoftwareApplication & FAQPage' },
+      { path: '/register', title: 'Registro de Usuarios', category: 'core' as const, isIndexable: true, schemaType: 'WebPage' },
+      { path: '/login', title: 'Acceso a la Plataforma', category: 'core' as const, isIndexable: false, schemaType: 'WebPage' },
+    ];
+
+    for (const c of coreUrls) {
+      const stats = trafficMap.get(c.path);
+      const views = stats?.views || 0;
+      const conversions = stats?.conversions || 0;
+      activeUrls.push({
+        path: c.path,
+        title: c.title,
+        category: c.category,
+        views,
+        conversions,
+        conversionRate: views > 0 ? Math.round((conversions / views) * 1000) / 10 : (conversions > 0 ? 100 : 0),
+        lastVisitedStr: stats?.lastVisited ? stats.lastVisited.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : undefined,
+        isIndexable: c.isIndexable,
+        schemaType: c.schemaType,
+      });
+    }
+
+    // 2. Programmatic SEO Landing Pages (10 pages)
+    Object.values(WISH_SEO_PAGES).forEach(seoPage => {
+      const path = `/felicitaciones/${seoPage.slug}`;
+      const stats = trafficMap.get(path);
+      const views = stats?.views || 0;
+      const conversions = stats?.conversions || 0;
+      activeUrls.push({
+        path,
+        title: seoPage.h1,
+        category: 'seo_programmatic',
+        views,
+        conversions,
+        conversionRate: views > 0 ? Math.round((conversions / views) * 1000) / 10 : (conversions > 0 ? 100 : 0),
+        lastVisitedStr: stats?.lastVisited ? stats.lastVisited.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : undefined,
+        isIndexable: true,
+        schemaType: 'SoftwareApplication & FAQPage',
+      });
+    });
+
+    // 3. User Viral Collector Pages
+    users
+      .filter(u => u.username)
+      .forEach(u => {
+        const path = `/u/${u.username}`;
+        const stats = trafficMap.get(path);
+        const views = stats?.views || 0;
+        const conversions = (stats?.conversions && stats.conversions > 0) ? stats.conversions : (u.collectorContactsCount || 0);
+        activeUrls.push({
+          path,
+          title: `Recolector de ${u.displayName}`,
+          category: 'viral_collector',
+          views,
+          conversions,
+          conversionRate: views > 0 ? Math.round((conversions / views) * 1000) / 10 : (conversions > 0 ? 100 : 0),
+          lastVisitedStr: stats?.lastVisited ? stats.lastVisited.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : undefined,
+          isIndexable: false,
+          schemaType: 'WebApplication',
+        });
+      });
+
+    // Traffic Summary
+    const totalViews = activeUrls.reduce((acc, u) => acc + u.views, 0);
+    const totalConversions = activeUrls.reduce((acc, u) => acc + u.conversions, 0);
+    const seoViews = activeUrls
+      .filter(u => u.category === 'seo_hub' || u.category === 'seo_programmatic')
+      .reduce((acc, u) => acc + u.views, 0);
+    const viralViews = activeUrls
+      .filter(u => u.category === 'viral_collector')
+      .reduce((acc, u) => acc + u.views, 0);
+
+    const trafficSummary = {
+      totalActiveUrls: activeUrls.length,
+      totalViews,
+      totalConversions,
+      avgConversionRate: totalViews > 0 ? Math.round((totalConversions / totalViews) * 1000) / 10 : 0,
+      seoViews,
+      viralViews,
+    };
 
     const totalCollectorContacts = users.reduce((acc, u) => acc + (u.collectorContactsCount || 0), 0);
     const collectorUsersCount = users.filter(u => (u.collectorContactsCount || 0) > 0).length;
@@ -428,6 +553,8 @@ export async function getAdminAnalyticsDataAction(): Promise<{
       },
       topCollectorHosts,
       recentSubmissions: allCollectorSubmissions.sort((a, b) => b.createdAtMs - a.createdAtMs).slice(0, 25),
+      activeUrls,
+      trafficSummary,
     };
 
     return {

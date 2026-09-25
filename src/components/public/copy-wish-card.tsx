@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { recordPageConversionAction } from '@/lib/analytics/traffic-actions';
 import { toast } from 'sonner';
 
 interface CopyWishCardProps {
@@ -16,6 +17,9 @@ export function CopyWishCard({ label, text }: CopyWishCardProps) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      if (typeof window !== 'undefined') {
+        recordPageConversionAction(window.location.pathname, 'example_wish_copied').catch(() => {});
+      }
       toast.success('¡Frase copiada al portapapeles! 🎉');
       setTimeout(() => setCopied(false), 2500);
     } catch {

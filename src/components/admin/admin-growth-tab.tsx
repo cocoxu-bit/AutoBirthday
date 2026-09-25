@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { 
   Sparkles, 
@@ -15,11 +15,17 @@ import {
   Eye,
   CheckCircle2,
   Copy,
-  Globe
+  Globe,
+  Search,
+  ArrowUpRight,
+  BarChart3,
+  Layers,
+  ShieldCheck,
+  Check
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { InstagramIcon, TikTokIcon } from '@/components/ui/social-icons';
-import { AdminGrowthData } from '@/app/admin/actions';
+import { AdminGrowthData, ActiveUrlTrafficItem } from '@/app/admin/actions';
 
 interface AdminGrowthTabProps {
   growth?: AdminGrowthData;
@@ -47,6 +53,51 @@ export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
 
   const topHosts = growth?.topCollectorHosts || [];
   const recentSubmissions = growth?.recentSubmissions || [];
+
+  const [filterCategory, setFilterCategory] = useState<'all' | 'core_hub' | 'seo_programmatic' | 'viral_collector'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [copiedPath, setCopiedPath] = useState<string | null>(null);
+
+  const activeUrls = growth?.activeUrls || [];
+  const trafficSummary = growth?.trafficSummary || {
+    totalActiveUrls: activeUrls.length,
+    totalViews: 0,
+    totalConversions: 0,
+    avgConversionRate: 0,
+    seoViews: 0,
+    viralViews: 0,
+  };
+
+  const filteredUrls = useMemo(() => {
+    return activeUrls.filter((item) => {
+      // Category filter
+      if (filterCategory === 'core_hub') {
+        if (item.category !== 'core' && item.category !== 'seo_hub') return false;
+      } else if (filterCategory === 'seo_programmatic') {
+        if (item.category !== 'seo_programmatic') return false;
+      } else if (filterCategory === 'viral_collector') {
+        if (item.category !== 'viral_collector') return false;
+      }
+
+      // Search term filter
+      if (searchTerm.trim()) {
+        const query = searchTerm.toLowerCase();
+        return (
+          item.path.toLowerCase().includes(query) ||
+          item.title.toLowerCase().includes(query)
+        );
+      }
+
+      return true;
+    });
+  }, [activeUrls, filterCategory, searchTerm]);
+
+  const copyUrlToClipboard = (path: string) => {
+    const fullUrl = `https://autobirthday.com${path}`;
+    navigator.clipboard.writeText(fullUrl).catch(() => {});
+    setCopiedPath(path);
+    setTimeout(() => setCopiedPath(null), 2000);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -344,6 +395,250 @@ export function AdminGrowthTab({ growth }: AdminGrowthTabProps) {
           </div>
         </div>
 
+      </div>
+
+      {/* 5. Catálogo de URLs Activas & Tráfico en Tiempo Real */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden space-y-6 p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-100 border border-violet-200 text-violet-800 text-[11px] font-black uppercase tracking-wider mb-2">
+              <Globe className="w-3.5 h-3.5 text-violet-600" />
+              <span>SEO Programático, Hubs & Red Viral</span>
+            </div>
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              Catálogo de URLs Activas & Tráfico en Vivo 🌐
+            </h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Monitorización de páginas indexadas en Google, herramientas públicas gratuitas y recolectores virales con visitas y conversiones en tiempo real.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+              {activeUrls.length} URLs Monitoreadas
+            </span>
+          </div>
+        </div>
+
+        {/* Traffic KPI Metrics Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">URLs Activas</p>
+            <p className="text-xl font-black text-slate-900">{trafficSummary.totalActiveUrls}</p>
+            <p className="text-[10px] text-slate-500 font-medium">100% operativas</p>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-violet-50/60 border border-violet-200/60 space-y-1">
+            <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wider">Visitas Totales</p>
+            <p className="text-xl font-black text-violet-950">{trafficSummary.totalViews}</p>
+            <p className="text-[10px] text-violet-600 font-medium">En todas las rutas</p>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/60 space-y-1">
+            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Conversiones</p>
+            <p className="text-xl font-black text-emerald-950">{trafficSummary.totalConversions}</p>
+            <p className="text-[10px] text-emerald-600 font-medium">Deseos + Fechas + CTA</p>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/60 space-y-1">
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Ratio Conversión</p>
+            <p className="text-xl font-black text-amber-950">{trafficSummary.avgConversionRate}%</p>
+            <p className="text-[10px] text-amber-700 font-medium">Media global de éxito</p>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-sky-50/60 border border-sky-200/60 space-y-1">
+            <p className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">Tráfico SEO</p>
+            <p className="text-xl font-black text-sky-950">{trafficSummary.seoViews}</p>
+            <p className="text-[10px] text-sky-600 font-medium">Hub + 10 slugs IA</p>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-fuchsia-50/60 border border-fuchsia-200/60 space-y-1">
+            <p className="text-[10px] font-bold text-fuchsia-700 uppercase tracking-wider">Tráfico Viral</p>
+            <p className="text-xl font-black text-fuchsia-950">{trafficSummary.viralViews}</p>
+            <p className="text-[10px] text-fuchsia-600 font-medium">Páginas /u/ compartidas</p>
+          </div>
+        </div>
+
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl overflow-x-auto text-xs font-bold text-slate-600 shrink-0">
+            <button
+              type="button"
+              onClick={() => setFilterCategory('all')}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                filterCategory === 'all' 
+                  ? 'bg-white text-slate-900 shadow-xs font-black' 
+                  : 'hover:text-slate-900'
+              }`}
+            >
+              Todas ({activeUrls.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterCategory('seo_programmatic')}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                filterCategory === 'seo_programmatic' 
+                  ? 'bg-white text-violet-700 shadow-xs font-black' 
+                  : 'hover:text-slate-900'
+              }`}
+            >
+              SEO Programático (10)
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterCategory('core_hub')}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                filterCategory === 'core_hub' 
+                  ? 'bg-white text-slate-900 shadow-xs font-black' 
+                  : 'hover:text-slate-900'
+              }`}
+            >
+              Hub & Landing
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterCategory('viral_collector')}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                filterCategory === 'viral_collector' 
+                  ? 'bg-white text-emerald-700 shadow-xs font-black' 
+                  : 'hover:text-slate-900'
+              }`}
+            >
+              Recolectores (/u/)
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por URL o título..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all placeholder:text-slate-400 font-medium"
+            />
+          </div>
+        </div>
+
+        {/* URLs Table */}
+        <div className="border border-slate-200/80 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  <th className="py-3 px-4">Ruta URL & Título</th>
+                  <th className="py-3 px-3">Categoría</th>
+                  <th className="py-3 px-3 text-right">Visitas</th>
+                  <th className="py-3 px-3 text-right">Conversiones</th>
+                  <th className="py-3 px-3 text-right">Ratio CR</th>
+                  <th className="py-3 px-3">Indexación & Marcado</th>
+                  <th className="py-3 px-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {filteredUrls.length > 0 ? (
+                  filteredUrls.map((item) => {
+                    const badgeCategory = 
+                      item.category === 'seo_programmatic' ? { label: 'SEO IA', bg: 'bg-violet-100 text-violet-800 border-violet-200' } :
+                      item.category === 'seo_hub' ? { label: 'Hub Principal', bg: 'bg-purple-100 text-purple-800 border-purple-200' } :
+                      item.category === 'viral_collector' ? { label: 'Recolector /u/', bg: 'bg-emerald-100 text-emerald-800 border-emerald-200' } :
+                      { label: 'Core App', bg: 'bg-slate-100 text-slate-700 border-slate-200' };
+
+                    return (
+                      <tr key={item.path} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-4 min-w-[220px]">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-900 hover:text-violet-600 transition-colors">
+                              {item.path}
+                            </span>
+                            <Link
+                              href={item.path}
+                              target="_blank"
+                              className="text-slate-400 hover:text-violet-600 transition-colors p-0.5 rounded"
+                              title="Abrir en nueva pestaña"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+                          <p className="text-[11px] text-slate-500 truncate max-w-sm mt-0.5">
+                            {item.title}
+                          </p>
+                        </td>
+
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded-md border text-[10px] font-black uppercase tracking-wider ${badgeCategory.bg}`}>
+                            {badgeCategory.label}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1 font-black text-slate-900">
+                            <Eye className="w-3 h-3 text-slate-400" />
+                            <span>{item.views}</span>
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                          <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                            {item.conversions}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-3 text-right whitespace-nowrap font-bold">
+                          <span className={item.conversionRate > 0 ? 'text-amber-700' : 'text-slate-400'}>
+                            {item.conversionRate}%
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          {item.isIndexable ? (
+                            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>Indexable (Schema.org)</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                              <span>Privado (noindex)</span>
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => copyUrlToClipboard(item.path)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 hover:text-violet-700 bg-slate-100 hover:bg-violet-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                            title="Copiar URL completa"
+                          >
+                            {copiedPath === item.path ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span className="text-emerald-600 font-bold">Copiado</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copiar</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-10 text-center text-slate-400 text-xs font-medium">
+                      No se encontraron URLs activas con los filtros actuales.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>

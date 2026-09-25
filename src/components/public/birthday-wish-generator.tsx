@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { generatePublicWishAction } from '@/app/felicitaciones/actions';
+import { recordPageConversionAction } from '@/lib/analytics/traffic-actions';
 import { toast } from 'sonner';
 
 export type WishRelationship = 'amigo/a' | 'pareja' | 'familiar' | 'compañero/a' | 'jefe/a';
@@ -96,6 +97,9 @@ export function BirthdayWishGenerator({
       if (res.success && res.wish) {
         setGeneratedWish(res.wish);
         toast.success('¡Felicitación generada con éxito! ✨');
+        if (typeof window !== 'undefined') {
+          recordPageConversionAction(window.location.pathname, 'wish_generated').catch(() => {});
+        }
       } else {
         toast.error(res.error || 'Error al generar felicitación');
       }
@@ -107,6 +111,9 @@ export function BirthdayWishGenerator({
     try {
       await navigator.clipboard.writeText(generatedWish);
       setCopied(true);
+      if (typeof window !== 'undefined') {
+        recordPageConversionAction(window.location.pathname, 'wish_copied').catch(() => {});
+      }
       toast.success('¡Copiado al portapapeles! Listo para pegar en WhatsApp 🎉', {
         duration: 3500,
       });

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getUserByUsername } from '@/lib/user/slug';
 import { BirthdayCollectorForm } from '@/components/public/birthday-collector-form';
+import { PageTrafficTracker } from '@/components/analytics/page-traffic-tracker';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Cake } from 'lucide-react';
@@ -60,6 +61,11 @@ export default async function PublicCollectorPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-violet-100/60 via-purple-50/40 to-rose-100/60 flex flex-col justify-between p-4 sm:p-6 md:p-10 relative overflow-hidden">
+      <PageTrafficTracker
+        path={`/u/${host.username}`}
+        title={`Recolector de ${host.displayName}`}
+        category="viral_collector"
+      />
       {/* Decorative festive background blurs */}
       <div className="absolute -top-32 -left-32 w-80 h-80 bg-violet-400/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />

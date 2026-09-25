@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test:flow": "tsx scripts/test-flow.ts",
     "cron:setup": "tsx scripts/setup-cron-jobs.ts",
-    "benchmark:memory": "tsx scripts/benchmark-memory.ts"
+    "benchmark:memory": "tsx scripts/benchmark-memory.ts",
+    "listener": "tsx scripts/social-listener.ts",
+    "listener:test": "tsx scripts/social-listener.ts --test",
+    "listener:watch": "tsx scripts/social-listener.ts --watch --interval 15"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",
