@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,37 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [pendingContactName, setPendingContactName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const nameParam = params.get("name");
+      const relParam = params.get("relationship");
+      const toneParam = params.get("tone");
+
+      if (nameParam) {
+        setPendingContactName(nameParam);
+        sessionStorage.setItem(
+          "autobirthday_pending_contact",
+          JSON.stringify({
+            name: nameParam,
+            relationship: relParam || "amigo/a",
+            tone: toneParam || "divertido",
+            source: "wish_generator",
+          })
+        );
+      } else {
+        const stored = sessionStorage.getItem("autobirthday_pending_contact");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed.name) setPendingContactName(parsed.name);
+          } catch {}
+        }
+      }
+    }
+  }, []);
 
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
@@ -124,6 +155,16 @@ export default function RegisterPage() {
           </p>
         </div>
       </div>
+
+      {/* Pending Contact Banner from Wish Generator */}
+      {pendingContactName && (
+        <div className="p-3.5 bg-violet-50 border border-violet-200/90 rounded-2xl flex items-center gap-2.5 text-xs text-violet-950 font-medium animate-in fade-in">
+          <Sparkles className="w-4 h-4 text-violet-600 shrink-0" />
+          <p>
+            Al registrarte guardaremos la felicitación de <strong className="font-bold text-violet-900">{pendingContactName}</strong> para automatizarla por WhatsApp.
+          </p>
+        </div>
+      )}
 
       {/* Google Sign In Hero Button */}
       <button
