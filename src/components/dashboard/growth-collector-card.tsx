@@ -101,39 +101,39 @@ export function GrowthCollectorCard({ username, displayName = 'Lucas' }: GrowthC
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-900 via-indigo-950 to-slate-950 p-5 sm:p-6 text-white shadow-md border border-violet-800/40">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-900 via-indigo-950 to-slate-950 p-4 sm:p-5 text-white shadow-md border border-violet-800/40">
       {/* Background ambient glow */}
       <div className="absolute -top-16 -right-16 w-48 h-48 bg-fuchsia-500/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-5">
         
         {/* Left: Text & Pitch */}
-        <div className="space-y-1.5 max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-400/30 text-violet-300 text-[11px] font-bold tracking-wide uppercase">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+        <div className="space-y-1 max-w-xl">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-500/20 border border-violet-400/30 text-violet-300 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase">
+            <Sparkles className="w-3 h-3 text-amber-300" />
             <span>Recolector Automático</span>
           </div>
 
-          <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+          <h3 className="text-sm sm:text-base lg:text-lg font-black tracking-tight text-white">
             Completa tu lista de cumpleaños sin mover un dedo 🎁
           </h3>
 
-          <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+          <p className="text-xs text-slate-300 font-medium leading-relaxed hidden sm:block">
             Comparte tu enlace personal o publica tu Storie para que tus amigos apunten su fecha automáticamente.
           </p>
         </div>
 
-        {/* Right: Only the 3 Action Pills */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
+        {/* Right: Exactly 3 Action Pills strictly in ONE single line */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 w-full lg:w-auto shrink-0">
           
           {/* 1. Botón WhatsApp */}
           <button
             type="button"
             onClick={handleWhatsAppShare}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-emerald-950/30 active:scale-[0.98] whitespace-nowrap cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-emerald-950/30 active:scale-[0.98] whitespace-nowrap cursor-pointer"
           >
-            <WhatsAppIcon className="w-4 h-4 shrink-0" size={16} />
+            <WhatsAppIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" size={16} />
             <span>WhatsApp</span>
           </button>
 
@@ -142,16 +142,16 @@ export function GrowthCollectorCard({ username, displayName = 'Lucas' }: GrowthC
             type="button"
             onClick={handleInstagramShare}
             disabled={isGeneratingStory}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-pink-950/30 active:scale-[0.98] disabled:opacity-75 whitespace-nowrap cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-pink-950/30 active:scale-[0.98] disabled:opacity-75 whitespace-nowrap cursor-pointer"
           >
             {isGeneratingStory ? (
               <>
-                <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                <span>Creando Storie...</span>
+                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 animate-spin" />
+                <span className="truncate">Creando...</span>
               </>
             ) : (
               <>
-                <InstagramIcon className="w-4 h-4 shrink-0" />
+                <InstagramIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                 <span>Instagram</span>
               </>
             )}
@@ -161,17 +161,17 @@ export function GrowthCollectorCard({ username, displayName = 'Lucas' }: GrowthC
           <button
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs sm:text-sm transition-all active:scale-[0.98] whitespace-nowrap cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs sm:text-sm transition-all active:scale-[0.98] whitespace-nowrap cursor-pointer"
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 shrink-0 text-emerald-400" />
+                <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-emerald-400" />
                 <span>¡Copiado!</span>
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 shrink-0 text-slate-300" />
-                <span>Copiar enlace</span>
+                <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-slate-300" />
+                <span>Copiar</span>
               </>
             )}
           </button>
