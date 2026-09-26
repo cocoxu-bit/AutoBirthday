@@ -135,9 +135,9 @@ export const InstagramChatView: React.FC<InstagramChatViewProps> = ({
             >
               {/* Incoming Avatar next to bubble */}
               {!isMe && (
-                <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 shrink-0 mb-0.5">
-                  {showAvatar ? (
-                    settings.contactAvatar ? (
+                showAvatar ? (
+                  <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 shrink-0 mb-0.5">
+                    {settings.contactAvatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={settings.contactAvatar}
@@ -149,11 +149,11 @@ export const InstagramChatView: React.FC<InstagramChatViewProps> = ({
                       <div className="w-full h-full flex items-center justify-center font-bold text-[10px] text-white">
                         {settings.contactName.slice(0, 2).toUpperCase()}
                       </div>
-                    )
-                  ) : (
-                    <div className="w-7 h-7" />
-                  )}
-                </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-7 h-7 shrink-0 mb-0.5" />
+                )
               )}
 
               {/* Message Bubble */}
