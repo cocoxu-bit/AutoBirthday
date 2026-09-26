@@ -64,7 +64,7 @@ const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'seen-leads.json');
 
 // Ventana de frescura temporal: solo publicaciones de las últimas horas
-const MAX_AGE_HOURS = parseInt(process.env.MAX_POST_AGE_HOURS || '4', 10);
+const MAX_AGE_HOURS = parseInt(process.env.MAX_POST_AGE_HOURS || '24', 10);
 const MAX_AGE_MS = MAX_AGE_HOURS * 60 * 60 * 1000;
 
 function isPostFresh(createdAt: Date): boolean {
@@ -344,30 +344,29 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
 
     const page = await context.newPage();
 
-    // Palabras clave de dolor en X
+    // Palabras clave de dolor en X (sin comillas estrictas para máxima captura de tweets frescos en vivo)
     const twitterSearchQueries = [
-      '"se me olvidó el cumple"',
-      '"se me olvido el cumple"',
-      '"se me pasó el cumpleaños"',
-      '"se me paso el cumple"',
-      '"olvidé el cumpleaños"',
-      '"olvide el cumpleaños"',
-      '"olvidé el cumple"',
-      '"olvide el cumple"',
-      '"se me olvidó felicitar"',
-      '"se me olvido felicitar"',
-      '"se me pasó felicitar"',
-      '"casi se me pasa felicitar"',
-      '"casi se me olvida felicitar"',
-      '"casi se me olvida el cumple"',
-      '"siempre se me olvidan los cumpleaños"',
-      '"olvidé el cumple de mi"',
-      '"se me fue el cumple"',
       'se me olvidó el cumple',
       'se me olvido el cumple',
-      'se me pasó el cumple',
-      'olvidé felicitar',
+      'se me pasó el cumpleaños',
+      'se me paso el cumple',
+      'olvidé el cumpleaños',
+      'olvide el cumpleaños',
+      'olvidé el cumple',
+      'olvide el cumple',
+      'se me olvidó felicitar',
+      'se me olvido felicitar',
+      'se me pasó felicitar',
+      'casi se me pasa felicitar',
+      'casi se me olvida felicitar',
+      'casi se me olvida el cumple',
+      'siempre se me olvidan los cumpleaños',
+      'olvidé el cumple de mi',
+      'se me fue el cumple',
+      'olvidé felicitar por su cumple',
       'olvide felicitar por su cumple',
+      'se me paso felicitarle',
+      'no me acordé de su cumple',
     ];
 
     // Rotar 1 query por ciclo para ejecución rápida y no llamar la atención
