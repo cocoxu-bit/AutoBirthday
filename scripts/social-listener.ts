@@ -312,6 +312,7 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
   const ct0 = process.env.TWITTER_CT0;
 
   if (!authToken || !ct0) {
+    await notifyTwitterSessionExpired('Faltan las variables TWITTER_AUTH_TOKEN o TWITTER_CT0 en el entorno.');
     return [];
   }
 
@@ -374,11 +375,47 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
     const searchUrl = `https://x.com/search?q=${encodeURIComponent(selectedQuery)}&f=live`;
 
     console.log(`🐦 Escaneando X (Twitter) en vivo con Chromium headless [query: ${selectedQuery}]...`);
-    await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {});
+    const navRes = await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 25000 }).catch((e: any) => {
+      console.warn('⚠️ Error de navegación en X:', e?.message || e);
+      return null;
+    });
     await page.waitForTimeout(5000);
+
+    const currentUrl = page.url();
+    const isRedirectedToLogin = currentUrl.includes('/login') || currentUrl.includes('/i/flow/login') || currentUrl.includes('redirect_after_login');
+    const pageTitle = await page.title().catch(() => '');
 
     const articles = await page.locator('article[data-testid="tweet"]').all();
     console.log(`🐦 Tweets encontrados en el DOM de X: ${articles.length}`);
+
+    if (articles.length > 0) {
+      clearTwitterSessionAlert();
+    } else {
+      let isSessionInvalid = false;
+      let failureReason = '';
+
+      if (isRedirectedToLogin) {
+        isSessionInvalid = true;
+        failureReason = 'X redirigió la petición a la pantalla de inicio de sesión (/login).';
+      } else if (navRes && (navRes.status() === 401 || navRes.status() === 403)) {
+        isSessionInvalid = true;
+        failureReason = `X devolvió código HTTP ${navRes.status()} (Acceso denegado o sesión no autorizada).`;
+      } else if (!pageTitle || pageTitle.trim() === '') {
+        isSessionInvalid = true;
+        failureReason = 'X devolvió una página en blanco o bloqueó el acceso.';
+      } else {
+        const hasLoginPrompt = (await page.locator('a[href*="/login"], div[data-testid="login"], input[name="text"]').count()) > 0;
+        if (hasLoginPrompt) {
+          isSessionInvalid = true;
+          failureReason = 'Se detectó solicitud de login en la página de resultados.';
+        }
+      }
+
+      if (isSessionInvalid) {
+        console.warn(`🚨 Sesión de X/Twitter caducada o bloqueada: ${failureReason}`);
+        await notifyTwitterSessionExpired(failureReason);
+      }
+    }
 
     for (const art of articles.slice(0, 8)) {
       const text = (await art.locator('[data-testid="tweetText"]').textContent().catch(() => ''))?.trim() || '';
@@ -593,6 +630,63 @@ Hola Lucas, el centinela ha detectado una situación de cuota/coste:
 
     await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
   } catch {}
+}
+
+const TWITTER_ALERT_CACHE_KEY = '__sys_twitter_session_alert__';
+
+function clearTwitterSessionAlert() {
+  try {
+    const cache = loadSeenLeads();
+    if (cache[TWITTER_ALERT_CACHE_KEY]) {
+      delete cache[TWITTER_ALERT_CACHE_KEY];
+      fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf-8');
+      console.log('🔄 Estado de sesión de X/Twitter restablecido a saludable.');
+    }
+  } catch {}
+}
+
+async function notifyTwitterSessionExpired(details?: string) {
+  const now = Date.now();
+  const seenLeads = loadSeenLeads();
+  const lastAlertRecord = seenLeads[TWITTER_ALERT_CACHE_KEY];
+  const lastAlertTime = lastAlertRecord ? new Date(lastAlertRecord.detectedAt).getTime() : 0;
+
+  // Evitar saturar con mensajes cada 20 min: máximo 1 aviso cada 12 horas
+  if (now - lastAlertTime < 12 * 60 * 60 * 1000) {
+    return;
+  }
+
+  saveSeenLead({
+    id: TWITTER_ALERT_CACHE_KEY,
+    title: 'Twitter Session Expired Alert',
+    url: 'https://x.com',
+    detectedAt: new Date().toISOString(),
+    score: 'CRITICO',
+    notified: true,
+  });
+
+  try {
+    const instances = await evolutionApi.fetchInstances();
+    const openInstance = instances.find(
+      (inst: any) => (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
+    );
+    const instanceName = openInstance 
+      ? (openInstance.name || openInstance.instance?.instanceName)
+      : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
+
+    const message = `⚠️ *Alerta AutoBirthday Social Listener* 🐦
+
+Hola Lucas, la sesión de X (Twitter) de @autobirthday ha caducado o requiere renovación de cookies.
+
+📌 *Detalle:* ${details || 'Sesión no válida o cerrada'}
+⚙️ El escaneo de Reddit sigue activo, pero Twitter está pausado hasta renovar \`auth_token\` y \`ct0\`.`;
+
+    console.log(`📲 Enviando aviso de sesión de Twitter caducada a WhatsApp (${ADMIN_PHONE})...`);
+    await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
+    console.log(`✅ ¡Aviso de sesión de Twitter enviado con éxito a WhatsApp!`);
+  } catch (err: any) {
+    console.error('❌ Error enviando aviso de Twitter a WhatsApp:', err?.message || err);
+  }
 }
 
 // ==========================================
