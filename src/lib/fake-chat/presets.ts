@@ -9,7 +9,7 @@ export const DEFAULT_PRESETS: ScriptPreset[] = [
     theme: "dark",
     contactName: "Laura García",
     contactHandle: "lauragarcia_",
-    contactAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    contactAvatar: "https://images.unsplash.com/photo-1582152629442-4a864303fb96?w=150&auto=format&fit=crop&crop=faces&q=80",
     isVerified: true,
     script: `Lucas: ¡¡FELIZ CUMPLEAÑOS LAURITA!! 🎂🎉✨
 Lucas: Oficialmente entras en los 28... ¡pero los llevas mejor que nadie! Disfruta muchísimo de tu día que te lo mereces todo ❤️🥂
@@ -28,7 +28,7 @@ Lucas: ¡Hecho! Guárdame un trozo de tarta 🍰🥳`,
     theme: "light",
     contactName: "Carlos Pádel 🎾",
     contactHandle: "+34 612 34 56 78",
-    contactAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    contactAvatar: "https://images.unsplash.com/photo-1558374805-cc55cedfb7f5?w=150&auto=format&fit=crop&crop=faces&q=80",
     isVerified: false,
     script: `Lucas: ¡Hombre Carlitos! ¡Muchísimas felicidades fiera! 🎾🎂
 Lucas: Que cumplas muchos más y a ver si este año mejoras ese revés que falta te hace jajaja un abrazo grande hermano! 🍻
@@ -46,7 +46,7 @@ Lucas: ¡A disfrutarlo! El domingo nos vemos en la pista 💪🎾`,
     theme: "dark",
     contactName: "Sofía ❤️",
     contactHandle: "sofia.martinez@icloud.com",
-    contactAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    contactAvatar: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150&auto=format&fit=crop&crop=faces&q=80",
     isVerified: false,
     script: `Lucas: Feliz cumpleaños mi amor 💖✨
 Lucas: Gracias por hacer cada día tan especial. Te prometo que este nuevo año va a estar lleno de momentos increíbles juntos. ¡Te amo muchísimo! 🥂🎂
@@ -63,7 +63,7 @@ Lucas: Salgo a las 6 y voy directo, no veo la hora de celebrarlo contigo! 😍`,
     theme: "dark",
     contactName: "Marcos (Jefe) 💼",
     contactHandle: "marcos_director",
-    contactAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    contactAvatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&crop=faces&q=80",
     isVerified: true,
     script: `Lucas: Estimado Marcos, ¡muy feliz cumpleaños! 🎂💼
 Lucas: Espero que pase un excelente día rodeado de familia y amigos. Mucho éxito en todos los proyectos de este nuevo ciclo. ¡Un cordial saludo!
