@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { AdminSystemLogsResponse, AdminWishRecord, adminRetryWishAction, clearAdminSystemLogsAction } from '@/app/admin/actions';
 import { toast } from 'sonner';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 interface AdminErrorMonitorProps {
   logsData: AdminSystemLogsResponse | null;
@@ -33,6 +34,7 @@ export function AdminErrorMonitor({ logsData, loading, onRefresh }: AdminErrorMo
   const [retryingWishId, setRetryingWishId] = useState<string | null>(null);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [showClearLogsModal, setShowClearLogsModal] = useState(false);
 
   const logs = logsData?.logs || [];
   const failedWishes = logsData?.failedWishes || [];
@@ -62,12 +64,12 @@ export function AdminErrorMonitor({ logsData, loading, onRefresh }: AdminErrorMo
   };
 
   const handleClearLogs = async () => {
-    if (!confirm('¿Deseas vaciar los registros del sistema antiguos?')) return;
     setIsClearing(true);
     try {
       const res = await clearAdminSystemLogsAction();
       if (res.success) {
         toast.success('Registros limpiados');
+        setShowClearLogsModal(false);
         onRefresh();
       } else {
         toast.error(res.error || 'Error al limpiar');
@@ -259,9 +261,9 @@ export function AdminErrorMonitor({ logsData, loading, onRefresh }: AdminErrorMo
             {logs.length > 0 && (
               <button
                 type="button"
-                onClick={handleClearLogs}
+                onClick={() => setShowClearLogsModal(true)}
                 disabled={isClearing}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-bold transition-all shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-bold transition-all shadow-2xs cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Vaciar Logs</span>
@@ -441,6 +443,18 @@ export function AdminErrorMonitor({ logsData, loading, onRefresh }: AdminErrorMo
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={showClearLogsModal}
+        onClose={() => setShowClearLogsModal(false)}
+        onConfirm={handleClearLogs}
+        isLoading={isClearing}
+        variant="danger"
+        title="¿Vaciar registros del sistema?"
+        description="Esta acción eliminará todos los registros y trazas de error antiguos del sistema. No se puede deshacer."
+        confirmText="Vaciar registros"
+        cancelText="Cancelar"
+      />
     </div>
   );
 }

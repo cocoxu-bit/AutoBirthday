@@ -528,10 +528,10 @@ export default function WhatsAppPage() {
         onConfirm={handleDisconnect}
         isLoading={loading}
         variant="warning"
-        title="¿Desconectar WhatsApp?"
-        description="Se cerrará la sesión de WhatsApp en AutoBirthday. Tus contactos y plantillas se mantendrán guardados y podrás volver a vincularte cuando quieras."
-        confirmText="Desconectar"
-        cancelText="Mantener conectado"
+        title={t('whatsapp.disconnectTitle')}
+        description={t('whatsapp.disconnectDesc')}
+        confirmText={t('whatsapp.disconnectButton')}
+        cancelText={t('whatsapp.keepConnected')}
       />
     </div>
   );

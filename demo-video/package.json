@@ -12,6 +12,7 @@
     "render:ep1:9x16": "hyperframes render src/scenes/ep01-qr-connection-9x16 -o renders/ep01-qr-connection-9x16.mp4",
     "render:ep1:switcher": "hyperframes render src/scenes/ep01-app-switcher-4x5 -o renders/ep01-app-switcher-4x5.mp4",
     "render:demo:espectacular": "hyperframes render src/scenes/product-demo-spectacular-4x5 -o renders/autobirthday-demo-espectacular-4x5.mp4",
+    "render:demo:reels:9x16": "hyperframes render src/scenes/product-demo-reels-9x16 -o renders/autobirthday-demo-reels-9x16.mp4",
     "render:ep1": "npm run render:ep1:16x9 && npm run render:ep1:9x16",
     "render:ep2:16x9": "hyperframes render src/scenes/ep02-contacts-16x9 -o renders/ep02-contacts-16x9.mp4",
     "render:ep2:9x16": "hyperframes render src/scenes/ep02-contacts-9x16 -o renders/ep02-contacts-9x16.mp4",

@@ -8,8 +8,10 @@ import { Template } from '@/types';
 import { Edit, Trash2, MessageCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { useTranslation } from '@/lib/i18n/context';
 
 export function TemplateCard({ template }: { template: Template }) {
+  const { t } = useTranslation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -18,8 +20,8 @@ export function TemplateCard({ template }: { template: Template }) {
     const res = await deleteTemplate(template.id);
     setIsDeleting(false);
     setShowDeleteModal(false);
-    if (res.success) toast.success('Plantilla eliminada');
-    else toast.error('Error al eliminar plantilla');
+    if (res.success) toast.success(t('templates.deleteSuccess'));
+    else toast.error(t('templates.deleteError'));
   }
 
   // Highlight variables like {nombre} and {edad}
@@ -55,7 +57,7 @@ export function TemplateCard({ template }: { template: Template }) {
       </div>
       
       <div className="px-5 py-3 border-t border-slate-100/50 bg-slate-50/50 flex justify-between items-center text-xs text-slate-500">
-        <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> Plantilla guardada</span>
+        <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {t('templates.savedTemplate')}</span>
         <span>{template.createdAt ? (typeof template.createdAt === 'string' ? new Date(template.createdAt).toLocaleDateString() : (template.createdAt as any).toDate ? formatDate((template.createdAt as any).toDate()) : '') : ''}</span>
       </div>
 
@@ -65,14 +67,14 @@ export function TemplateCard({ template }: { template: Template }) {
         onConfirm={handleDelete}
         isLoading={isDeleting}
         variant="danger"
-        title="¿Eliminar plantilla?"
+        title={t('templates.deleteTitle')}
         description={
           <span>
-            ¿Seguro que deseas eliminar la plantilla <strong className="text-slate-800 font-bold">{template.title}</strong>? Esta acción no se puede deshacer.
+            {t('templates.deleteDesc').replace('{title}', template.title)}
           </span>
         }
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
       />
     </div>
   );

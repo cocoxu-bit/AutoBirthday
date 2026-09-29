@@ -609,18 +609,18 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                               </p>
                               <p className="text-[11px] text-emerald-700 font-semibold truncate flex items-center gap-1">
                                 {hasCommonGroups && commonGroups.some(cg => cg.id === selectedGroup?.id) ? (
-                                  <span>✨ En común con este contacto</span>
+                                  <span>{t('contactForm.groupModalInCommon')}</span>
                                 ) : (
-                                  <span>Grupo de WhatsApp</span>
+                                  <span>{t('contactForm.groupModalTitle')}</span>
                                 )}
-                                {selectedGroup?.size ? ` • ${selectedGroup.size} miembros` : ''}
+                                {selectedGroup?.size ? ` • ${selectedGroup.size} ${t('contactForm.groupModalMembers')}` : ''}
                               </p>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0 bg-emerald-50 group-hover:bg-emerald-100/90 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition-colors">
                             <span className="text-[11px] font-bold text-emerald-800">
-                              Cambiar
+                              {t('contactForm.groupChangeBtn')}
                             </span>
                             <ChevronDown className="w-3.5 h-3.5 text-emerald-700" />
                           </div>

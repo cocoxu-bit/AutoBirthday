@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { WhatsAppGroup } from '@/types';
 import { Users, Search, Check, X } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface WhatsAppGroupPickerDialogProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function WhatsAppGroupPickerDialog({
   contactPhone = '',
   onSelectGroup,
 }: WhatsAppGroupPickerDialogProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   // Reset search when dialog opens/closes
@@ -90,18 +92,18 @@ export function WhatsAppGroupPickerDialog({
             </div>
             <div>
               <h3 className="text-base font-black text-slate-900 tracking-tight">
-                Grupo de WhatsApp
+                {t('contactForm.groupModalTitle')}
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Selecciona dónde se enviará la felicitación
+                {t('contactForm.groupModalSubtitle')}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-white rounded-xl transition-all border border-transparent hover:border-slate-200"
-            title="Cerrar"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-white rounded-xl transition-all border border-transparent hover:border-slate-200 cursor-pointer"
+            title={t('common.close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -114,7 +116,7 @@ export function WhatsAppGroupPickerDialog({
             <input
               type="text"
               autoFocus
-              placeholder="Buscar grupo..."
+              placeholder={t('contactForm.groupModalSearch')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none font-medium shadow-2xs transition-all"
@@ -123,7 +125,7 @@ export function WhatsAppGroupPickerDialog({
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -138,16 +140,16 @@ export function WhatsAppGroupPickerDialog({
               <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center">
                 <Users className="w-6 h-6" />
               </div>
-              <p className="text-xs font-bold text-slate-700">No se detectaron grupos</p>
+              <p className="text-xs font-bold text-slate-700">{t('contactForm.groupModalNoGroups')}</p>
               <p className="text-[11px] text-slate-500">
-                Asegúrate de tener WhatsApp conectado con grupos activos.
+                {t('contactForm.groupModalNoGroupsDesc')}
               </p>
             </div>
           ) : commonGroups.length === 0 && otherGroups.length === 0 ? (
             <div className="py-12 text-center space-y-1">
-              <p className="text-xs font-bold text-slate-700">No hay grupos que coincidan</p>
+              <p className="text-xs font-bold text-slate-700">{t('contactForm.groupModalNoMatch')}</p>
               <p className="text-[11px] text-slate-500">
-                Prueba a escribir otro término de búsqueda.
+                {t('contactForm.groupModalNoMatchDesc')}
               </p>
             </div>
           ) : (
@@ -157,7 +159,7 @@ export function WhatsAppGroupPickerDialog({
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between px-1">
                     <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                      ✨ Grupos en común con este contacto
+                      {t('contactForm.groupModalCommon')}
                     </span>
                     <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                       {commonGroups.length}
@@ -198,8 +200,8 @@ export function WhatsAppGroupPickerDialog({
                                 {g.subject}
                               </p>
                               <p className="text-[11px] text-emerald-700 font-semibold truncate flex items-center gap-1">
-                                ✨ En común con este contacto
-                                {g.size ? ` • ${g.size} miembros` : ''}
+                                {t('contactForm.groupModalInCommon')}
+                                {g.size ? ` • ${g.size} ${t('contactForm.groupModalMembers')}` : ''}
                               </p>
                             </div>
                           </div>
@@ -221,7 +223,7 @@ export function WhatsAppGroupPickerDialog({
                 <div className="space-y-1.5 pt-3">
                   <div className="flex items-center justify-between px-1">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      {commonGroups.length > 0 ? 'Otros grupos' : 'Todos tus grupos'}
+                      {commonGroups.length > 0 ? t('contactForm.groupModalOther') : t('contactForm.groupModalAll')}
                     </span>
                     <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                       {otherGroups.length}
@@ -263,7 +265,7 @@ export function WhatsAppGroupPickerDialog({
                               </p>
                               {g.size ? (
                                 <p className="text-[11px] text-slate-500 font-medium truncate">
-                                  {g.size} miembros
+                                  {g.size} {t('contactForm.groupModalMembers')}
                                 </p>
                               ) : null}
                             </div>

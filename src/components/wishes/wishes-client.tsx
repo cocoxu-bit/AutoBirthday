@@ -323,10 +323,10 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
         onConfirm={confirmCancelWish}
         isLoading={isCanceling}
         variant="danger"
-        title="¿Cancelar felicitación?"
-        description="¿Seguro que deseas cancelar el envío programado de esta felicitación?"
-        confirmText="Cancelar envío"
-        cancelText="Volver"
+        title={t('wishes.cancelTitle')}
+        description={t('wishes.cancelDesc')}
+        confirmText={t('wishes.cancelConfirmBtn')}
+        cancelText={t('common.back')}
       />
     </div>
   );

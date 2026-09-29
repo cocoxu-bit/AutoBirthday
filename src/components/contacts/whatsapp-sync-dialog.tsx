@@ -1016,17 +1016,37 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
                       {currentTemplates.length === 0 ? (
                         <p className="text-xs text-slate-500">{t('templates.noTemplates')}</p>
                       ) : (
-                        <select
-                          value={currentCard.templateId || currentTemplates[0]?.id || ''}
-                          onChange={e => updateCurrentCard({ templateId: e.target.value })}
-                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        >
-                          {currentTemplates.map(tpl => (
-                            <option key={tpl.id} value={tpl.id}>
-                              {tpl.title}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-2 pt-1 max-h-48 overflow-y-auto pr-1">
+                          {currentTemplates.map(tpl => {
+                            const isSelected = (currentCard.templateId || currentTemplates[0]?.id) === tpl.id;
+                            return (
+                              <button
+                                key={tpl.id}
+                                type="button"
+                                onClick={() => updateCurrentCard({ templateId: tpl.id })}
+                                className={`w-full p-2.5 rounded-2xl text-left border transition-all flex items-start justify-between gap-3 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-emerald-50/60 border-2 border-emerald-600 shadow-2xs'
+                                    : 'bg-white hover:bg-slate-50 border-slate-200/80 hover:border-emerald-300'
+                                }`}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <p className={`text-xs font-bold truncate ${isSelected ? 'text-emerald-950 font-black' : 'text-slate-800'}`}>
+                                    {tpl.title}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                                    {tpl.content}
+                                  </p>
+                                </div>
+                                {isSelected && (
+                                  <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                    <Check className="w-3 h-3" />
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   )}
