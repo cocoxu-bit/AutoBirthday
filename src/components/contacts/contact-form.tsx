@@ -14,6 +14,7 @@ import {
 } from '@/app/(dashboard)/contacts/actions';
 import { getWhatsAppProfilePicAction } from '@/app/(dashboard)/contacts/sync-actions';
 import { InlineTemplateCreator } from '@/components/templates/inline-template-creator';
+import { WhatsAppGroupPickerDialog } from '@/components/contacts/whatsapp-group-picker-dialog';
 import { Template, WhatsAppGroup, WhatsAppChatContact, AiTone } from '@/types';
 import { useTranslation } from '@/lib/i18n/context';
 import { 
@@ -29,7 +30,8 @@ import {
   ArrowLeft,
   AlertTriangle,
   Plus,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -78,6 +80,7 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
   const [showExitWarningModal, setShowExitWarningModal] = useState(false);
   const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   
   // WhatsApp & Phone Contacts (Merged Pool)
   const [groups, setGroups] = useState<WhatsAppGroup[]>([]);
@@ -562,13 +565,15 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                 g.participantPhones && g.participantPhones.length > 0 && g.participantPhones.includes(currentPhone)
               );
               const hasCommonGroups = commonGroups.length > 0;
+              const currentGroupId = form.watch('groupId');
+              const selectedGroup = groups.find(g => g.id === currentGroupId) || (hasCommonGroups ? commonGroups[0] : groups[0]);
 
               return (
                 <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-2.5 mt-2 animate-in fade-in duration-200">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-bold text-emerald-900 uppercase">
-                        Selecciona el Grupo de WhatsApp:
+                        {t('contactForm.groupSelectLabel')}
                       </label>
                       {hasCommonGroups && (
                         <span className="text-[10px] bg-emerald-200/80 text-emerald-900 font-extrabold px-2 py-0.5 rounded-md">
@@ -579,45 +584,60 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
 
                     {groups.length === 0 ? (
                       <p className="text-xs text-emerald-700">No se detectaron grupos en tu cuenta de WhatsApp.</p>
-                    ) : hasCommonGroups ? (
-                      <select
-                        value={form.watch('groupId') || commonGroups[0]?.id || ''}
-                        onChange={e => {
-                          const selectedId = e.target.value;
-                          const g = groups.find(item => item.id === selectedId);
-                          form.setValue('groupId', selectedId);
-                          form.setValue('groupName', g?.subject || '');
-                        }}
-                        className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      >
-                        {commonGroups.map(g => (
-                          <option key={g.id} value={g.id}>
-                            {g.subject}
-                          </option>
-                        ))}
-                      </select>
                     ) : (
-                      <div className="space-y-1.5">
-                        <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200/60">
-                          Sin grupos en común detectados. Mostrando todos tus grupos:
-                        </p>
-                        <select
-                          value={form.watch('groupId') || groups[0]?.id || ''}
-                          onChange={e => {
-                            const selectedId = e.target.value;
-                            const g = groups.find(item => item.id === selectedId);
-                            form.setValue('groupId', selectedId);
-                            form.setValue('groupName', g?.subject || '');
-                          }}
-                          className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setIsGroupModalOpen(true)}
+                          className="w-full flex items-center justify-between p-3 bg-white hover:bg-emerald-50/50 border border-emerald-300 hover:border-emerald-500 rounded-2xl transition-all shadow-2xs text-left group cursor-pointer"
                         >
-                          {groups.map(g => (
-                            <option key={g.id} value={g.id}>
-                              {g.subject}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          <div className="flex items-center gap-3 min-w-0">
+                            {selectedGroup?.pictureUrl ? (
+                              <img
+                                src={selectedGroup.pictureUrl}
+                                alt=""
+                                className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0 group-hover:scale-105 transition-transform">
+                                <Users className="w-5 h-5" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                                {selectedGroup?.subject || t('contactForm.groupSelectPlaceholder')}
+                              </p>
+                              <p className="text-[11px] text-emerald-700 font-semibold truncate flex items-center gap-1">
+                                {hasCommonGroups && commonGroups.some(cg => cg.id === selectedGroup?.id) ? (
+                                  <span>✨ En común con este contacto</span>
+                                ) : (
+                                  <span>Grupo de WhatsApp</span>
+                                )}
+                                {selectedGroup?.size ? ` • ${selectedGroup.size} miembros` : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0 bg-emerald-50 group-hover:bg-emerald-100/90 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition-colors">
+                            <span className="text-[11px] font-bold text-emerald-800">
+                              Cambiar
+                            </span>
+                            <ChevronDown className="w-3.5 h-3.5 text-emerald-700" />
+                          </div>
+                        </button>
+
+                        <WhatsAppGroupPickerDialog
+                          isOpen={isGroupModalOpen}
+                          onClose={() => setIsGroupModalOpen(false)}
+                          groups={groups}
+                          selectedGroupId={form.watch('groupId') || selectedGroup?.id}
+                          contactPhone={form.watch('phone')}
+                          onSelectGroup={(g) => {
+                            form.setValue('groupId', g.id);
+                            form.setValue('groupName', g.subject);
+                          }}
+                        />
+                      </>
                     )}
                   </div>
 
@@ -726,17 +746,37 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                 {currentTemplates.length === 0 ? (
                   <p className="text-xs text-slate-500">{t('templates.noTemplates')}</p>
                 ) : (
-                  <select
-                    value={form.watch('templateId') || currentTemplates[0]?.id || ''}
-                    onChange={e => form.setValue('templateId', e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  >
-                    {currentTemplates.map(tpl => (
-                      <option key={tpl.id} value={tpl.id}>
-                        {tpl.title}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2 pt-1">
+                    {currentTemplates.map(tpl => {
+                      const isSelected = (form.watch('templateId') || currentTemplates[0]?.id) === tpl.id;
+                      return (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() => form.setValue('templateId', tpl.id)}
+                          className={`w-full p-3 rounded-2xl text-left border transition-all flex items-start justify-between gap-3 cursor-pointer ${
+                            isSelected
+                              ? 'bg-white border-2 border-violet-600 shadow-sm'
+                              : 'bg-white/80 hover:bg-white border-slate-200/80 hover:border-violet-300'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-bold truncate ${isSelected ? 'text-violet-950 font-black' : 'text-slate-800'}`}>
+                              {tpl.title}
+                            </p>
+                            <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed whitespace-pre-wrap">
+                              {tpl.content}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <span className="w-5 h-5 rounded-full bg-violet-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                              <Check className="w-3 h-3" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )}

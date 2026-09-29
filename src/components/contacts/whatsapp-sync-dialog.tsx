@@ -13,6 +13,7 @@ import {
 import { WhatsAppGroup, Template, WishMode, AiTone, TargetType } from '@/types';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { InlineTemplateCreator } from '@/components/templates/inline-template-creator';
+import { WhatsAppGroupPickerDialog } from '@/components/contacts/whatsapp-group-picker-dialog';
 import { 
   X, 
   Sparkles, 
@@ -21,6 +22,7 @@ import {
   Check, 
   ArrowRight, 
   ChevronLeft,
+  ChevronDown,
   Users, 
   User,
   FileText, 
@@ -118,6 +120,7 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
   // Templates state
   const [currentTemplates, setCurrentTemplates] = useState<Template[]>(templates);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
   // Client-side photo cache for instant rendering
   const [photoCache, setPhotoCache] = useState<Record<string, string | null>>({});
@@ -842,50 +845,66 @@ export function WhatsAppSyncDialog({ onClose, templates = [] }: WhatsAppSyncDial
 
                           {availableGroups.length === 0 ? (
                             <p className="text-xs text-emerald-700">{t('contactForm.groupNoneDetected')}</p>
-                          ) : hasCommonGroups ? (
-                            <select
-                              value={currentCard.groupId || commonGroups[0]?.id || ''}
-                              onChange={e => {
-                                const selectedId = e.target.value;
-                                const group = availableGroups.find(g => g.id === selectedId);
-                                updateCurrentCard({
-                                  groupId: selectedId,
-                                  groupName: group?.subject || '',
-                                });
-                              }}
-                              className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            >
-                              {commonGroups.map(g => (
-                                <option key={g.id} value={g.id}>
-                                  {g.subject}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="space-y-1.5">
-                              <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200/60">
-                                {t('contactForm.groupNoCommon')}
-                              </p>
-                              <select
-                                value={currentCard.groupId || availableGroups[0]?.id || ''}
-                                onChange={e => {
-                                  const selectedId = e.target.value;
-                                  const group = availableGroups.find(g => g.id === selectedId);
-                                  updateCurrentCard({
-                                    groupId: selectedId,
-                                    groupName: group?.subject || '',
-                                  });
-                                }}
-                                className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                              >
-                                {availableGroups.map(g => (
-                                  <option key={g.id} value={g.id}>
-                                    {g.subject}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
+                          ) : (() => {
+                            const selectedGroup = availableGroups.find(g => g.id === currentCard.groupId) || (hasCommonGroups ? commonGroups[0] : availableGroups[0]);
+                            return (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsGroupModalOpen(true)}
+                                  className="w-full flex items-center justify-between p-3 bg-white hover:bg-emerald-50/50 border border-emerald-300 hover:border-emerald-500 rounded-2xl transition-all shadow-2xs text-left group cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    {selectedGroup?.pictureUrl ? (
+                                      <img
+                                        src={selectedGroup.pictureUrl}
+                                        alt=""
+                                        className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0 group-hover:scale-105 transition-transform">
+                                        <Users className="w-5 h-5" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                                        {selectedGroup?.subject || t('contactForm.groupSelectPlaceholder')}
+                                      </p>
+                                      <p className="text-[11px] text-emerald-700 font-semibold truncate flex items-center gap-1">
+                                        {hasCommonGroups && commonGroups.some(cg => cg.id === selectedGroup?.id) ? (
+                                          <span>✨ En común con este contacto</span>
+                                        ) : (
+                                          <span>Grupo de WhatsApp</span>
+                                        )}
+                                        {selectedGroup?.size ? ` • ${selectedGroup.size} miembros` : ''}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 shrink-0 bg-emerald-50 group-hover:bg-emerald-100/90 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition-colors">
+                                    <span className="text-[11px] font-bold text-emerald-800">
+                                      Cambiar
+                                    </span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-emerald-700" />
+                                  </div>
+                                </button>
+
+                                <WhatsAppGroupPickerDialog
+                                  isOpen={isGroupModalOpen}
+                                  onClose={() => setIsGroupModalOpen(false)}
+                                  groups={availableGroups}
+                                  selectedGroupId={currentCard.groupId || selectedGroup?.id}
+                                  contactPhone={currentCard.phone}
+                                  onSelectGroup={(g) => {
+                                    updateCurrentCard({
+                                      groupId: g.id,
+                                      groupName: g.subject,
+                                    });
+                                  }}
+                                />
+                              </>
+                            );
+                          })()}
                         </div>
 
                         {/* Mention Checkbox */}
