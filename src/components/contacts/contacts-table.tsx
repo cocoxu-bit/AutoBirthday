@@ -9,6 +9,7 @@ import { deleteContact } from '@/app/(dashboard)/contacts/actions';
 import { Contact, Template } from '@/types';
 import { CalendarSyncDialog } from '@/components/contacts/calendar-sync-dialog';
 import { WhatsAppSyncDialog } from '@/components/contacts/whatsapp-sync-dialog';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { useTranslation } from '@/lib/i18n/context';
 import { 
@@ -33,6 +34,7 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
   const { t, dict } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isWhatsAppSyncOpen, setIsWhatsAppSyncOpen] = useState(false);
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
@@ -50,12 +52,17 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
     (c.groupName && c.groupName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  async function handleDelete(e: React.MouseEvent, id: string, name: string) {
+  function handleDelete(e: React.MouseEvent, id: string, name: string) {
     e.stopPropagation();
-    if (!confirm(t('contacts.confirmDelete'))) return;
-    setDeletingId(id);
-    const res = await deleteContact(id);
+    setContactToDelete({ id, name });
+  }
+
+  async function confirmDeleteContact() {
+    if (!contactToDelete) return;
+    setDeletingId(contactToDelete.id);
+    const res = await deleteContact(contactToDelete.id);
     setDeletingId(null);
+    setContactToDelete(null);
     if (res.success) toast.success(t('common.success'));
     else toast.error(t('common.error'));
   }
@@ -285,6 +292,23 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
       {isWhatsAppSyncOpen && (
         <WhatsAppSyncDialog onClose={() => setIsWhatsAppSyncOpen(false)} templates={templates} />
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={Boolean(contactToDelete)}
+        onClose={() => setContactToDelete(null)}
+        onConfirm={confirmDeleteContact}
+        isLoading={Boolean(deletingId)}
+        variant="danger"
+        title={t('contacts.deleteTitle')}
+        description={
+          <span>
+            {t('contacts.deleteDesc').replace('{name}', contactToDelete?.name || '')}
+          </span>
+        }
+        confirmText={t('contacts.delete')}
+        cancelText={t('common.cancel')}
+      />
 
     </div>
   );

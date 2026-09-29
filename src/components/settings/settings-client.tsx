@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/context';
 import { SUPPORTED_LOCALES, SupportedLocale } from '@/lib/i18n/config';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 interface SettingsClientProps {
   userProfile: UserProfile & { [key: string]: any };
@@ -49,6 +50,7 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
   
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
 
   const handleLanguageChange = async (code: SupportedLocale) => {
     setSelectedLocale(code);
@@ -86,11 +88,7 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
     setIsSaving(false);
   };
 
-  const handleDeleteAccount = async () => {
-    if (!confirm(t('settings.deleteConfirm'))) {
-      return;
-    }
-    
+  const confirmDeleteAccount = async () => {
     setIsDeleting(true);
     const res = await deleteAccount();
     if (res.success) {
@@ -101,6 +99,7 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
     } else {
       toast.error(res.error || t('common.error'));
       setIsDeleting(false);
+      setShowDeleteAccountModal(false);
     }
   };
 
@@ -356,7 +355,7 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
             {t('settings.dangerZoneWarning')}
           </p>
           <button 
-            onClick={handleDeleteAccount}
+            onClick={() => setShowDeleteAccountModal(true)}
             disabled={isDeleting}
             className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors text-xs font-bold shadow-md shadow-red-500/20 disabled:opacity-50 cursor-pointer"
           >
@@ -364,6 +363,19 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
           </button>
         </div>
       </div>
+
+      {/* CONFIRM DELETE ACCOUNT MODAL */}
+      <ConfirmModal
+        isOpen={showDeleteAccountModal}
+        onClose={() => setShowDeleteAccountModal(false)}
+        onConfirm={confirmDeleteAccount}
+        isLoading={isDeleting}
+        variant="danger"
+        title={t('settings.deleteAccount')}
+        description={t('settings.dangerZoneWarning')}
+        confirmText={t('settings.deleteAccount')}
+        cancelText={t('common.cancel')}
+      />
     </div>
   );
 }

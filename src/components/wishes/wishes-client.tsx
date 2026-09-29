@@ -8,6 +8,7 @@ import { Check, Edit2, X, RotateCcw, Clock, Send, AlertCircle, Save, CheckCheck 
 import { approveWish, editWishMessage, cancelWish, retryWish } from '@/app/(dashboard)/wishes/actions';
 import { ScheduledWish, Contact } from '@/types';
 import { useTranslation } from '@/lib/i18n/context';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 interface WishesClientProps {
   wishes: ScheduledWish[];
@@ -19,6 +20,8 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
   const [activeTab, setActiveTab] = useState<'pending' | 'queued' | 'sent' | 'failed'>('pending');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [wishToCancel, setWishToCancel] = useState<string | null>(null);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   const pendingWishes = wishes.filter(w => w.status === 'waiting_approval');
   const queuedWishes = wishes.filter(w => w.status === 'queued');
@@ -46,9 +49,16 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
     else toast.error('Error al aprobar');
   };
 
-  const handleCancel = async (id: string) => {
-    if (!confirm('¿Seguro que quieres cancelar este envío?')) return;
-    const res = await cancelWish(id);
+  const handleCancel = (id: string) => {
+    setWishToCancel(id);
+  };
+
+  const confirmCancelWish = async () => {
+    if (!wishToCancel) return;
+    setIsCanceling(true);
+    const res = await cancelWish(wishToCancel);
+    setIsCanceling(false);
+    setWishToCancel(null);
     if (res.success) toast.success('Envío cancelado');
     else toast.error('Error al cancelar');
   };
@@ -306,6 +316,18 @@ export function WishesClient({ wishes, contactsMap }: WishesClientProps) {
           )
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(wishToCancel)}
+        onClose={() => setWishToCancel(null)}
+        onConfirm={confirmCancelWish}
+        isLoading={isCanceling}
+        variant="danger"
+        title="¿Cancelar felicitación?"
+        description="¿Seguro que deseas cancelar el envío programado de esta felicitación?"
+        confirmText="Cancelar envío"
+        cancelText="Volver"
+      />
     </div>
   );
 }

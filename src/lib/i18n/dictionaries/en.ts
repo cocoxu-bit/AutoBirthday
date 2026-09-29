@@ -103,6 +103,8 @@ export const en: Dictionary = {
     edit: "Edit",
     delete: "Delete",
     confirmDelete: "Are you sure you want to delete this contact?",
+    deleteTitle: "Delete contact?",
+    deleteDesc: "Are you sure you want to delete {name}? This action cannot be undone.",
   },
   contactForm: {
     searchAutofill: "Search WhatsApp contact to autofill",

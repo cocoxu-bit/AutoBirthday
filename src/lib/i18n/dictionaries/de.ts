@@ -103,6 +103,8 @@ export const de: Dictionary = {
     edit: "Bearbeiten",
     delete: "Löschen",
     confirmDelete: "Möchtest du diesen Kontakt wirklich löschen?",
+    deleteTitle: "Kontakt löschen?",
+    deleteDesc: "Möchtest du {name} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
   },
   contactForm: {
     searchAutofill: "WhatsApp-Kontakt zum automatischen Ausfüllen suchen",

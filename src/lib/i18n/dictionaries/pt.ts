@@ -103,6 +103,8 @@ export const pt: Dictionary = {
     edit: "Editar",
     delete: "Excluir",
     confirmDelete: "Tem certeza de que deseja excluir este contato?",
+    deleteTitle: "Excluir contato?",
+    deleteDesc: "Tem certeza de que deseja excluir {name}? Esta ação não pode ser desfeita.",
   },
   contactForm: {
     searchAutofill: "Buscar contato do WhatsApp para preenchimento automático",

@@ -101,6 +101,8 @@ export const es = {
     edit: "Editar",
     delete: "Eliminar",
     confirmDelete: "¿Seguro que deseas eliminar este contacto?",
+    deleteTitle: "¿Eliminar contacto?",
+    deleteDesc: "¿Seguro que deseas eliminar a {name}? Esta acción no se puede deshacer.",
   },
   contactForm: {
     searchAutofill: "Buscar contacto en WhatsApp para autorrellenar",

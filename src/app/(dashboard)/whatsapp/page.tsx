@@ -37,6 +37,7 @@ import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 import { toast } from 'sonner';
 import { WhatsAppInstanceStatus } from '@/types';
 import { useTranslation } from '@/lib/i18n/context';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 export default function WhatsAppPage() {
   const router = useRouter();
@@ -57,6 +58,7 @@ export default function WhatsAppPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [testSending, setTestSending] = useState(false);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
   const fetchStatus = async () => {
     try {
@@ -159,7 +161,6 @@ export default function WhatsAppPage() {
   };
 
   const handleDisconnect = async () => {
-    if (!confirm('¿Seguro que deseas desconectar WhatsApp?')) return;
     setLoading(true);
     await disconnectInstance();
     setStatus('disconnected');
@@ -167,6 +168,7 @@ export default function WhatsAppPage() {
     setPairingCode(null);
     setPhoneNumber(null);
     setLoading(false);
+    setShowDisconnectModal(false);
     toast.info('WhatsApp desconectado');
   };
 
@@ -475,7 +477,7 @@ export default function WhatsAppPage() {
               <Link href="/contacts?sync=whatsapp" className="flex-1 py-3 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700">
                 {t('contacts.syncWhatsApp')}
               </Link>
-              <button onClick={handleDisconnect} className="py-3 px-4 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200">
+              <button onClick={() => setShowDisconnectModal(true)} className="py-3 px-4 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200 cursor-pointer">
                 {t('whatsapp.disconnectButton')}
               </button>
             </div>
@@ -518,6 +520,19 @@ export default function WhatsAppPage() {
           </div>
         </div>
       )}
+
+      {/* DISCONNECT CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={showDisconnectModal}
+        onClose={() => setShowDisconnectModal(false)}
+        onConfirm={handleDisconnect}
+        isLoading={loading}
+        variant="warning"
+        title="¿Desconectar WhatsApp?"
+        description="Se cerrará la sesión de WhatsApp en AutoBirthday. Tus contactos y plantillas se mantendrán guardados y podrás volver a vincularte cuando quieras."
+        confirmText="Desconectar"
+        cancelText="Mantener conectado"
+      />
     </div>
   );
 }

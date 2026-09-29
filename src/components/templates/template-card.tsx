@@ -1,17 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { deleteTemplate } from '@/app/(dashboard)/templates/actions';
 import { Template } from '@/types';
 import { Edit, Trash2, MessageCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 export function TemplateCard({ template }: { template: Template }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   async function handleDelete() {
-    if (!confirm('¿Estás seguro de eliminar esta plantilla?')) return;
+    setIsDeleting(true);
     const res = await deleteTemplate(template.id);
+    setIsDeleting(false);
+    setShowDeleteModal(false);
     if (res.success) toast.success('Plantilla eliminada');
     else toast.error('Error al eliminar plantilla');
   }
@@ -34,7 +40,7 @@ export function TemplateCard({ template }: { template: Template }) {
             <Link href={`/templates/${template.id}/edit`} className="p-1.5 text-slate-400 hover:text-violet-600 transition-colors rounded-md hover:bg-slate-50">
               <Edit className="w-4 h-4" />
             </Link>
-            <button onClick={handleDelete} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded-md hover:bg-slate-50">
+            <button onClick={() => setShowDeleteModal(true)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded-md hover:bg-slate-50 cursor-pointer">
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -52,6 +58,22 @@ export function TemplateCard({ template }: { template: Template }) {
         <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> Plantilla guardada</span>
         <span>{template.createdAt ? (typeof template.createdAt === 'string' ? new Date(template.createdAt).toLocaleDateString() : (template.createdAt as any).toDate ? formatDate((template.createdAt as any).toDate()) : '') : ''}</span>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+        variant="danger"
+        title="¿Eliminar plantilla?"
+        description={
+          <span>
+            ¿Seguro que deseas eliminar la plantilla <strong className="text-slate-800 font-bold">{template.title}</strong>? Esta acción no se puede deshacer.
+          </span>
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+      />
     </div>
   );
 }
