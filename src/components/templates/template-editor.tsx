@@ -79,7 +79,6 @@ export function TemplateEditor({ initialData }: TemplateEditorProps) {
           <input 
             {...form.register('title')} 
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all" 
-            placeholder="Ej. Cumpleaños informal amigos"
           />
           {form.formState.errors.title && (
             <p className="text-red-500 text-xs">{form.formState.errors.title.message}</p>

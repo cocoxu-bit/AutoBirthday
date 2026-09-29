@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/context';
 
-const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
+const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
 
 const AI_TONE_EXAMPLES: Record<AiTone, string> = {
   casual: '¡Muchas felicidades {nombre}! 🎉🎂 Que tengas un día genial rodeado de los tuyos. ¡Un abrazo grande!',

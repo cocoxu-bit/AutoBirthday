@@ -84,13 +84,6 @@ export default async function PublicCollectorPage({ params }: PageProps) {
       <div className="my-auto py-6">
         <BirthdayCollectorForm host={host} />
       </div>
-
-      {/* Minimal Footer */}
-      <footer className="w-full max-w-md mx-auto text-center py-4">
-        <p className="text-[11px] text-slate-400 font-medium">
-          Privacidad garantizada · Solo {host.displayName} verá tu fecha de cumpleaños
-        </p>
-      </footer>
     </main>
   );
 }

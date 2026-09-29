@@ -177,7 +177,11 @@ export const pt: Dictionary = {
     months: [
       "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ]
+    ],
+    discardTitle: "Descartar alterações?",
+    discardDesc: "Tem alterações não salvas. Se sair agora, as alterações serão perdidas.",
+    keepEditing: "Continuar a editar",
+    discardButton: "Descartar alterações"
   },
   wishes: {
     title: "Mensagens",
@@ -271,9 +275,20 @@ export const pt: Dictionary = {
     step4Qr: "4. Aponte a câmera do seu celular para este código QR:",
     phoneInputLabel: "Digite seu número com o código do país:",
     phoneInputPlaceholder: "Ex. 5511999998888",
-    getCodeButton: "Obter Código de Pareamento",
+    getCodeButton: "Obter Código",
     copyCode: "Copiar Código",
     copied: "Copiado!",
+    pairingCodeTab: "Código de vinculação",
+    qrCodeTab: "Código QR",
+    phoneLabel: "Seu WhatsApp",
+    phoneHint: "Com código do país",
+    phoneHelper: "Você receberá um código de 8 dígitos para vincular no seu WhatsApp.",
+    generatingCode: "Gerando código...",
+    qrDescription: "Abra o WhatsApp no celular, vá em Aparelhos conectados e escaneie este código QR.",
+    generatingQr: "Gerando código QR...",
+    showQrButton: "Mostrar Código QR",
+    yourPairingCode: "Seu código de vinculação:",
+    codeCopied: "Copiado!",
     disconnectButton: "Desconectar WhatsApp",
     disconnectConfirm: "Tem certeza de que deseja desconectar sua conta do WhatsApp?",
     connectedSuccess: "Seu WhatsApp está conectado e pronto para enviar mensagens 🎉",

@@ -73,13 +73,7 @@ export function OnboardingChecklist({
               <span>{t('onboarding.activationGuide')}</span>
             </div>
 
-            <div className="flex items-center gap-2 pt-0.5">
-              <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
-                {t('onboarding.activationGuideDesc')}
-              </h3>
-            </div>
-            
-            <p className="text-xs text-slate-300 max-w-xl font-medium">
+            <p className="text-xs text-slate-300 max-w-xl font-medium pt-1">
               {t('onboarding.activationSubtitle')}
             </p>
           </div>

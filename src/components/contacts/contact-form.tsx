@@ -37,7 +37,7 @@ const MONTH_NAMES = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
 ];
 
-const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades {nombre}! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
+const DEFAULT_FIXED_MESSAGE = '¡Muchas felicidades! 🎂🥳 Que pases un día genial y lo disfrutes al máximo.';
 
 const TONES: Array<{ id: AiTone; label: string; icon: string }> = [
   { id: 'casual', label: 'Casual', icon: '😊' },
@@ -122,8 +122,8 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
   const phoneValue = form.watch('phone');
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
-  // Check if form is dirty or has filled content
-  const isFormDirty = Boolean(contactName?.trim()) || Boolean(phoneValue?.trim()) || form.formState.isDirty;
+  // Check if form is dirty or has modified content
+  const isFormDirty = form.formState.isDirty;
 
   // Intercept back navigation / exit attempt
   const handleAttemptExit = () => {
@@ -286,7 +286,7 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
   let livePreviewBody = '';
   if (mode === 'manual') {
     const raw = customMessageValue && customMessageValue.trim().length > 0 ? customMessageValue : DEFAULT_FIXED_MESSAGE;
-    livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
+    livePreviewBody = raw;
   } else if (mode === 'template') {
     const raw = selectedTemplate ? selectedTemplate.content : DEFAULT_FIXED_MESSAGE;
     livePreviewBody = raw.replace(/\{nombre\}/gi, contactFirstName);
@@ -322,7 +322,7 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
         </button>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{formTitle}</h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">{formSubtitle}</p>
+          {formSubtitle ? <p className="text-slate-500 text-xs sm:text-sm mt-0.5">{formSubtitle}</p> : null}
         </div>
       </div>
 
@@ -354,7 +354,7 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
             </div>
 
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-3">
-              {contactName || t('contactForm.namePlaceholder')}
+              {contactName || "Introduce el nombre"}
             </h3>
 
             <p className="text-xs text-slate-500 mt-1">
@@ -823,10 +823,10 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
               </div>
             </div>
 
-            {/* 5. MOMENTO DE ENVÍO */}
+            {/* 5. ¿QUIERES APROBACIÓN? */}
             <div className="pt-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-                {t('contactForm.timeWindowLabel')}:
+                {t('contactForm.deliveryTimingLabel')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -839,9 +839,9 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                   }`}
                 >
                   <p className="font-bold text-xs flex items-center gap-1">
-                    🛡️ {t('wishes.tabWaiting')}
+                    🛡️ {t('contactForm.deliveryAskApproval')}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{t('contactForm.autoSendDesc')}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{t('contactForm.deliveryAskApprovalDesc')}</p>
                 </button>
 
                 <button
@@ -854,9 +854,9 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                   }`}
                 >
                   <p className="font-bold text-xs flex items-center gap-1">
-                    🚀 {t('contactForm.autoSendLabel')}
+                    🚀 {t('contactForm.deliveryAuto')}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{t('dashboard.statusQueued')}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{t('contactForm.deliveryAutoDesc')}</p>
                 </button>
               </div>
             </div>
@@ -904,10 +904,10 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
             
             <div className="space-y-1.5">
               <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                {t('common.confirm')}
+                {t('contactForm.discardTitle')}
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                {t('settings.dangerZoneWarning')}
+                {t('contactForm.discardDesc')}
               </p>
             </div>
 
@@ -917,7 +917,7 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                 onClick={() => setShowExitWarningModal(false)}
                 className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition-all"
               >
-                {t('common.cancel')}
+                {t('contactForm.keepEditing')}
               </button>
               <button
                 type="button"
@@ -925,9 +925,9 @@ export function ContactForm({ initialData, templates, title, subtitle }: Contact
                   setShowExitWarningModal(false);
                   router.push('/contacts');
                 }}
-                className="py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-2xl shadow-md shadow-rose-500/20 transition-all active:scale-95"
+                className="py-3 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-2xl transition-all active:scale-95"
               >
-                {t('common.delete')}
+                {t('contactForm.discardButton')}
               </button>
             </div>
           </div>

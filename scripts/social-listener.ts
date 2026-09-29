@@ -345,8 +345,9 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
 
     const page = await context.newPage();
 
-    // Palabras clave de dolor en X (sin comillas estrictas para máxima captura de tweets frescos en vivo)
+    // Palabras clave de dolor en X (español e inglés para captar la mayor cantidad de tweets frescos)
     const twitterSearchQueries = [
+      // Español
       'se me olvidó el cumple',
       'se me olvido el cumple',
       'se me pasó el cumpleaños',
@@ -368,6 +369,26 @@ async function fetchTwitterPosts(): Promise<RawSocialPost[]> {
       'olvide felicitar por su cumple',
       'se me paso felicitarle',
       'no me acordé de su cumple',
+
+      // Inglés (dolor real de olvido de cumpleaños)
+      'forgot birthday',
+      'forgot her birthday',
+      'forgot his birthday',
+      'forgot my girlfriend birthday',
+      'forgot my boyfriend birthday',
+      'forgot my friend birthday',
+      'forgot mom birthday',
+      'forgot dad birthday',
+      'almost forgot birthday',
+      'almost forgot her birthday',
+      'almost forgot his birthday',
+      'almost forgot to wish',
+      'forgot to wish happy birthday',
+      'always forget birthdays',
+      'terrible at remembering birthdays',
+      'missed birthday',
+      'missed my girlfriend birthday',
+      'missed my friend birthday',
     ];
 
     // Rotar 1 query por ciclo para ejecución rápida y no llamar la atención
@@ -532,16 +553,16 @@ async function qualifyLeadWithGemini(post: RawSocialPost): Promise<LeadQualifica
      * Menciona casual y orgánicamente que para no volver a liarla tú usas autobirthday.com que manda el WhatsApp directo en el momento exacto.`;
 
   const prompt = `Eres el analista de Growth y Social Listening de AutoBirthday.com.
-Tu misión es evaluar publicaciones de redes sociales (Reddit y X/Twitter) para detectar personas que olvidaron o casi olvidan el cumpleaños de un ser querido (pareja, madre, familiar, amigo, compañero de trabajo).
+Tu misión es evaluar publicaciones de redes sociales (Reddit y X/Twitter) para detectar personas que olvidaron o casi olvidan el cumpleaños de un ser querido (pareja, madre, familiar, amigo, compañero de trabajo), tanto en español como en inglés.
 
 CRITERIOS DE FILTRADO:
-1. "isValidLead": true SOLO si la persona expresa un problema REAL de haber olvidado, estar a punto de olvidar, o tener problemas constantes para recordar y felicitar cumpleaños a tiempo.
+1. "isValidLead": true SOLO si la persona expresa un problema REAL de haber olvidado, estar a punto de olvidar, o tener problemas constantes para recordar y felicitar cumpleaños a tiempo (en inglés o español).
 2. Descarta memes, noticias de famosos, chistes, spam o felicitaciones genéricas sin dolor real ("isValidLead: false").
 3. Si es un lead válido:
    - "leadScore": "CRITICO" (pareja / madre / crisis actual), "ALTO" (amigo cercano / familiar), "MEDIO" (dudas generales de cómo recordar).
    - "targetPerson": A quién olvidó (ej: "Novia / Pareja", "Madre", "Mejor amigo", "Compañero").
-   - "painSummary": Resumen conciso de 1 frase del problema.
-   - "suggestedReply": Redacta una respuesta de usuario a usuario:
+   - "painSummary": Resumen conciso de 1 frase del problema (en español).
+   - "suggestedReply": Redacta una respuesta de usuario a usuario (en el mismo idioma del post original, español o inglés):
 ${platformInstructions}
 
 DATOS DEL POST A EVALUAR:

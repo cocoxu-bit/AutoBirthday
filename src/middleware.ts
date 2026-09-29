@@ -7,13 +7,10 @@ export function middleware(request: NextRequest) {
   
   const isAuthRoute = pathname === '/login' || pathname === '/register';
   
-  // Direct onboarding: root / redirects to /register (unauthenticated) or /dashboard (authenticated)
-  if (pathname === '/') {
-    if (session) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/register', request.url));
-    }
+  // Allow unauthenticated visitors to see the landing page (src/app/page.tsx)
+  // If user is already authenticated and visits '/', redirect them to '/dashboard'
+  if (pathname === '/' && session) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // Protected SaaS dashboard routes
@@ -21,9 +18,7 @@ export function middleware(request: NextRequest) {
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/tools') ||
-    pathname.startsWith('/studio') ||
-    pathname.startsWith('/fake-chat') ||
+    (pathname.startsWith('/tools') && !pathname.startsWith('/tools/fake-chat')) ||
     pathname.startsWith('/whatsapp') ||
     pathname.startsWith('/contacts') ||
     pathname.startsWith('/templates') ||

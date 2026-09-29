@@ -115,6 +115,16 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
             <p className="text-sm text-slate-600 font-medium leading-relaxed">
               <span className="font-bold text-slate-900">{host.displayName}</span> ya tiene tu fecha registrada (<span className="font-bold text-violet-700">{formattedBday}</span>). ¡No se le escapará tu felicitación!
             </p>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setIsSuccess(false)}
+                className="text-xs text-slate-400 hover:text-slate-700 transition-colors inline-flex items-center gap-1"
+              >
+                <span>¿Te has equivocado en algún dato?</span>
+                <span className="underline font-bold text-slate-600">Editar</span>
+              </button>
+            </div>
           </div>
 
           {/* VIRAL CTA BOX (Product-Led Growth Loop) */}
@@ -126,10 +136,10 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
 
             <div className="space-y-1">
               <h3 className="font-bold text-base text-white">
-                Automatiza tus felicitaciones por WhatsApp con IA
+                Automatiza tus felicitaciones por WhatsApp con AutoBirthday
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                Crea tu propio AutoBirthday gratis, sincroniza tus contactos en 30 segundos y deja que un bot redacte felicitaciones divertidas y emotivas por ti.
+                Sincroniza tus contactos, programa felicitaciones y AutoBirthday se encargará de todo.
               </p>
             </div>
 
@@ -137,22 +147,10 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
               href={`/register?ref=${encodeURIComponent(host.username)}`}
               className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-md transition-all active:scale-[0.98]"
             >
-              <span>Crear mi AutoBirthday Gratis</span>
+              <span>Crear mi cuenta</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
-
-            <p className="text-[11px] text-center text-slate-400">
-              100% gratuito · Sin descargas · Vinculación directa con WhatsApp
-            </p>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setIsSuccess(false)}
-            className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            Modificar mi fecha o añadir a otra persona
-          </button>
         </div>
       </div>
     );
@@ -183,11 +181,11 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
           </div>
 
           <div className="space-y-1">
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-              ¿Cuándo es tu cumpleaños, amigo de {host.displayName}? 🎂
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              ¿Cuándo es tu cumpleaños?
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-xs mx-auto leading-relaxed">
-              Apunta tu fecha para que {host.displayName} no se olvide de felicitarte como te mereces este año.
+            <p className="text-sm text-slate-600 font-medium max-w-xs mx-auto leading-relaxed">
+              Ayuda a <span className="font-bold text-slate-900">{host.displayName}</span> a completar su agenda 🎂
             </p>
           </div>
         </div>
@@ -215,10 +213,9 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
             <input
               type="text"
               required
-              placeholder="Ej. Carlos, Dani, Marta..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
             />
           </div>
 
@@ -226,8 +223,7 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
               <Phone className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Tu WhatsApp *</span>
-              <span className="text-[10px] text-slate-400 font-normal">(para que te llegue el mensaje)</span>
+              <span>Tu Teléfono *</span>
             </label>
             <div className="flex gap-2">
               <select
@@ -250,10 +246,9 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
               <input
                 type="tel"
                 required
-                placeholder="600 000 000"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono"
+                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono"
               />
             </div>
           </div>
@@ -303,17 +298,16 @@ export function BirthdayCollectorForm({ host }: BirthdayCollectorFormProps) {
               <div className="col-span-3">
                 <input
                   type="number"
-                  placeholder="Año"
+                  placeholder="Opcional"
                   min="1920"
                   max={new Date().getFullYear()}
                   value={birthYear}
                   onChange={(e) => setBirthYear(e.target.value)}
-                  className="w-full px-2.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-center"
+                  className="w-full px-2.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-center"
                   title="Opcional: Si quieres que calcule tu edad"
                 />
               </div>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">El año es opcional. Solo el día y el mes son necesarios.</p>
           </div>
 
           {/* SUBMIT BUTTON */}

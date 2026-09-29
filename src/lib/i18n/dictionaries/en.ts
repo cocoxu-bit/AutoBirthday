@@ -177,7 +177,11 @@ export const en: Dictionary = {
     months: [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
-    ]
+    ],
+    discardTitle: "Discard changes?",
+    discardDesc: "You have unsaved changes. If you leave now, your changes will be lost.",
+    keepEditing: "Keep editing",
+    discardButton: "Discard changes"
   },
   wishes: {
     title: "Wishes",
@@ -271,9 +275,20 @@ export const en: Dictionary = {
     step4Qr: "4. Point your phone camera at this QR code:",
     phoneInputLabel: "Enter your phone number with country prefix:",
     phoneInputPlaceholder: "e.g. 14155552671",
-    getCodeButton: "Get Pairing Code",
+    getCodeButton: "Get Code",
     copyCode: "Copy Code",
     copied: "Copied!",
+    pairingCodeTab: "Pairing Code",
+    qrCodeTab: "QR Code",
+    phoneLabel: "Your WhatsApp Phone",
+    phoneHint: "With country prefix",
+    phoneHelper: "You will receive an 8-digit code to link inside your WhatsApp app.",
+    generatingCode: "Generating code...",
+    qrDescription: "Open WhatsApp on your phone, go to Linked Devices and scan this QR code.",
+    generatingQr: "Generating QR code...",
+    showQrButton: "Show QR Code",
+    yourPairingCode: "Your pairing code:",
+    codeCopied: "Copied!",
     disconnectButton: "Disconnect WhatsApp",
     disconnectConfirm: "Are you sure you want to disconnect your WhatsApp account?",
     connectedSuccess: "Your WhatsApp is connected and ready to send birthday wishes 🎉",

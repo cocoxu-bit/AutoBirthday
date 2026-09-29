@@ -177,7 +177,11 @@ export const de: Dictionary = {
     months: [
       "Januar", "Februar", "März", "April", "Mai", "Juni",
       "Juli", "August", "September", "Oktober", "November", "Dezember"
-    ]
+    ],
+    discardTitle: "Änderungen verwerfen?",
+    discardDesc: "Du hast ungespeicherte Änderungen. Wenn du jetzt verlässt, gehen sie verloren.",
+    keepEditing: "Weiter bearbeiten",
+    discardButton: "Änderungen verwerfen"
   },
   wishes: {
     title: "Glückwünsche",
@@ -271,9 +275,20 @@ export const de: Dictionary = {
     step4Qr: "4. Richte deine Kamera auf diesen QR-Code:",
     phoneInputLabel: "Gib deine Telefonnummer mit Ländervorwahl ein:",
     phoneInputPlaceholder: "z.B. 491701234567",
-    getCodeButton: "Kopplungscode anfordern",
+    getCodeButton: "Code anfordern",
     copyCode: "Code kopieren",
     copied: "Kopiert!",
+    pairingCodeTab: "Verbindungscode",
+    qrCodeTab: "QR-Code",
+    phoneLabel: "Deine WhatsApp-Nummer",
+    phoneHint: "Mit Ländervorwahl",
+    phoneHelper: "Du erhältst einen 8-stelligen Code zur Bestätigung in deiner WhatsApp-App.",
+    generatingCode: "Code wird generiert...",
+    qrDescription: "Öffne WhatsApp auf dem Smartphone, gehe zu Verknüpfte Geräte und scanne diesen QR-Code.",
+    generatingQr: "QR-Code wird generiert...",
+    showQrButton: "QR-Code anzeigen",
+    yourPairingCode: "Dein Verbindungscode:",
+    codeCopied: "Kopiert!",
     disconnectButton: "WhatsApp trennen",
     disconnectConfirm: "Bist du sicher, dass du dein WhatsApp-Konto trennen möchtest?",
     connectedSuccess: "Dein WhatsApp ist verbunden und bereit zum Gratulieren 🎉",

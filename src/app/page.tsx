@@ -35,7 +35,7 @@ export default function HomePage() {
               href="/register"
               className="text-sm font-semibold text-white bg-gradient-violet px-5 py-2.5 rounded-xl shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
-              Empezar Gratis
+              Empezar ahora
             </Link>
           </div>
         </div>
@@ -48,20 +48,18 @@ export default function HomePage() {
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            100% Gratis · Con IA
+            Tu asistente personal de cumpleaños
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight max-w-3xl mx-auto">
             Nunca más olvides un{" "}
-            <span className="bg-gradient-birthday bg-clip-text text-transparent">
+            <span className="text-[#285953]">
               cumpleaños
             </span>
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-600 mt-6 max-w-2xl mx-auto leading-relaxed">
-            Conecta tu WhatsApp, añade tus contactos y deja que la IA genere y
-            envíe felicitaciones personalizadas{" "}
-            <strong>automáticamente</strong>.
+            Añade tus contactos y deja que AutoBirthday te recuerde y les felicite sus cumpleaños por whatsapp.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
@@ -69,66 +67,45 @@ export default function HomePage() {
               href="/register"
               className="inline-flex items-center gap-2 bg-gradient-violet text-white font-semibold px-8 py-4 rounded-2xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-lg"
             >
-              Empezar Gratis
+              Empezar ahora
               <ArrowRight className="w-5 h-5" />
             </Link>
             <p className="text-sm text-slate-500">
-              Sin tarjeta de crédito · Setup en 2 minutos
+              Listo en menos de 2 minutos
             </p>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features: 3 Pastillas Explicativas */}
       <section className="max-w-6xl mx-auto px-4 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
               icon: MessageCircle,
-              title: "WhatsApp Personal",
+              title: "1. Conecta tu WhatsApp",
               description:
-                "Conecta tu propio WhatsApp escaneando un QR. Los mensajes se envían desde tu número, como si los escribieras tú.",
-              color: "bg-emerald-100 text-emerald-600",
-            },
-            {
-              icon: Sparkles,
-              title: "IA Personalizada",
-              description:
-                "Gemini genera felicitaciones únicas basadas en tu relación, tono y anécdotas con cada persona.",
-              color: "bg-violet-100 text-violet-600",
-            },
-            {
-              icon: Calendar,
-              title: "Totalmente Automático",
-              description:
-                "Configura una vez y olvídate. El sistema escanea cumpleaños cada día y envía en el horario que elijas.",
-              color: "bg-amber-100 text-amber-600",
+                "Añade o importa las fechas de tus amigos y familiares en menos de un minuto.",
+              color: "bg-emerald-100 text-emerald-700",
             },
             {
               icon: Zap,
-              title: "Aprobación por WhatsApp",
+              title: "2. Te avisamos (si quieres)",
               description:
-                "¿Prefieres revisar antes de enviar? Te avisamos por WhatsApp y apruebas con un simple SÍ.",
-              color: "bg-pink-100 text-pink-600",
-            },
-            {
-              icon: Shield,
-              title: "Privado y Seguro",
-              description:
-                "Tus datos y contactos están protegidos. Tu sesión de WhatsApp solo la controlas tú.",
-              color: "bg-blue-100 text-blue-600",
+                "El día del cumple recibes un aviso en tu chat para aprobar el mensaje con un toque.",
+              color: "bg-amber-100 text-amber-700",
             },
             {
               icon: Cake,
-              title: "Plantillas & Custom",
+              title: "3. Felicitación enviada",
               description:
-                "Usa plantillas con variables, mensajes manuales o deja que la IA decida. Tú eliges por cada contacto.",
-              color: "bg-rose-100 text-rose-600",
+                "Sale puntual desde tu propio número y a la hora que elijas. Cero olvidos.",
+              color: "bg-teal-100 text-[#285953]",
             },
           ].map((feature) => (
             <div
               key={feature.title}
-              className="glass-strong rounded-2xl p-6 hover:shadow-xl hover:shadow-violet-500/10 hover:-translate-y-1 transition-all duration-300"
+              className="glass-strong rounded-2xl p-6 hover:shadow-xl hover:shadow-teal-500/10 hover:-translate-y-1 transition-all duration-300"
             >
               <div
                 className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${feature.color} mb-4`}
@@ -156,17 +133,14 @@ export default function HomePage() {
             <div className="absolute bottom-4 right-8 text-4xl">🥳</div>
           </div>
           <div className="relative z-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
               ¿Listo para no olvidar ningún cumpleaños?
             </h2>
-            <p className="text-violet-200 text-lg mb-8 max-w-xl mx-auto">
-              Crea tu cuenta en segundos y configura tu primer contacto.
-            </p>
             <Link
               href="/register"
               className="inline-flex items-center gap-2 bg-white text-violet-700 font-semibold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-lg"
             >
-              Crear Cuenta Gratis
+              Crear Cuenta
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>

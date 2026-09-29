@@ -160,9 +160,8 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
               required
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-xs sm:text-sm font-medium transition-all"
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-xs sm:text-sm font-medium transition-all"
             />
           </div>
         </div>
@@ -219,12 +218,6 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {/* Security badge */}
-      <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400 pt-1">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-        <span>Conexión cifrada y segura</span>
-      </div>
-
       {/* Footer */}
       <div className="border-t border-slate-100 pt-4 text-center">
         <p className="text-xs text-slate-500 font-medium">
@@ -233,7 +226,7 @@ export default function LoginPage() {
             href="/register"
             className="text-emerald-700 font-bold hover:text-emerald-800 hover:underline transition-colors"
           >
-            Regístrate gratis
+            Regístrate
           </Link>
         </p>
       </div>

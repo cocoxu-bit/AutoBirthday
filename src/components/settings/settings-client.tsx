@@ -13,7 +13,6 @@ import {
   LogOut, 
   Globe, 
   Clock, 
-  Sparkles, 
   Loader2, 
   Save, 
   Languages, 
@@ -47,7 +46,6 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
   const [selectedLocale, setSelectedLocale] = useState<SupportedLocale>((userProfile.locale as SupportedLocale) || locale);
   const [sendTimeStart, setSendTimeStart] = useState(userProfile.defaultSendTimeStart || '09:30');
   const [sendTimeEnd, setSendTimeEnd] = useState(userProfile.defaultSendTimeEnd || '11:45');
-  const [aiTone, setAiTone] = useState(userProfile.defaultAiTone || 'casual');
   
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -76,7 +74,6 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
       locale: selectedLocale,
       defaultSendTimeStart: sendTimeStart,
       defaultSendTimeEnd: sendTimeEnd,
-      defaultAiTone: aiTone,
     });
 
     if (res.success) {
@@ -245,44 +242,25 @@ export function SettingsClient({ userProfile }: SettingsClientProps) {
             <p className="text-[11px] text-slate-400 mt-1">{t('settings.scanNotice')}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-500" />
-                {t('settings.windowLabel')}
-              </label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="time" 
-                  value={sendTimeStart}
-                  onChange={(e) => setSendTimeStart(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium"
-                />
-                <span className="text-slate-400 font-bold">-</span>
-                <input 
-                  type="time" 
-                  value={sendTimeEnd}
-                  onChange={(e) => setSendTimeEnd(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-                {t('settings.aiToneLabel')}
-              </label>
-              <select 
-                value={aiTone}
-                onChange={(e) => setAiTone(e.target.value)}
-                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-violet-500 outline-none"
-              >
-                <option value="casual">{t('settings.toneCasual')}</option>
-                <option value="divertido">{t('settings.toneFunny')}</option>
-                <option value="emotivo">{t('settings.toneEmotional')}</option>
-                <option value="formal">{t('settings.toneFormal')}</option>
-              </select>
+          <div className="pt-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              {t('settings.windowLabel')}
+            </label>
+            <div className="flex items-center gap-2">
+              <input 
+                type="time" 
+                value={sendTimeStart}
+                onChange={(e) => setSendTimeStart(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium"
+              />
+              <span className="text-slate-400 font-bold">-</span>
+              <input 
+                type="time" 
+                value={sendTimeEnd}
+                onChange={(e) => setSendTimeEnd(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium"
+              />
             </div>
           </div>
 

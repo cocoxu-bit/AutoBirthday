@@ -344,7 +344,7 @@ export default function WhatsAppPage() {
                   <div className="relative">
                     <input
                       type="tel"
-                      placeholder="34612345678"
+                      placeholder={t('contactForm.phonePlaceholder')}
                       value={inputPhone}
                       onChange={(e) => setInputPhone(e.target.value)}
                       className="w-full pl-3 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-600 focus:bg-white transition-all shadow-inner"

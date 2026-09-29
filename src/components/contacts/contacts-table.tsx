@@ -87,31 +87,33 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
             <span>{t('contacts.syncWhatsApp')}</span>
           </button>
 
-          {/* Line 2: Agregar cumpleaños desde Calendario */}
-          <button 
-            type="button"
-            onClick={() => setIsImportOpen(true)}
-            className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold active:scale-[0.99]"
-            title={t('contacts.importContacts')}
-          >
-            <div className="flex items-center gap-1.5 shrink-0">
-              <Image 
-                src="/google-calendar-icon.png" 
-                alt="Google Calendar" 
-                width={18} 
-                height={18} 
-                className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain" 
-              />
-              <Image 
-                src="/apple-calendar-icon.png" 
-                alt="Apple Calendar" 
-                width={18} 
-                height={18} 
-                className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain" 
-              />
-            </div>
-            <span>{t('contacts.importContacts')}</span>
-          </button>
+          {/* Line 2: Agregar cumpleaños desde Calendario (Oculto temporalmente) */}
+          {false && (
+            <button 
+              type="button"
+              onClick={() => setIsImportOpen(true)}
+              className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-2xl transition-all shadow-2xs text-xs sm:text-sm font-bold active:scale-[0.99]"
+              title={t('contacts.importContacts')}
+            >
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Image 
+                  src="/google-calendar-icon.png" 
+                  alt="Google Calendar" 
+                  width={18} 
+                  height={18} 
+                  className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain" 
+                />
+                <Image 
+                  src="/apple-calendar-icon.png" 
+                  alt="Apple Calendar" 
+                  width={18} 
+                  height={18} 
+                  className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain" 
+                />
+              </div>
+              <span>{t('contacts.importContacts')}</span>
+            </button>
+          )}
 
           {/* Line 3: Añadir Cumpleaños */}
           <Link 
@@ -163,14 +165,17 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
                 <span>{t('contacts.syncWhatsApp')}</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setIsImportOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-all shadow-xs"
-              >
-                <Calendar className="w-3.5 h-3.5 text-violet-600" />
-                <span>{t('contacts.importContacts')}</span>
-              </button>
+              {/* Botón de Calendario oculto temporalmente */}
+              {false && (
+                <button
+                  type="button"
+                  onClick={() => setIsImportOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl text-xs font-bold transition-all shadow-xs"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-violet-600" />
+                  <span>{t('contacts.importContacts')}</span>
+                </button>
+              )}
 
               <Link 
                 href="/contacts/new" 
@@ -272,7 +277,8 @@ export function ContactsTable({ contacts, templates = [] }: ContactsTableProps) 
         </div>
       )}
 
-      {isImportOpen && (
+      {/* Calendar sync dialog - Oculto temporalmente */}
+      {false && isImportOpen && (
         <CalendarSyncDialog onClose={() => setIsImportOpen(false)} templates={templates} />
       )}
 
