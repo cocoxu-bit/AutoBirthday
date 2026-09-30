@@ -59,9 +59,46 @@ export interface SeenLeadCacheRecord {
 // 2. Configuración y Constantes
 // ==========================================
 
-const ADMIN_PHONE = process.env.ADMIN_PHONE || '34926312436';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '34606513672';
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || 'lguuencbRUP5dhi79hqZLBtJEST2';
+const ADMIN_INSTANCE = `autocumple-${ADMIN_USER_ID}`;
+const SYSTEM_INSTANCE = 'autobirthday-system';
 const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'seen-leads.json');
+
+async function getAuthorizedAdminInstance(): Promise<string | null> {
+  try {
+    const instances = await evolutionApi.fetchInstances();
+
+    // 1. Probar primero si el bot central del sistema está conectado
+    const sysInst = instances.find(
+      (inst: any) =>
+        (inst.name === SYSTEM_INSTANCE || inst.instance?.instanceName === SYSTEM_INSTANCE) &&
+        (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
+    );
+    if (sysInst) {
+      return SYSTEM_INSTANCE;
+    }
+
+    // 2. Si no, verificar si la instancia de WhatsApp de Lucas (Admin) está conectada
+    const adminInst = instances.find(
+      (inst: any) =>
+        (inst.name === ADMIN_INSTANCE || inst.instance?.instanceName === ADMIN_INSTANCE) &&
+        (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
+    );
+    if (adminInst) {
+      return ADMIN_INSTANCE;
+    }
+
+    // 3. SEGURIDAD CRÍTICA MULTI-INQUILINO:
+    // NUNCA utilizar la instancia de ningún otro usuario, cliente o beta tester.
+    console.warn(`⚠️ [Seguridad] Ninguna instancia autorizada de admin está abierta (ni ${SYSTEM_INSTANCE} ni ${ADMIN_INSTANCE}). Omitiendo envío para proteger la privacidad de otros usuarios.`);
+    return null;
+  } catch (err: any) {
+    console.error('❌ Error al verificar instancias de admin:', err?.message || err);
+    return null;
+  }
+}
 
 // Ventana de frescura temporal: solo publicaciones de las últimas horas
 const MAX_AGE_HOURS = parseInt(process.env.MAX_POST_AGE_HOURS || '24', 10);
@@ -633,13 +670,11 @@ Devuelve ÚNICAMENTE un JSON válido con la siguiente estructura:
 
 async function triggerBillingQuotaAlert(service: string, reason: string) {
   try {
-    const instances = await evolutionApi.fetchInstances();
-    const openInstance = instances.find(
-      (inst: any) => (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
-    );
-    const instanceName = openInstance 
-      ? (openInstance.name || openInstance.instance?.instanceName)
-      : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
+    const instanceName = await getAuthorizedAdminInstance();
+    if (!instanceName) {
+      console.warn('🛑 Alerta de cuota no enviada por falta de instancia autorizada de admin.');
+      return;
+    }
 
     const message = `🚨💳 *ALERTA DE SEGURIDAD FINANCIERA (AUTOBIRTHDAY)*
 
@@ -687,13 +722,11 @@ async function notifyTwitterSessionExpired(details?: string) {
   });
 
   try {
-    const instances = await evolutionApi.fetchInstances();
-    const openInstance = instances.find(
-      (inst: any) => (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
-    );
-    const instanceName = openInstance 
-      ? (openInstance.name || openInstance.instance?.instanceName)
-      : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
+    const instanceName = await getAuthorizedAdminInstance();
+    if (!instanceName) {
+      console.warn('🛑 Aviso de Twitter no enviado por falta de instancia autorizada de admin.');
+      return;
+    }
 
     const message = `⚠️ *Alerta AutoBirthday Social Listener* 🐦
 
@@ -702,7 +735,7 @@ Hola Lucas, la sesión de X (Twitter) de @autobirthday ha caducado o requiere re
 📌 *Detalle:* ${details || 'Sesión no válida o cerrada'}
 ⚙️ El escaneo de Reddit sigue activo, pero Twitter está pausado hasta renovar \`auth_token\` y \`ct0\`.`;
 
-    console.log(`📲 Enviando aviso de sesión de Twitter caducada a WhatsApp (${ADMIN_PHONE})...`);
+    console.log(`📲 Enviando aviso de sesión de Twitter caducada a WhatsApp (${ADMIN_PHONE}) usando "${instanceName}"...`);
     await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
     console.log(`✅ ¡Aviso de sesión de Twitter enviado con éxito a WhatsApp!`);
   } catch (err: any) {
@@ -716,20 +749,16 @@ Hola Lucas, la sesión de X (Twitter) de @autobirthday ha caducado o requiere re
 
 async function sendWhatsAppAlert(post: RawSocialPost, qualification: LeadQualification): Promise<boolean> {
   try {
-    // 1. Localizar la instancia activa de Evolution API
-    const instances = await evolutionApi.fetchInstances();
-    const openInstance = instances.find(
-      (inst: any) => (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
-    );
-
-    const instanceName = openInstance 
-      ? (openInstance.name || openInstance.instance?.instanceName)
-      : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
+    const instanceName = await getAuthorizedAdminInstance();
+    if (!instanceName) {
+      console.warn('🛑 Envío de alerta de lead omitido: ninguna instancia autorizada de admin está abierta.');
+      return false;
+    }
 
     // El usuario solicitó exclusivamente el enlace directo sin texto adicional
     const message = post.url;
 
-    console.log(`📲 Enviando enlace a WhatsApp (${ADMIN_PHONE}) usando instancia "${instanceName}"...`);
+    console.log(`📲 Enviando enlace a WhatsApp (${ADMIN_PHONE}) usando instancia autorizada "${instanceName}"...`);
     const res = await evolutionApi.sendText(instanceName, ADMIN_PHONE, message);
     console.log(`✅ ¡Enlace enviado con éxito (${post.url})!`);
     return true;

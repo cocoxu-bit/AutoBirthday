@@ -35,14 +35,28 @@ export async function sendBillingAlertToAdmin(params: BillingAlertParams): Promi
       }
     }
 
-    // 2. Localizar instancia activa de Evolution API
-    const instances = await evolutionApi.fetchInstances();
-    const openInstance = instances.find(
-      (inst: any) => (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
+    // 2. Localizar instancia autorizada de admin de Evolution API (NUNCA usar la de otros usuarios)
+    const ADMIN_USER_ID = process.env.ADMIN_USER_ID || 'lguuencbRUP5dhi79hqZLBtJEST2';
+    const ADMIN_INSTANCE = `autocumple-${ADMIN_USER_ID}`;
+    const SYSTEM_INSTANCE = 'autobirthday-system';
+
+    const instances = await evolutionApi.fetchInstances().catch(() => []);
+    const sysInst = instances.find(
+      (inst: any) =>
+        (inst.name === SYSTEM_INSTANCE || inst.instance?.instanceName === SYSTEM_INSTANCE) &&
+        (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
     );
-    const instanceName = openInstance 
-      ? (openInstance.name || openInstance.instance?.instanceName)
-      : 'autocumple-lguuencbRUP5dhi79hqZLBtJEST2';
+    const adminInst = instances.find(
+      (inst: any) =>
+        (inst.name === ADMIN_INSTANCE || inst.instance?.instanceName === ADMIN_INSTANCE) &&
+        (inst.connectionStatus || inst.instance?.status || inst.status) === 'open'
+    );
+
+    const instanceName = sysInst ? SYSTEM_INSTANCE : adminInst ? ADMIN_INSTANCE : null;
+    if (!instanceName) {
+      console.warn('[BillingAlert] No hay instancia autorizada de admin activa para enviar la alerta financiera.');
+      return false;
+    }
 
     // 3. Redactar mensaje de alerta claro y directo
     const icon = severity === 'critical' ? '🚨💳 *ALERTA URGENTE DE FACTURACIÓN*' : '⚠️💳 *AVISO DE CUOTA / FACTURACIÓN*';
