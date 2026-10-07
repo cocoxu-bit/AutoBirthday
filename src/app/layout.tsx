@@ -49,9 +49,10 @@ export default async function RootLayout({
   const locale = await getServerLocale();
 
   return (
-    <html lang={locale} className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-gradient-festive font-sans">
+    <html lang={locale} className="h-full antialiased max-w-full overflow-x-hidden">
+      <body className="min-h-full flex flex-col bg-gradient-festive font-sans max-w-full overflow-x-hidden">
         <LanguageProvider initialLocale={locale}>
+
           {children}
         </LanguageProvider>
         <Toaster

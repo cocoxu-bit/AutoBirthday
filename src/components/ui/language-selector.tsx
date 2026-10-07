@@ -55,14 +55,14 @@ export function LanguageSelector({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${buttonStyles[variant]}`}
+        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${buttonStyles[variant]}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
         title="Cambiar idioma / Change language"
       >
         <span className="text-base leading-none">{currentLocaleInfo.flag}</span>
         {showText && (
-          <span className="uppercase tracking-wide text-xs text-slate-600 font-bold">
+          <span className="uppercase tracking-wide text-xs text-slate-600 font-bold hidden sm:inline">
             {currentLocaleInfo.code}
           </span>
         )}
@@ -72,6 +72,7 @@ export function LanguageSelector({
           }`}
         />
       </button>
+
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl shadow-slate-900/10 border border-slate-200/90 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
