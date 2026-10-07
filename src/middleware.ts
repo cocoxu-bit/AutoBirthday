@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { matchLocaleFromHeader } from '@/lib/i18n/config';
 
 export function middleware(request: NextRequest) {
   const session = request.cookies.get('__session')?.value;
@@ -35,7 +36,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // If user does not have a NEXT_LOCALE cookie set, auto-detect device language from Accept-Language header
+  if (!request.cookies.has('NEXT_LOCALE')) {
+    const acceptLanguage = request.headers.get('accept-language');
+    const detectedLocale = matchLocaleFromHeader(acceptLanguage);
+    response.cookies.set('NEXT_LOCALE', detectedLocale, {
+      path: '/',
+      maxAge: 31536000,
+      sameSite: 'lax',
+    });
+  }
+
+  return response;
 }
 
 export const config = {

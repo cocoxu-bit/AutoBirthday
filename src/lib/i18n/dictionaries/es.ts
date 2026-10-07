@@ -397,7 +397,74 @@ export const es = {
     goToContacts: "Ir a Cumpleaños",
     finishButton: "Volver al Inicio",
     noContactsFound: "No se encontraron contactos nuevos",
-  }
+  },
+  landing: {
+    header: {
+      login: "Iniciar Sesión",
+      startNow: "Empezar ahora",
+    },
+    hero: {
+      badge: "Tu asistente personal de cumpleaños",
+      titlePart1: "Nunca más olvides un",
+      titleHighlight: "cumpleaños",
+      subtitle: "Añade tus contactos y deja que AutoBirthday te recuerde y les felicite sus cumpleaños por whatsapp.",
+      startNowCta: "Empezar ahora",
+      readyInMinutes: "Listo en menos de 2 minutos",
+    },
+    features: {
+      f1Title: "1. Conecta tu WhatsApp",
+      f1Desc: "Añade o importa las fechas de tus amigos y familiares en menos de un minuto.",
+      f2Title: "2. Te avisamos (si quieres)",
+      f2Desc: "El día del cumple recibes un aviso en tu chat para aprobar el mensaje con un toque.",
+      f3Title: "3. Felicitación enviada",
+      f3Desc: "Sale puntual desde tu propio número y a la hora que elijas. Cero olvidos.",
+    },
+    cta: {
+      title: "¿Listo para no olvidar ningún cumpleaños?",
+      button: "Crear Cuenta",
+    },
+    footer: {
+      copyright: "© {year} AutoBirthday. Hecho con ❤️ para que nunca olvides un cumpleaños.",
+    },
+  },
+  auth: {
+    login: {
+      title: "Iniciar Sesión",
+      subtitle: "Entra a tu panel para gestionar tus felicitaciones",
+      googleButton: "Continuar con Google",
+      orWithEmail: "O con tu correo",
+      emailLabel: "Correo Electrónico",
+      emailPlaceholder: "tu@email.com",
+      passwordLabel: "Contraseña",
+      passwordPlaceholder: "••••••••",
+      submitButton: "Entrar al Panel",
+      noAccount: "¿No tienes una cuenta?",
+      registerLink: "Regístrate gratis",
+      welcomeBack: "¡Bienvenido de vuelta! 🎉",
+      loginError: "Error al iniciar sesión",
+    },
+    register: {
+      title: "Crear Cuenta",
+      subtitle: "Empieza a felicitar a tus seres queridos a tiempo",
+      googleButton: "Registrarse con Google",
+      orWithEmail: "O regístrate con correo",
+      nameLabel: "Nombre Completo",
+      namePlaceholder: "Lucas García",
+      emailLabel: "Correo Electrónico",
+      emailPlaceholder: "tu@email.com",
+      passwordLabel: "Contraseña",
+      passwordPlaceholder: "Al menos 6 caracteres",
+      confirmPasswordLabel: "Confirmar Contraseña",
+      confirmPasswordPlaceholder: "Repite tu contraseña",
+      submitButton: "Crear Mi Cuenta",
+      hasAccount: "¿Ya tienes una cuenta?",
+      loginLink: "Inicia sesión",
+      accountCreated: "¡Cuenta creada con éxito! 🎉",
+      passwordsDoNotMatch: "Las contraseñas no coinciden",
+      minPasswordLength: "La contraseña debe tener al menos 6 caracteres",
+    },
+  },
 };
 
 export type Dictionary = typeof es;
+

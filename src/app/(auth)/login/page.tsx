@@ -7,10 +7,14 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
 import { signIn, signInWithGoogle, getIdToken } from "@/lib/firebase/auth";
 import { PageTrafficTracker } from "@/components/analytics/page-traffic-tracker";
+import { useTranslation } from "@/lib/i18n/context";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { dict } = useTranslation();
+  const authDict = dict.auth.login;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,11 +38,11 @@ export default function LoginPage() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
-      toast.success("¡Bienvenido! 🎉");
+      toast.success(authDict.welcomeBack);
       window.location.href = "/dashboard";
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Error al iniciar sesión con Google";
+        error instanceof Error ? error.message : authDict.loginError;
       toast.error(message);
     } finally {
       setGoogleLoading(false);
@@ -64,11 +68,11 @@ export default function LoginPage() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || "Error al crear la sesión en el servidor");
       }
-      toast.success("¡Bienvenido de vuelta! 🎉");
+      toast.success(authDict.welcomeBack);
       window.location.href = "/dashboard";
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Error al iniciar sesión";
+        error instanceof Error ? error.message : authDict.loginError;
       toast.error(message);
     } finally {
       setLoading(false);
@@ -76,11 +80,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-6 sm:p-8 space-y-6">
+    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-6 sm:p-8 space-y-6 relative">
       <PageTrafficTracker path="/login" title="Acceso Usuarios (Login)" category="core" />
       
+      {/* Language Selector Top Right */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <LanguageSelector variant="solid" />
+      </div>
+
       {/* Header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 pt-2 sm:pt-0">
         <div className="flex justify-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/80 shadow-xs flex items-center justify-center p-2.5">
             <Image 
@@ -96,10 +105,10 @@ export default function LoginPage() {
 
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Iniciar Sesión
+            {authDict.title}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-            Entra a tu panel para gestionar tus felicitaciones
+            {authDict.subtitle}
           </p>
         </div>
       </div>
@@ -133,14 +142,14 @@ export default function LoginPage() {
             />
           </svg>
         )}
-        <span>Continuar con Google</span>
+        <span>{authDict.googleButton}</span>
       </button>
 
       {/* Divider */}
       <div className="relative flex items-center justify-center">
         <div className="w-full border-t border-slate-200" />
         <span className="absolute bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          o con tu email
+          {authDict.orWithEmail}
         </span>
       </div>
 
@@ -151,7 +160,7 @@ export default function LoginPage() {
             htmlFor="email"
             className="block text-xs font-bold text-slate-700 mb-1"
           >
-            Correo electrónico
+            {authDict.emailLabel}
           </label>
           <div className="relative">
             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -160,6 +169,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder={authDict.emailPlaceholder}
               required
               className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-xs sm:text-sm font-medium transition-all"
             />
@@ -171,7 +181,7 @@ export default function LoginPage() {
             htmlFor="password"
             className="block text-xs font-bold text-slate-700 mb-1"
           >
-            Contraseña
+            {authDict.passwordLabel}
           </label>
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -180,7 +190,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder={authDict.passwordPlaceholder}
               required
               minLength={6}
               className="w-full h-11 pl-10 pr-11 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 text-xs sm:text-sm font-medium transition-all"
@@ -207,11 +217,11 @@ export default function LoginPage() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Iniciando sesión...</span>
+              <span>{authDict.submitButton}...</span>
             </>
           ) : (
             <>
-              <span>Iniciar Sesión</span>
+              <span>{authDict.submitButton}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
@@ -221,16 +231,16 @@ export default function LoginPage() {
       {/* Footer */}
       <div className="border-t border-slate-100 pt-4 text-center">
         <p className="text-xs text-slate-500 font-medium">
-          ¿No tienes una cuenta?{" "}
+          {authDict.noAccount}{" "}
           <Link
             href="/register"
             className="text-emerald-700 font-bold hover:text-emerald-800 hover:underline transition-colors"
           >
-            Regístrate
+            {authDict.registerLink}
           </Link>
         </p>
       </div>
-
     </div>
   );
 }
+

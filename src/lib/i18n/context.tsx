@@ -28,13 +28,28 @@ export function LanguageProvider({ children, initialLocale = DEFAULT_LOCALE }: L
     }
   }, [initialLocale]);
 
-  // Read cookie on mount if not provided from server
+  // Read cookie on mount if not provided from server, or auto-detect device language
   useEffect(() => {
     const match = document.cookie.match(/(?:^|; )NEXT_LOCALE=([^;]*)/);
     if (match && match[1]) {
       const savedLocale = match[1] as SupportedLocale;
       if (SUPPORTED_LOCALES[savedLocale]) {
         setLocaleState(savedLocale);
+        return;
+      }
+    }
+
+    // If no cookie was set yet, detect the device / browser language
+    if (typeof navigator !== 'undefined') {
+      const browserLangs = navigator.languages || [navigator.language || ''];
+      for (const lang of browserLangs) {
+        if (!lang) continue;
+        const prefix = lang.toLowerCase().split('-')[0] as SupportedLocale;
+        if (SUPPORTED_LOCALES[prefix]) {
+          setLocaleState(prefix);
+          document.cookie = `NEXT_LOCALE=${prefix}; path=/; max-age=31536000; SameSite=Lax`;
+          return;
+        }
       }
     }
   }, []);

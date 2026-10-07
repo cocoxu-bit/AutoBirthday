@@ -1,20 +1,26 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { PageTrafficTracker } from "@/components/analytics/page-traffic-tracker";
+import { useTranslation } from "@/lib/i18n/context";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import {
   Cake,
   MessageCircle,
   Sparkles,
-  Calendar,
   Zap,
-  Shield,
   ArrowRight,
 } from "lucide-react";
 
 export default function HomePage() {
+  const { dict } = useTranslation();
+  const landing = dict.landing;
+
   return (
     <div className="min-h-screen bg-gradient-festive">
       <PageTrafficTracker path="/" title="Landing Principal AutoBirthday" category="core" />
+      
       {/* Header */}
       <header className="glass-strong sticky top-0 z-50 border-b border-white/20">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -24,82 +30,80 @@ export default function HomePage() {
               AutoBirthday
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSelector variant="glass" />
             <Link
               href="/login"
-              className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors px-4 py-2"
+              className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-violet-600 transition-colors px-2.5 sm:px-4 py-2"
             >
-              Iniciar Sesión
+              {landing.header.login}
             </Link>
             <Link
               href="/register"
-              className="text-sm font-semibold text-white bg-gradient-violet px-5 py-2.5 rounded-xl shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              className="text-xs sm:text-sm font-bold text-white bg-gradient-violet px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
-              Empezar ahora
+              {landing.header.startNow}
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-4 pt-20 pb-24 text-center relative">
+      <section className="max-w-6xl mx-auto px-4 pt-16 sm:pt-20 pb-20 sm:pb-24 text-center relative">
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-violet-400/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
-            Tu asistente personal de cumpleaños
+          <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4 text-violet-600" />
+            {landing.hero.badge}
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight max-w-3xl mx-auto">
-            Nunca más olvides un{" "}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight max-w-3xl mx-auto">
+            {landing.hero.titlePart1}{" "}
             <span className="text-[#285953]">
-              cumpleaños
+              {landing.hero.titleHighlight}
             </span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-slate-600 mt-6 max-w-2xl mx-auto leading-relaxed">
-            Añade tus contactos y deja que AutoBirthday te recuerde y les felicite sus cumpleaños por whatsapp.
+          <p className="text-base sm:text-xl text-slate-600 mt-6 max-w-2xl mx-auto leading-relaxed">
+            {landing.hero.subtitle}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-gradient-violet text-white font-semibold px-8 py-4 rounded-2xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-lg"
+              className="inline-flex items-center gap-2 bg-gradient-violet text-white font-semibold px-8 py-4 rounded-2xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-base sm:text-lg"
             >
-              Empezar ahora
+              {landing.hero.startNowCta}
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <p className="text-sm text-slate-500">
-              Listo en menos de 2 minutos
+            <p className="text-xs sm:text-sm text-slate-500">
+              {landing.hero.readyInMinutes}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Features: 3 Pastillas Explicativas */}
+      {/* Features: 3 Cards */}
       <section className="max-w-6xl mx-auto px-4 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
               icon: MessageCircle,
-              title: "1. Conecta tu WhatsApp",
-              description:
-                "Añade o importa las fechas de tus amigos y familiares en menos de un minuto.",
+              title: landing.features.f1Title,
+              description: landing.features.f1Desc,
               color: "bg-emerald-100 text-emerald-700",
             },
             {
               icon: Zap,
-              title: "2. Te avisamos (si quieres)",
-              description:
-                "El día del cumple recibes un aviso en tu chat para aprobar el mensaje con un toque.",
+              title: landing.features.f2Title,
+              description: landing.features.f2Desc,
               color: "bg-amber-100 text-amber-700",
             },
             {
               icon: Cake,
-              title: "3. Felicitación enviada",
-              description:
-                "Sale puntual desde tu propio número y a la hora que elijas. Cero olvidos.",
+              title: landing.features.f3Title,
+              description: landing.features.f3Desc,
               color: "bg-teal-100 text-[#285953]",
             },
           ].map((feature) => (
@@ -125,7 +129,7 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="max-w-6xl mx-auto px-4 pb-24">
-        <div className="bg-gradient-violet rounded-3xl p-12 text-center relative overflow-hidden">
+        <div className="bg-gradient-violet rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-4 left-8 text-4xl">🎂</div>
             <div className="absolute top-12 right-16 text-3xl">🎉</div>
@@ -133,14 +137,14 @@ export default function HomePage() {
             <div className="absolute bottom-4 right-8 text-4xl">🥳</div>
           </div>
           <div className="relative z-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
-              ¿Listo para no olvidar ningún cumpleaños?
+            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-8">
+              {landing.cta.title}
             </h2>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-white text-violet-700 font-semibold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-lg"
+              className="inline-flex items-center gap-2 bg-white text-violet-700 font-semibold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-base sm:text-lg"
             >
-              Crear Cuenta
+              {landing.cta.button}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -149,10 +153,9 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-violet-100 py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 text-center text-xs sm:text-sm text-slate-500">
           <p>
-            © {new Date().getFullYear()} AutoBirthday. Hecho con ❤️ para que
-            nunca olvides un cumpleaños.
+            {landing.footer.copyright.replace("{year}", new Date().getFullYear().toString())}
           </p>
         </div>
       </footer>
