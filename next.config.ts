@@ -52,6 +52,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/__/auth/:path*',
+        destination: 'https://cumple-9bcd7.firebaseapp.com/__/auth/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
+
