@@ -403,7 +403,7 @@ export const en: Dictionary = {
   landing: {
     header: {
       login: "Sign In",
-      startNow: "Get Started",
+      startNow: "Register",
     },
     hero: {
       badge: "Your personal birthday assistant",

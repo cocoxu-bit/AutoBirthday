@@ -401,7 +401,7 @@ export const es = {
   landing: {
     header: {
       login: "Iniciar Sesión",
-      startNow: "Empezar ahora",
+      startNow: "Registrarme",
     },
     hero: {
       badge: "Tu asistente personal de cumpleaños",
