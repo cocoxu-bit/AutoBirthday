@@ -44,13 +44,13 @@ export default function HomePage() {
             <LanguageSelector variant="glass" />
             <Link
               href="/login"
-              className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-violet-600 transition-colors px-2 sm:px-3 py-1.5 whitespace-nowrap"
+              className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-violet-600 transition-colors px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-lg"
             >
               {landing.header.login}
             </Link>
             <Link
               href="/register"
-              className="text-xs sm:text-sm font-bold text-white bg-gradient-violet px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
+              className="hidden sm:inline-flex text-xs sm:text-sm font-bold text-white bg-gradient-violet px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
             >
               {landing.header.startNow}
             </Link>
